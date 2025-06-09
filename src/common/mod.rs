@@ -1,7 +1,11 @@
+pub mod color_target_state;
 pub mod depth_stencil;
+pub mod multisample_state;
 pub mod primitive_state;
 
+pub use color_target_state::*;
 pub use depth_stencil::*;
+pub use multisample_state::*;
 pub use primitive_state::*;
 
 use std::collections::HashMap;

@@ -3,8 +3,8 @@ use std::sync::Arc;
 use fyrox_core::{reflect::*, sparse::AtomicIndex, visitor::*};
 
 use crate::{
-    BindGroupLayoutEntry, DepthStencilState, PipelineCompilationOptions, PrimitiveState,
-    ShaderResource, VertexBufferLayout,
+    BindGroupLayoutEntry, ColorTargetState, DepthStencilState, MultisampleState,
+    PipelineCompilationOptions, PrimitiveState, ShaderResource, VertexBufferLayout,
 };
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
@@ -13,8 +13,14 @@ pub struct VertexState {
     pub entry_point: Option<String>,
     pub compilation_options: PipelineCompilationOptions,
     pub buffers: Vec<VertexBufferLayout>,
-    pub primitive: PrimitiveState,
-    pub depth_stencil: Option<DepthStencilState>,
+}
+
+#[derive(Clone, Debug, Reflect, Visit, Default)]
+pub struct FragmentState {
+    pub shader: ShaderResource,
+    pub entry_point: Option<String>,
+    pub compilation_options: PipelineCompilationOptions,
+    pub targets: Vec<Option<ColorTargetState>>,
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
@@ -33,6 +39,11 @@ pub struct PipelineLayoutDescriptor {
 pub struct RenderPipelineDescriptor {
     pub label: String,
     pub layout: PipelineLayoutDescriptor,
+    pub vertex: VertexState,
+    pub primitive: PrimitiveState,
+    pub depth_stencil: Option<DepthStencilState>,
+    pub multisample: MultisampleState,
+    pub fragment: Option<FragmentState>,
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]

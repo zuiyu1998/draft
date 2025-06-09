@@ -1,0 +1,17 @@
+use fyrox_core::{reflect::*, visitor::*};
+
+/// Describes the multi-sampling state of a render pipeline.
+///
+/// Corresponds to [WebGPU `GPUMultisampleState`](
+/// https://gpuweb.github.io/gpuweb/#dictdef-gpumultisamplestate).
+#[repr(C)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Reflect, Visit, Default)]
+pub struct MultisampleState {
+    /// The number of samples calculated per pixel (for MSAA). For non-multisampled textures,
+    /// this should be `1`
+    pub count: u32,
+    /// Bitmask that restricts the samples of a pixel modified by this pipeline. All samples
+    /// can be enabled using the value `!0`
+    pub mask: u64,
+    pub alpha_to_coverage_enabled: bool,
+}
