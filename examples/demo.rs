@@ -1,9 +1,9 @@
 use std::{collections::HashMap, sync::Arc};
 
-use frame_graph::{
+use frame_graph::wgpu::{
     CompositeAlphaMode, Device, DeviceDescriptor, Instance, InstanceDescriptor, PresentMode, Queue,
-    RawTextureView, RequestAdapterOptions, Surface, SurfaceConfiguration, SurfaceTexture,
-    TextureFormat, TextureUsages, TextureViewDescriptor,
+    RequestAdapterOptions, Surface, SurfaceConfiguration, SurfaceTexture, TextureFormat,
+    TextureUsages, TextureView as RawTextureView, TextureViewDescriptor,
 };
 use fyrox_core::{futures, task::TaskPool};
 use fyrox_resource::{io::FsResourceIo, manager::ResourceManager};
