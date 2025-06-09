@@ -1,5 +1,7 @@
+pub mod depth_stencil;
 pub mod primitive_state;
 
+pub use depth_stencil::*;
 pub use primitive_state::*;
 
 use std::collections::HashMap;

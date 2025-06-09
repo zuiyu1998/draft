@@ -3,8 +3,8 @@ use std::sync::Arc;
 use fyrox_core::{reflect::*, sparse::AtomicIndex, visitor::*};
 
 use crate::{
-    BindGroupLayoutEntry, PipelineCompilationOptions, PrimitiveState, ShaderResource,
-    VertexBufferLayout,
+    BindGroupLayoutEntry, DepthStencilState, PipelineCompilationOptions, PrimitiveState,
+    ShaderResource, VertexBufferLayout,
 };
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
@@ -14,6 +14,7 @@ pub struct VertexState {
     pub compilation_options: PipelineCompilationOptions,
     pub buffers: Vec<VertexBufferLayout>,
     pub primitive: PrimitiveState,
+    pub depth_stencil: Option<DepthStencilState>,
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
