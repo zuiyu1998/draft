@@ -1,3 +1,7 @@
+pub mod primitive_state;
+
+pub use primitive_state::*;
+
 use std::collections::HashMap;
 
 use frame_graph::wgpu::{BufferAddress, ShaderLocation};
