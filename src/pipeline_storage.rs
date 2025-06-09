@@ -185,8 +185,14 @@ impl<T> TemporaryCache<T> {
     }
 }
 
+pub struct ShaderModuleData {
+    pub module: Arc<wgpu::ShaderModule>,
+    pub cache_index: Arc<AtomicIndex>,
+}
+
 pub struct ShaderCache {
     // composer: naga_oil::compose::Composer,
+    // cache: TemporaryCache<ShaderModuleData>,
 }
 
 impl ShaderCache {
