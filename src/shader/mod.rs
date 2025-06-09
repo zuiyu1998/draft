@@ -61,12 +61,6 @@ impl Shader {
     }
 }
 
-#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
-pub struct ShaderDefinition {
-    pub path: String,
-    pub source: Source,
-}
-
 #[derive(Debug, Error)]
 pub enum ShaderError {
     /// An i/o error has occurred.
@@ -116,10 +110,48 @@ pub enum Source {
     Glsl(String, ShaderStage),
 }
 
+impl Source {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Source::Wgsl(s) | Source::Glsl(s, _) => s,
+        }
+    }
+}
+
 impl Default for Source {
     fn default() -> Self {
         Self::Wgsl("".into())
     }
+}
+
+impl From<&Source> for naga_oil::compose::ShaderType {
+    fn from(value: &Source) -> Self {
+        match value {
+            Source::Wgsl(_) => naga_oil::compose::ShaderType::Wgsl,
+            Source::Glsl(_, shader_stage) => match shader_stage {
+                ShaderStage::Vertex => naga_oil::compose::ShaderType::GlslVertex,
+                ShaderStage::Fragment => naga_oil::compose::ShaderType::GlslFragment,
+                _ => panic!("glsl compute not yet implemented"),
+            },
+        }
+    }
+}
+
+impl<'a> From<&'a ShaderDefinition> for naga_oil::compose::NagaModuleDescriptor<'a> {
+    fn from(definition: &'a ShaderDefinition) -> Self {
+        naga_oil::compose::NagaModuleDescriptor {
+            source: definition.source.as_str(),
+            file_path: &definition.path,
+            shader_type: (&definition.source).into(),
+            ..Default::default()
+        }
+    }
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
+pub struct ShaderDefinition {
+    pub path: String,
+    pub source: Source,
 }
 
 impl ShaderDefinition {
