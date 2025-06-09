@@ -1,6 +1,10 @@
 use std::{collections::HashMap, sync::Arc};
 
-use frame_graph::wgpu;
+use frame_graph::{
+    CompositeAlphaMode, Device, DeviceDescriptor, Instance, InstanceDescriptor, PresentMode, Queue,
+    RawTextureView, RequestAdapterOptions, Surface, SurfaceConfiguration, SurfaceTexture,
+    TextureFormat, TextureUsages, TextureViewDescriptor,
+};
 use fyrox_core::{futures, task::TaskPool};
 use fyrox_resource::{io::FsResourceIo, manager::ResourceManager};
 
@@ -62,15 +66,15 @@ impl Windows {
 
 pub struct WindowData {
     window: Arc<Window>,
-    surface: wgpu::Surface<'static>,
+    surface: Surface<'static>,
 
-    pub swap_chain_texture_view: Option<wgpu::TextureView>,
-    pub swap_chain_texture: Option<wgpu::SurfaceTexture>,
-    pub swap_chain_texture_format: Option<wgpu::TextureFormat>,
+    pub swap_chain_texture_view: Option<RawTextureView>,
+    pub swap_chain_texture: Option<SurfaceTexture>,
+    pub swap_chain_texture_format: Option<TextureFormat>,
 }
 
 impl WindowData {
-    pub fn new(window: Arc<Window>, surface: wgpu::Surface<'static>) -> Self {
+    pub fn new(window: Arc<Window>, surface: Surface<'static>) -> Self {
         Self {
             window,
             surface,
@@ -83,7 +87,7 @@ impl WindowData {
     pub fn set_swapchain_texture(&mut self) {
         let frame = self.surface.get_current_texture().unwrap();
 
-        let texture_view_descriptor = wgpu::TextureViewDescriptor {
+        let texture_view_descriptor = TextureViewDescriptor {
             format: Some(frame.texture.format().add_srgb_suffix()),
             ..Default::default()
         };
@@ -106,21 +110,21 @@ impl WindowData {
 
 struct State {
     windows: Windows,
-    _device: wgpu::Device,
-    _queue: wgpu::Queue,
+    _device: Device,
+    _queue: Queue,
     size: winit::dpi::PhysicalSize<u32>,
     _resource_manager: ResourceManager,
 }
 
 impl State {
     async fn new(window: Arc<Window>) -> State {
-        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor::default());
+        let instance = Instance::new(&InstanceDescriptor::default());
         let adapter = instance
-            .request_adapter(&wgpu::RequestAdapterOptions::default())
+            .request_adapter(&RequestAdapterOptions::default())
             .await
             .unwrap();
         let (device, queue) = adapter
-            .request_device(&wgpu::DeviceDescriptor::default(), None)
+            .request_device(&DeviceDescriptor::default(), None)
             .await
             .unwrap();
 
@@ -130,16 +134,16 @@ impl State {
         let cap = surface.get_capabilities(&adapter);
         let surface_format = cap.formats[0];
 
-        let surface_config = wgpu::SurfaceConfiguration {
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+        let surface_config = SurfaceConfiguration {
+            usage: TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
             // Request compatibility with the sRGB-format texture view we‘re going to create later.
             view_formats: vec![surface_format.add_srgb_suffix()],
-            alpha_mode: wgpu::CompositeAlphaMode::Auto,
+            alpha_mode: CompositeAlphaMode::Auto,
             width: size.width,
             height: size.height,
             desired_maximum_frame_latency: 2,
-            present_mode: wgpu::PresentMode::AutoVsync,
+            present_mode: PresentMode::AutoVsync,
         };
 
         surface.configure(&device, &surface_config);
