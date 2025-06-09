@@ -8,7 +8,10 @@ use std::{error::Error, fs::File, io::Write, path::Path};
 use thiserror::Error;
 
 use fyrox_core::{TypeUuidProvider, Uuid, io::FileError, reflect::*, uuid, visitor::*};
+use fyrox_resource::Resource;
 use serde::{Deserialize, Serialize};
+
+pub type ShaderResource = Resource<Shader>;
 
 #[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
 pub enum ShaderStage {

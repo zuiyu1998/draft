@@ -2,7 +2,15 @@ use std::sync::Arc;
 
 use fyrox_core::{reflect::*, sparse::AtomicIndex, visitor::*};
 
-use crate::BindGroupLayoutEntry;
+use crate::{BindGroupLayoutEntry, PipelineCompilationOptions, ShaderResource, VertexBufferLayout};
+
+#[derive(Debug, Clone, Reflect, Visit, Default)]
+pub struct VertexState {
+    pub shader: ShaderResource,
+    pub entry_point: Option<String>,
+    pub compilation_options: PipelineCompilationOptions,
+    pub buffers: Vec<VertexBufferLayout>,
+}
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
 pub struct BindGroupLayoutDescriptor {
