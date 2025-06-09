@@ -4,7 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-frame-graph = { git = "https://github.com/zuiyu1998/frame-graph.git" }
+frame-graph = { git = "https://github.com/zuiyu1998/frame-graph.git", features = [
+    "serde",
+] }
 fyrox-core = { git = "https://github.com/zuiyu1998/Fyrox.git" }
 fyrox-resource = { git = "https://github.com/zuiyu1998/Fyrox.git" }
 
