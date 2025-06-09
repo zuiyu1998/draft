@@ -1,6 +1,4 @@
-use std::sync::Arc;
-
-use fyrox_core::{reflect::*, sparse::AtomicIndex, visitor::*};
+use fyrox_core::{reflect::*, visitor::*};
 
 use crate::{
     BindGroupLayoutEntry, ColorTargetState, DepthStencilState, MultisampleState,
@@ -58,8 +56,4 @@ pub enum PipelineDescriptor {
 #[derive(Debug, Clone, Reflect, Visit)]
 pub struct Material {
     desc: PipelineDescriptor,
-    /// An id that can be used to create associated GPU resources.
-    #[reflect(hidden)]
-    #[visit(skip)]
-    pub cache_index: Arc<AtomicIndex>,
 }

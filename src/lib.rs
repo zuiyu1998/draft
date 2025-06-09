@@ -1,5 +1,6 @@
 pub mod common;
 pub mod material;
+pub mod pipeline_storage;
 pub mod shader;
 
 pub use common::*;
