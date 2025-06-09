@@ -12,6 +12,8 @@ fyrox-resource = { git = "https://github.com/zuiyu1998/Fyrox.git" }
 
 naga = { version = "25.0", features = ["serialize", "deserialize"] }
 serde = { version = "1.0", features = ["derive"] }
+ron = "0.8.0"
+thiserror = { version = "1.0"}
 
 [dev-dependencies]
 winit = "0.30"

@@ -509,7 +509,9 @@ dependencies = [
  "fyrox-core",
  "fyrox-resource",
  "naga 25.0.1",
+ "ron",
  "serde",
+ "thiserror 1.0.69",
  "tracing-subscriber",
  "winit",
 ]

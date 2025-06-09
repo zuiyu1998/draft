@@ -1,8 +1,8 @@
 pub mod material;
 pub mod shader;
 
-pub use shader::*;
 pub use material::*;
+pub use shader::*;
 
 pub fn add(left: u64, right: u64) -> u64 {
     left + right
