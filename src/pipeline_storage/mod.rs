@@ -7,12 +7,12 @@ pub use layout_cache::*;
 use std::{borrow::Cow, sync::Arc};
 
 use frame_graph::{
-    GetPipelineCache, PipelineCache, RenderDevice,
+    GetPipelineCache, Pipeline, PipelineCache, RenderDevice,
     wgpu::{self, ShaderModuleDescriptor, ShaderSource},
 };
 use fyrox_core::log::Log;
 
-use crate::{FrameworkError, Shader, ShaderResource};
+use crate::{FrameworkError, MaterialResource, PipelineDescriptor, Shader, ShaderResource};
 
 pub struct ShaderModuleData {
     pub module: Arc<wgpu::ShaderModule>,
@@ -74,7 +74,39 @@ impl ShaderCache {
     }
 }
 
-pub struct PipelineStorage {}
+pub struct MaterialData {
+    pub pipeline: CachedPipeline,
+    pub layout: Arc<wgpu::PipelineLayout>,
+}
+
+pub struct CachedPipeline {
+    pub descriptor: PipelineDescriptor,
+    pub state: CachedPipelineState,
+}
+
+pub enum CachedPipelineState {
+    Ok(Pipeline),
+    /// An error occurred while trying to create the pipeline GPU object.
+    Err(FrameworkError),
+}
+
+pub struct PipelineStorage {
+    pub shader_cache: ShaderCache,
+    pub pipelie_cache: PipelineCache,
+    pub material_cache: TemporaryCache<MaterialData>,
+}
+
+impl PipelineStorage {
+    pub fn get(
+        &mut self,
+        _device: &RenderDevice,
+        _material: &MaterialResource,
+    ) -> Result<Pipeline, FrameworkError> {
+        // let mut _material_state = _material.state();
+
+        todo!()
+    }
+}
 
 impl GetPipelineCache for PipelineStorage {
     fn get_pipeline_cache(&self) -> PipelineCache {
