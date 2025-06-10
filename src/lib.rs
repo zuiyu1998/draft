@@ -1,9 +1,11 @@
 pub mod common;
+pub mod error;
 pub mod material;
 pub mod pipeline_storage;
 pub mod shader;
 
 pub use common::*;
+pub use error::*;
 pub use material::*;
 pub use shader::*;
 

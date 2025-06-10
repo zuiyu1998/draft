@@ -11,18 +11,11 @@ use frame_graph::{
     wgpu::{self, ShaderModuleDescriptor, ShaderSource},
 };
 use fyrox_core::log::Log;
-use thiserror::Error;
 
-use crate::{Shader, ShaderResource};
+use crate::{FrameworkError, Shader, ShaderResource};
 
 pub struct ShaderModuleData {
     pub module: Arc<wgpu::ShaderModule>,
-}
-
-#[derive(Debug, Error)]
-pub enum Error {
-    #[error(transparent)]
-    ProcessShaderError(#[from] naga_oil::compose::ComposerError),
 }
 
 impl ShaderModuleData {
@@ -30,7 +23,7 @@ impl ShaderModuleData {
         composer: &mut naga_oil::compose::Composer,
         device: &RenderDevice,
         shader: &Shader,
-    ) -> Result<Self, Error> {
+    ) -> Result<Self, FrameworkError> {
         let naga = composer.make_naga_module(naga_oil::compose::NagaModuleDescriptor {
             ..(&shader.definition).into()
         })?;

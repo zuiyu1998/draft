@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use super::TemporaryCache;
-use crate::{BindGroupLayoutDescriptor, PipelineLayoutDescriptor, pipeline_storage::Error};
+use crate::{BindGroupLayoutDescriptor, FrameworkError, PipelineLayoutDescriptor};
 use frame_graph::{RenderDevice, wgpu};
 use fyrox_core::{log::Log, sparse::AtomicIndex};
 
@@ -103,7 +103,7 @@ pub struct BindGroupLayoutData {
 }
 
 impl BindGroupLayoutData {
-    pub fn new(device: &RenderDevice, layout: &BindGroupLayout) -> Result<Self, Error> {
+    pub fn new(device: &RenderDevice, layout: &BindGroupLayout) -> Result<Self, FrameworkError> {
         let entries = layout
             .desc
             .entries
@@ -131,7 +131,7 @@ pub struct PipelineLayoutData {
 }
 
 impl PipelineLayoutData {
-    pub fn new(device: &RenderDevice, layout: &PipelineLayout) -> Result<Self, Error> {
+    pub fn new(device: &RenderDevice, layout: &PipelineLayout) -> Result<Self, FrameworkError> {
         let bind_group_layouts = layout
             .bind_group_layouts
             .iter()
