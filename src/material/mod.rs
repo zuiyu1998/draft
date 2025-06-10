@@ -67,7 +67,7 @@ impl Default for PipelineDescriptor {
 #[derive(Debug, Clone, Reflect, Visit, Default, TypeUuidProvider)]
 #[type_uuid(id = "3485bce7-7b74-4970-9bf0-2b4a897b06dd")]
 pub struct Material {
-    desc: PipelineDescriptor,
+    pub desc: PipelineDescriptor,
     #[reflect(hidden)]
     #[visit(skip)]
     pub cache_index: Arc<AtomicIndex>,

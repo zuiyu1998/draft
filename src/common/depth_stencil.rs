@@ -1,6 +1,11 @@
 use std::hash::{Hash, Hasher};
 
 use crate::TextureFormat;
+use frame_graph::wgpu::{
+    CompareFunction as RawCompareFunction, DepthBiasState as RawDepthBiasState,
+    DepthStencilState as RawDepthStencilState, StencilFaceState as RawStencilFaceState,
+    StencilOperation as RawStencilOperation, StencilState as RawStencilState,
+};
 use fyrox_core::{reflect::*, visitor::*};
 
 /// Describes the biasing setting for the depth target.
@@ -18,6 +23,16 @@ pub struct DepthBiasState {
     pub slope_scale: f32,
     /// Depth bias clamp value (absolute).
     pub clamp: f32,
+}
+
+impl From<DepthBiasState> for RawDepthBiasState {
+    fn from(value: DepthBiasState) -> Self {
+        Self {
+            constant: value.constant,
+            slope_scale: value.slope_scale,
+            clamp: value.clamp,
+        }
+    }
 }
 
 impl Hash for DepthBiasState {
@@ -67,6 +82,21 @@ pub enum StencilOperation {
     DecrementWrap = 7,
 }
 
+impl From<StencilOperation> for RawStencilOperation {
+    fn from(value: StencilOperation) -> Self {
+        match value {
+            StencilOperation::Keep => RawStencilOperation::Keep,
+            StencilOperation::Zero => RawStencilOperation::Zero,
+            StencilOperation::Replace => RawStencilOperation::Replace,
+            StencilOperation::Invert => RawStencilOperation::Invert,
+            StencilOperation::IncrementClamp => RawStencilOperation::IncrementClamp,
+            StencilOperation::DecrementClamp => RawStencilOperation::DecrementClamp,
+            StencilOperation::IncrementWrap => RawStencilOperation::IncrementWrap,
+            StencilOperation::DecrementWrap => RawStencilOperation::DecrementWrap,
+        }
+    }
+}
+
 /// Describes stencil state in a render pipeline.
 ///
 /// If you are not using stencil state, set this to [`StencilFaceState::IGNORE`].
@@ -86,6 +116,17 @@ pub struct StencilFaceState {
     pub pass_op: StencilOperation,
 }
 
+impl From<StencilFaceState> for RawStencilFaceState {
+    fn from(value: StencilFaceState) -> Self {
+        RawStencilFaceState {
+            compare: value.compare.into(),
+            fail_op: value.fail_op.into(),
+            depth_fail_op: value.depth_fail_op.into(),
+            pass_op: value.pass_op.into(),
+        }
+    }
+}
+
 /// State of the stencil operation (fixed-pipeline stage).
 ///
 /// For use in [`DepthStencilState`].
@@ -103,6 +144,17 @@ pub struct StencilState {
     pub read_mask: u32,
     /// Stencil values are AND'd with this mask when writing to the stencil buffer. Only low 8 bits are used.
     pub write_mask: u32,
+}
+
+impl<'a> From<&'a StencilState> for RawStencilState {
+    fn from(value: &'a StencilState) -> Self {
+        RawStencilState {
+            front: value.front.into(),
+            back: value.back.into(),
+            read_mask: value.read_mask,
+            write_mask: value.write_mask,
+        }
+    }
 }
 
 /// Comparison function used for depth and stencil operations.
@@ -135,6 +187,21 @@ pub enum CompareFunction {
     Always = 8,
 }
 
+impl From<CompareFunction> for RawCompareFunction {
+    fn from(value: CompareFunction) -> Self {
+        match value {
+            CompareFunction::Always => RawCompareFunction::Always,
+            CompareFunction::Equal => RawCompareFunction::Equal,
+            CompareFunction::Greater => RawCompareFunction::Greater,
+            CompareFunction::GreaterEqual => RawCompareFunction::GreaterEqual,
+            CompareFunction::Less => RawCompareFunction::Less,
+            CompareFunction::LessEqual => RawCompareFunction::LessEqual,
+            CompareFunction::Never => RawCompareFunction::Never,
+            CompareFunction::NotEqual => RawCompareFunction::NotEqual,
+        }
+    }
+}
+
 /// Describes the depth/stencil state in a render pipeline.
 ///
 /// Corresponds to [WebGPU `GPUDepthStencilState`](
@@ -155,4 +222,16 @@ pub struct DepthStencilState {
     pub stencil: StencilState,
     /// Depth bias state.
     pub bias: DepthBiasState,
+}
+
+impl<'a> From<&'a DepthStencilState> for RawDepthStencilState {
+    fn from(value: &'a DepthStencilState) -> Self {
+        RawDepthStencilState {
+            format: value.format.into(),
+            depth_write_enabled: value.depth_write_enabled,
+            depth_compare: value.depth_compare.into(),
+            stencil: (&value.stencil).into(),
+            bias: value.bias.into(),
+        }
+    }
 }

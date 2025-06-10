@@ -65,7 +65,7 @@ impl PipelineLayoutCache {
         &mut self,
         device: &RenderDevice,
         desc: &PipelineLayoutDescriptor,
-    ) -> Option<Arc<wgpu::PipelineLayout>> {
+    ) -> Result<&wgpu::PipelineLayout, FrameworkError> {
         let layout = self.get_pipeline_layout(device, desc).clone();
 
         match self.pipeline_layout_cache.get_or_insert_with(
@@ -73,11 +73,8 @@ impl PipelineLayoutCache {
             Default::default(),
             || PipelineLayoutData::new(device, &layout),
         ) {
-            Ok(data) => Some(data.layout.clone()),
-            Err(error) => {
-                Log::err(format!("{error}"));
-                None
-            }
+            Ok(data) => Ok(&data.layout),
+            Err(error) => Err(error),
         }
     }
 }

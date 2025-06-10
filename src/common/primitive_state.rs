@@ -1,3 +1,8 @@
+use frame_graph::wgpu::{
+    Face as RawFace, FrontFace as RawFrontFace, IndexFormat as RawIndexFormat,
+    PolygonMode as RawPolygonMode, PrimitiveState as RawPrimitiveState,
+    PrimitiveTopology as RawPrimitiveTopology,
+};
 use fyrox_core::{reflect::*, visitor::*};
 
 /// Type of drawing mode for polygons
@@ -13,6 +18,16 @@ pub enum PolygonMode {
     Point = 2,
 }
 
+impl From<PolygonMode> for RawPolygonMode {
+    fn from(value: PolygonMode) -> Self {
+        match value {
+            PolygonMode::Fill => RawPolygonMode::Fill,
+            PolygonMode::Line => RawPolygonMode::Line,
+            PolygonMode::Point => RawPolygonMode::Point,
+        }
+    }
+}
+
 /// Face of a vertex.
 ///
 /// Corresponds to [WebGPU `GPUCullMode`](
@@ -26,6 +41,15 @@ pub enum Face {
     Front = 0,
     /// Back face
     Back = 1,
+}
+
+impl From<Face> for RawFace {
+    fn from(value: Face) -> Self {
+        match value {
+            Face::Back => RawFace::Back,
+            Face::Front => RawFace::Front,
+        }
+    }
 }
 
 /// Vertex winding order which classifies the "front" face of a triangle.
@@ -46,6 +70,15 @@ pub enum FrontFace {
     Cw = 1,
 }
 
+impl From<FrontFace> for RawFrontFace {
+    fn from(value: FrontFace) -> Self {
+        match value {
+            FrontFace::Ccw => RawFrontFace::Ccw,
+            FrontFace::Cw => RawFrontFace::Cw,
+        }
+    }
+}
+
 /// Format of indices used with pipeline.
 ///
 /// Corresponds to [WebGPU `GPUIndexFormat`](
@@ -58,6 +91,15 @@ pub enum IndexFormat {
     /// Indices are 32 bit unsigned integers.
     #[default]
     Uint32 = 1,
+}
+
+impl From<IndexFormat> for RawIndexFormat {
+    fn from(value: IndexFormat) -> Self {
+        match value {
+            IndexFormat::Uint16 => RawIndexFormat::Uint16,
+            IndexFormat::Uint32 => RawIndexFormat::Uint32,
+        }
+    }
 }
 
 /// Primitive type the input mesh is composed of.
@@ -86,6 +128,18 @@ pub enum PrimitiveTopology {
     ///
     /// Vertices `0 1 2 3 4 5` create four triangles `0 1 2`, `2 1 3`, `2 3 4`, and `4 3 5`
     TriangleStrip = 4,
+}
+
+impl From<PrimitiveTopology> for RawPrimitiveTopology {
+    fn from(value: PrimitiveTopology) -> Self {
+        match value {
+            PrimitiveTopology::PointList => RawPrimitiveTopology::PointList,
+            PrimitiveTopology::LineStrip => RawPrimitiveTopology::LineStrip,
+            PrimitiveTopology::TriangleList => RawPrimitiveTopology::TriangleList,
+            PrimitiveTopology::TriangleStrip => RawPrimitiveTopology::TriangleStrip,
+            PrimitiveTopology::LineList => RawPrimitiveTopology::LineList,
+        }
+    }
 }
 
 /// Describes the state of primitive assembly and rasterization in a render pipeline.
@@ -122,4 +176,18 @@ pub struct PrimitiveState {
     ///
     /// Enabling this requires `Features::CONSERVATIVE_RASTERIZATION` to be enabled.
     pub conservative: bool,
+}
+
+impl From<PrimitiveState> for RawPrimitiveState {
+    fn from(value: PrimitiveState) -> Self {
+        RawPrimitiveState {
+            topology: value.topology.into(),
+            strip_index_format: value.strip_index_format.map(Into::into),
+            front_face: value.front_face.into(),
+            cull_mode: value.cull_mode.map(Into::into),
+            unclipped_depth: value.unclipped_depth,
+            polygon_mode: value.polygon_mode.into(),
+            conservative: value.conservative,
+        }
+    }
 }

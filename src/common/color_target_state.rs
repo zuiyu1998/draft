@@ -1,6 +1,11 @@
 use fyrox_core::{reflect::*, visitor::*};
 
 use crate::TextureFormat;
+use frame_graph::wgpu::{
+    BlendComponent as RawBlendComponent, BlendFactor as RawBlendFactor,
+    BlendOperation as RawBlendOperation, BlendState as RawBlendState,
+    ColorTargetState as RawColorTargetState, ColorWrites as RawColorWrites,
+};
 
 /// Color write mask. Disabled color channels will not be written to.
 ///
@@ -9,6 +14,12 @@ use crate::TextureFormat;
 #[repr(transparent)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Reflect, Visit, Default)]
 pub struct ColorWrites(u32);
+
+impl From<ColorWrites> for RawColorWrites {
+    fn from(value: ColorWrites) -> Self {
+        RawColorWrites::from_bits(value.0).unwrap_or(RawColorWrites::ALL)
+    }
+}
 
 /// Alpha blend operation.
 ///
@@ -31,6 +42,18 @@ pub enum BlendOperation {
     Min = 3,
     /// max(Src, Dst)
     Max = 4,
+}
+
+impl From<BlendOperation> for RawBlendOperation {
+    fn from(value: BlendOperation) -> Self {
+        match value {
+            BlendOperation::Add => RawBlendOperation::Add,
+            BlendOperation::Subtract => RawBlendOperation::Subtract,
+            BlendOperation::ReverseSubtract => RawBlendOperation::ReverseSubtract,
+            BlendOperation::Min => RawBlendOperation::Min,
+            BlendOperation::Max => RawBlendOperation::Max,
+        }
+    }
 }
 
 /// Alpha blend factor.
@@ -82,6 +105,30 @@ pub enum BlendFactor {
     OneMinusSrc1Alpha = 16,
 }
 
+impl From<BlendFactor> for RawBlendFactor {
+    fn from(value: BlendFactor) -> Self {
+        match value {
+            BlendFactor::Constant => RawBlendFactor::Constant,
+            BlendFactor::Dst => RawBlendFactor::Dst,
+            BlendFactor::DstAlpha => RawBlendFactor::DstAlpha,
+            BlendFactor::One => RawBlendFactor::One,
+            BlendFactor::OneMinusConstant => RawBlendFactor::OneMinusConstant,
+            BlendFactor::OneMinusDst => RawBlendFactor::OneMinusDst,
+            BlendFactor::OneMinusDstAlpha => RawBlendFactor::OneMinusDstAlpha,
+            BlendFactor::OneMinusSrc => RawBlendFactor::OneMinusSrc,
+            BlendFactor::OneMinusSrc1 => RawBlendFactor::OneMinusSrc1,
+            BlendFactor::OneMinusSrc1Alpha => RawBlendFactor::OneMinusSrc1Alpha,
+            BlendFactor::OneMinusSrcAlpha => RawBlendFactor::OneMinusSrcAlpha,
+            BlendFactor::SrcAlphaSaturated => RawBlendFactor::SrcAlphaSaturated,
+            BlendFactor::Zero => RawBlendFactor::Zero,
+            BlendFactor::Src => RawBlendFactor::Src,
+            BlendFactor::Src1Alpha => RawBlendFactor::Src1Alpha,
+            BlendFactor::SrcAlpha => RawBlendFactor::SrcAlpha,
+            BlendFactor::Src1 => RawBlendFactor::Src1,
+        }
+    }
+}
+
 /// Describes a blend component of a [`BlendState`].
 ///
 /// Corresponds to [WebGPU `GPUBlendComponent`](
@@ -98,6 +145,16 @@ pub struct BlendComponent {
     pub operation: BlendOperation,
 }
 
+impl From<BlendComponent> for RawBlendComponent {
+    fn from(value: BlendComponent) -> Self {
+        RawBlendComponent {
+            src_factor: value.src_factor.into(),
+            dst_factor: value.dst_factor.into(),
+            operation: value.operation.into(),
+        }
+    }
+}
+
 /// Describe the blend state of a render pipeline,
 /// within [`ColorTargetState`].
 ///
@@ -110,6 +167,15 @@ pub struct BlendState {
     pub color: BlendComponent,
     /// Alpha equation.
     pub alpha: BlendComponent,
+}
+
+impl From<BlendState> for RawBlendState {
+    fn from(value: BlendState) -> Self {
+        RawBlendState {
+            color: value.color.into(),
+            alpha: value.alpha.into(),
+        }
+    }
 }
 
 /// Describes the color state of a render pipeline.
@@ -128,4 +194,14 @@ pub struct ColorTargetState {
     pub blend: Option<BlendState>,
     /// Mask which enables/disables writes to different color/alpha channel.
     pub write_mask: ColorWrites,
+}
+
+impl<'a> From<&'a ColorTargetState> for RawColorTargetState {
+    fn from(value: &'a ColorTargetState) -> Self {
+        RawColorTargetState {
+            format: value.format.into(),
+            blend: value.blend.map(Into::into),
+            write_mask: value.write_mask.into(),
+        }
+    }
 }

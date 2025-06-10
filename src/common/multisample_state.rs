@@ -1,5 +1,7 @@
 use fyrox_core::{reflect::*, visitor::*};
 
+use frame_graph::wgpu::MultisampleState as RawMultisampleState;
+
 /// Describes the multi-sampling state of a render pipeline.
 ///
 /// Corresponds to [WebGPU `GPUMultisampleState`](
@@ -14,4 +16,14 @@ pub struct MultisampleState {
     /// can be enabled using the value `!0`
     pub mask: u64,
     pub alpha_to_coverage_enabled: bool,
+}
+
+impl From<MultisampleState> for RawMultisampleState {
+    fn from(value: MultisampleState) -> Self {
+        RawMultisampleState {
+            count: value.count,
+            mask: value.mask,
+            alpha_to_coverage_enabled: value.alpha_to_coverage_enabled,
+        }
+    }
 }
