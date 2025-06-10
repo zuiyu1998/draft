@@ -8,9 +8,19 @@ pub use depth_stencil::*;
 pub use multisample_state::*;
 pub use primitive_state::*;
 
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    num::{NonZeroU32, NonZeroU64},
+};
 
-use frame_graph::wgpu::{BufferAddress, ShaderLocation};
+use frame_graph::wgpu::{
+    AstcBlock as RawAstcBlock, AstcChannel as RawAstcChannel,
+    BindGroupLayoutEntry as RawBindGroupLayoutEntry, BindingType as RawBindingType, BufferAddress,
+    BufferBindingType as RawBufferBindingType, SamplerBindingType as RawSamplerBindingType,
+    ShaderLocation, ShaderStages, StorageTextureAccess as RawStorageTextureAccess,
+    TextureFormat as RawTextureFormat, TextureSampleType as RawTextureSampleType,
+    TextureViewDimension as RawTextureViewDimension,
+};
 use fyrox_core::{reflect::*, visitor::*};
 
 #[repr(C)]
@@ -180,6 +190,16 @@ pub enum AstcChannel {
     Hdr,
 }
 
+impl From<AstcChannel> for RawAstcChannel {
+    fn from(value: AstcChannel) -> Self {
+        match value {
+            AstcChannel::Hdr => RawAstcChannel::Hdr,
+            AstcChannel::Unorm => RawAstcChannel::Unorm,
+            AstcChannel::UnormSrgb => RawAstcChannel::UnormSrgb,
+        }
+    }
+}
+
 /// ASTC block dimensions
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, Visit, Reflect, Default)]
@@ -215,6 +235,27 @@ pub enum AstcBlock {
     B12x12,
 }
 
+impl From<AstcBlock> for RawAstcBlock {
+    fn from(value: AstcBlock) -> Self {
+        match value {
+            AstcBlock::B4x4 => RawAstcBlock::B4x4,
+            AstcBlock::B5x4 => RawAstcBlock::B5x4,
+            AstcBlock::B5x5 => RawAstcBlock::B5x5,
+            AstcBlock::B6x5 => RawAstcBlock::B6x5,
+            AstcBlock::B6x6 => RawAstcBlock::B6x6,
+            AstcBlock::B8x5 => RawAstcBlock::B8x5,
+            AstcBlock::B8x6 => RawAstcBlock::B8x6,
+            AstcBlock::B8x8 => RawAstcBlock::B8x8,
+            AstcBlock::B10x5 => RawAstcBlock::B10x5,
+            AstcBlock::B10x6 => RawAstcBlock::B10x6,
+            AstcBlock::B10x8 => RawAstcBlock::B10x8,
+            AstcBlock::B10x10 => RawAstcBlock::B10x10,
+            AstcBlock::B12x10 => RawAstcBlock::B12x10,
+            AstcBlock::B12x12 => RawAstcBlock::B12x12,
+        }
+    }
+}
+
 /// Underlying texture data format.
 ///
 /// If there is a conversion in the format (such as srgb -> linear), the conversion listed here is for
@@ -231,7 +272,7 @@ pub enum TextureFormat {
     R8Unorm,
     /// Red channel only. 8 bit integer per channel. [-127, 127] converted to/from float [-1, 1] in shader.
     R8Snorm,
-    /// Red channel only. 8 bit integer per channel. Unsigned in shader.
+    /// Red channel only. 8 bit integer per channel. RawTextureFormatUnsigned in shader.
     R8Uint,
     /// Red channel only. 8 bit integer per channel. Signed in shader.
     R8Sint,
@@ -547,6 +588,92 @@ pub enum TextureFormat {
     },
 }
 
+impl From<TextureFormat> for RawTextureFormat {
+    fn from(value: TextureFormat) -> Self {
+        match value {
+            TextureFormat::Astc { block, channel } => RawTextureFormat::Astc {
+                block: block.into(),
+                channel: channel.into(),
+            },
+            TextureFormat::Bc1RgbaUnorm => RawTextureFormat::Bc1RgbaUnorm,
+            TextureFormat::Bc1RgbaUnormSrgb => RawTextureFormat::Bc1RgbaUnormSrgb,
+            TextureFormat::Bc2RgbaUnorm => RawTextureFormat::Bc2RgbaUnorm,
+            TextureFormat::Bc2RgbaUnormSrgb => RawTextureFormat::Bc2RgbaUnormSrgb,
+            TextureFormat::Bc3RgbaUnorm => RawTextureFormat::Bc3RgbaUnorm,
+            TextureFormat::Bc3RgbaUnormSrgb => RawTextureFormat::Bc3RgbaUnormSrgb,
+            TextureFormat::Bc4RSnorm => RawTextureFormat::Bc4RSnorm,
+            TextureFormat::Bc4RUnorm => RawTextureFormat::Bc4RUnorm,
+            TextureFormat::Bc5RgSnorm => RawTextureFormat::Bc5RgSnorm,
+            TextureFormat::Bc5RgUnorm => RawTextureFormat::Bc5RgUnorm,
+            TextureFormat::Bc6hRgbFloat => RawTextureFormat::Bc6hRgbFloat,
+            TextureFormat::Bc6hRgbUfloat => RawTextureFormat::Bc6hRgbUfloat,
+            TextureFormat::Bc7RgbaUnorm => RawTextureFormat::Bc7RgbaUnorm,
+            TextureFormat::Bc7RgbaUnormSrgb => RawTextureFormat::Bc7RgbaUnormSrgb,
+            TextureFormat::Bgra8Unorm => RawTextureFormat::Bgra8Unorm,
+            TextureFormat::Bgra8UnormSrgb => RawTextureFormat::Bgra8UnormSrgb,
+            TextureFormat::Depth16Unorm => RawTextureFormat::Depth16Unorm,
+            TextureFormat::Depth24Plus => RawTextureFormat::Depth24Plus,
+            TextureFormat::Depth24PlusStencil8 => RawTextureFormat::Depth24PlusStencil8,
+            TextureFormat::Depth32Float => RawTextureFormat::Depth32Float,
+            TextureFormat::Depth32FloatStencil8 => RawTextureFormat::Depth32FloatStencil8,
+            TextureFormat::EacR11Snorm => RawTextureFormat::EacR11Snorm,
+            TextureFormat::EacR11Unorm => RawTextureFormat::EacR11Unorm,
+            TextureFormat::EacRg11Snorm => RawTextureFormat::EacRg11Snorm,
+            TextureFormat::EacRg11Unorm => RawTextureFormat::EacRg11Unorm,
+            TextureFormat::Etc2Rgb8A1Unorm => RawTextureFormat::Etc2Rgb8A1Unorm,
+            TextureFormat::Etc2Rgb8A1UnormSrgb => RawTextureFormat::Etc2Rgb8A1UnormSrgb,
+            TextureFormat::Etc2Rgb8Unorm => RawTextureFormat::Etc2Rgb8Unorm,
+            TextureFormat::Etc2Rgb8UnormSrgb => RawTextureFormat::Etc2Rgb8UnormSrgb,
+            TextureFormat::Etc2Rgba8Unorm => RawTextureFormat::Etc2Rgba8Unorm,
+            TextureFormat::Etc2Rgba8UnormSrgb => RawTextureFormat::Etc2Rgba8UnormSrgb,
+            TextureFormat::NV12 => RawTextureFormat::NV12,
+            TextureFormat::R16Float => RawTextureFormat::R16Float,
+            TextureFormat::R16Sint => RawTextureFormat::R16Sint,
+            TextureFormat::R16Snorm => RawTextureFormat::R16Snorm,
+            TextureFormat::R16Uint => RawTextureFormat::R16Uint,
+            TextureFormat::R16Unorm => RawTextureFormat::R16Unorm,
+            TextureFormat::R32Float => RawTextureFormat::R32Float,
+            TextureFormat::R32Sint => RawTextureFormat::R32Sint,
+            TextureFormat::R32Uint => RawTextureFormat::R32Uint,
+            TextureFormat::R64Uint => RawTextureFormat::R64Uint,
+            TextureFormat::R8Sint => RawTextureFormat::R8Sint,
+            TextureFormat::R8Snorm => RawTextureFormat::R8Snorm,
+            TextureFormat::R8Uint => RawTextureFormat::R8Uint,
+            TextureFormat::R8Unorm => RawTextureFormat::R8Unorm,
+            TextureFormat::Rg11b10Ufloat => RawTextureFormat::Rg11b10Ufloat,
+            TextureFormat::Rg16Float => RawTextureFormat::Rg16Float,
+            TextureFormat::Rg16Sint => RawTextureFormat::Rg16Sint,
+            TextureFormat::Rg16Snorm => RawTextureFormat::Rg16Snorm,
+            TextureFormat::Rg16Uint => RawTextureFormat::Rg16Uint,
+            TextureFormat::Rg16Unorm => RawTextureFormat::Rg16Unorm,
+            TextureFormat::Rg32Float => RawTextureFormat::Rg32Float,
+            TextureFormat::Rg32Sint => RawTextureFormat::Rg32Sint,
+            TextureFormat::Rg32Uint => RawTextureFormat::Rg32Uint,
+            TextureFormat::Rg8Sint => RawTextureFormat::Rg8Sint,
+            TextureFormat::Rg8Snorm => RawTextureFormat::Rg8Snorm,
+            TextureFormat::Rg8Uint => RawTextureFormat::Rg8Uint,
+            TextureFormat::Rg8Unorm => RawTextureFormat::Rg8Unorm,
+            TextureFormat::Rgb10a2Uint => RawTextureFormat::Rgb10a2Uint,
+            TextureFormat::Rgb10a2Unorm => RawTextureFormat::Rgb10a2Unorm,
+            TextureFormat::Rgb9e5Ufloat => RawTextureFormat::Rgb9e5Ufloat,
+            TextureFormat::Rgba16Float => RawTextureFormat::Rgba16Float,
+            TextureFormat::Rgba16Sint => RawTextureFormat::Rgba16Float,
+            TextureFormat::Rgba16Snorm => RawTextureFormat::Rgba16Snorm,
+            TextureFormat::Rgba16Uint => RawTextureFormat::Rgba16Uint,
+            TextureFormat::Rgba16Unorm => RawTextureFormat::Rgba16Unorm,
+            TextureFormat::Rgba32Float => RawTextureFormat::Rgba32Float,
+            TextureFormat::Rgba32Sint => RawTextureFormat::Rgba32Sint,
+            TextureFormat::Rgba32Uint => RawTextureFormat::Rgba32Uint,
+            TextureFormat::Rgba8Sint => RawTextureFormat::Rgba8Sint,
+            TextureFormat::Rgba8Snorm => RawTextureFormat::Rgba8Snorm,
+            TextureFormat::Rgba8Uint => RawTextureFormat::Rgba8Uint,
+            TextureFormat::Rgba8Unorm => RawTextureFormat::Rgba8Unorm,
+            TextureFormat::Rgba8UnormSrgb => RawTextureFormat::Rgba8UnormSrgb,
+            TextureFormat::Stencil8 => RawTextureFormat::Stencil8,
+        }
+    }
+}
+
 /// Specific type of a sample in a texture binding.
 ///
 /// For use in [`BindingType::StorageTexture`].
@@ -619,6 +746,17 @@ pub enum StorageTextureAccess {
     Atomic,
 }
 
+impl From<StorageTextureAccess> for RawStorageTextureAccess {
+    fn from(value: StorageTextureAccess) -> Self {
+        match value {
+            StorageTextureAccess::Atomic => RawStorageTextureAccess::Atomic,
+            StorageTextureAccess::ReadOnly => RawStorageTextureAccess::ReadOnly,
+            StorageTextureAccess::ReadWrite => RawStorageTextureAccess::ReadWrite,
+            StorageTextureAccess::WriteOnly => RawStorageTextureAccess::WriteOnly,
+        }
+    }
+}
+
 /// Dimensions of a particular texture view.
 ///
 /// Corresponds to [WebGPU `GPUTextureViewDimension`](
@@ -639,6 +777,19 @@ pub enum TextureViewDimension {
     CubeArray,
     /// A three dimensional texture. `texture_3d` in WGSL and `texture3D` in GLSL.
     D3,
+}
+
+impl From<TextureViewDimension> for RawTextureViewDimension {
+    fn from(value: TextureViewDimension) -> Self {
+        match value {
+            TextureViewDimension::Cube => RawTextureViewDimension::Cube,
+            TextureViewDimension::D1 => RawTextureViewDimension::D1,
+            TextureViewDimension::CubeArray => RawTextureViewDimension::CubeArray,
+            TextureViewDimension::D2 => RawTextureViewDimension::D2,
+            TextureViewDimension::D2Array => RawTextureViewDimension::D2Array,
+            TextureViewDimension::D3 => RawTextureViewDimension::D3,
+        }
+    }
 }
 
 /// Specific type of a sample in a texture binding.
@@ -715,6 +866,17 @@ pub enum TextureSampleType {
     Uint,
 }
 
+impl From<TextureSampleType> for RawTextureSampleType {
+    fn from(value: TextureSampleType) -> Self {
+        match value {
+            TextureSampleType::Depth => RawTextureSampleType::Depth,
+            TextureSampleType::Sint => RawTextureSampleType::Sint,
+            TextureSampleType::Float { filterable } => RawTextureSampleType::Float { filterable },
+            TextureSampleType::Uint => RawTextureSampleType::Uint,
+        }
+    }
+}
+
 /// Specific type of a sampler binding.
 ///
 /// For use in [`BindingType::Sampler`].
@@ -733,6 +895,16 @@ pub enum SamplerBindingType {
     /// Use as a comparison sampler instead of a normal sampler.
     /// For more info take a look at the analogous functionality in OpenGL: <https://www.khronos.org/opengl/wiki/Sampler_Object#Comparison_mode>.
     Comparison,
+}
+
+impl From<SamplerBindingType> for RawSamplerBindingType {
+    fn from(value: SamplerBindingType) -> Self {
+        match value {
+            SamplerBindingType::Comparison => RawSamplerBindingType::Comparison,
+            SamplerBindingType::Filtering => RawSamplerBindingType::Filtering,
+            SamplerBindingType::NonFiltering => RawSamplerBindingType::NonFiltering,
+        }
+    }
 }
 
 /// Specific type of a buffer binding.
@@ -797,6 +969,15 @@ pub enum BufferBindingType {
         /// ```
         read_only: bool,
     },
+}
+
+impl From<BufferBindingType> for RawBufferBindingType {
+    fn from(value: BufferBindingType) -> Self {
+        match value {
+            BufferBindingType::Storage { read_only } => RawBufferBindingType::Storage { read_only },
+            BufferBindingType::Uniform => RawBufferBindingType::Uniform,
+        }
+    }
 }
 
 /// Specific type of a binding.
@@ -937,7 +1118,7 @@ pub enum BindingType {
     AccelerationStructure,
 }
 
-#[derive(Debug, Default, Reflect, Visit, Clone)]
+#[derive(Debug, Default, Reflect, Visit, Clone, PartialEq, Eq, Hash)]
 pub struct BindGroupLayoutEntry {
     /// Binding index. Must match shader index and be unique inside a BindGroupLayout. A binding
     /// of index 1, would be described as `layout(set = 0, binding = 1) uniform` in shaders.
@@ -952,4 +1133,54 @@ pub struct BindGroupLayoutEntry {
     ///
     /// If this value is Some and `ty` is any other variant, bind group creation will fail.
     pub count: Option<u32>,
+}
+
+impl From<BindingType> for RawBindingType {
+    fn from(value: BindingType) -> Self {
+        match value {
+            BindingType::AccelerationStructure => RawBindingType::AccelerationStructure,
+            BindingType::Buffer {
+                ty,
+                has_dynamic_offset,
+                min_binding_size,
+            } => RawBindingType::Buffer {
+                ty: ty.into(),
+                has_dynamic_offset,
+                min_binding_size: min_binding_size
+                    .and_then(|value| NonZeroU64::try_from(value).ok()),
+            },
+            BindingType::Sampler(value) => RawBindingType::Sampler(value.into()),
+            BindingType::Texture {
+                sample_type,
+                view_dimension,
+                multisampled,
+            } => RawBindingType::Texture {
+                sample_type: sample_type.into(),
+                view_dimension: view_dimension.into(),
+                multisampled,
+            },
+            BindingType::StorageTexture {
+                access,
+                format,
+                view_dimension,
+            } => RawBindingType::StorageTexture {
+                access: access.into(),
+                format: format.into(),
+                view_dimension: view_dimension.into(),
+            },
+        }
+    }
+}
+
+impl From<BindGroupLayoutEntry> for RawBindGroupLayoutEntry {
+    fn from(value: BindGroupLayoutEntry) -> Self {
+        RawBindGroupLayoutEntry {
+            binding: value.binding,
+            visibility: ShaderStages::from_bits(value.visibility).unwrap_or(ShaderStages::NONE),
+            ty: value.ty.into(),
+            count: value
+                .count
+                .and_then(|value| NonZeroU32::try_from(value).ok()),
+        }
+    }
 }

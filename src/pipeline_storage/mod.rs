@@ -1,6 +1,8 @@
 pub mod cache;
+pub mod layout_cache;
 
 pub use cache::*;
+pub use layout_cache::*;
 
 use std::{borrow::Cow, sync::Arc};
 

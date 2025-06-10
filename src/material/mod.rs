@@ -21,13 +21,13 @@ pub struct FragmentState {
     pub targets: Vec<Option<ColorTargetState>>,
 }
 
-#[derive(Debug, Clone, Reflect, Visit, Default)]
+#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
 pub struct BindGroupLayoutDescriptor {
     pub label: String,
     pub entries: Vec<BindGroupLayoutEntry>,
 }
 
-#[derive(Debug, Clone, Reflect, Visit, Default)]
+#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
 pub struct PipelineLayoutDescriptor {
     pub label: String,
     pub bind_group_layouts: Vec<BindGroupLayoutDescriptor>,
