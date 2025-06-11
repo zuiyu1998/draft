@@ -186,7 +186,14 @@ impl State {
     fn render(&mut self) {
         self.windows.set_swapchain_texture();
 
-        self.renderer.render();
+        if let Some(texture_view) = self
+            .windows
+            .get_primary_window()
+            .swap_chain_texture_view
+            .clone()
+        {
+            self.renderer.render(texture_view);
+        }
 
         self.windows.present();
     }
