@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use frame_graph::wgpu::{
+use draft_render::wgpu::{
     CompositeAlphaMode, Device, DeviceDescriptor, Instance, InstanceDescriptor, PresentMode, Queue,
     RequestAdapterOptions, Surface, SurfaceConfiguration, SurfaceTexture, TextureFormat,
     TextureUsages, TextureView as RawTextureView, TextureViewDescriptor,
