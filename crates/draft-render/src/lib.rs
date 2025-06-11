@@ -12,6 +12,13 @@ pub use shader::*;
 pub use frame_graph;
 pub use frame_graph::wgpu;
 
+use frame_graph::{RenderDevice, RenderQueue};
+
+pub struct RenderServer {
+    pub device: RenderDevice,
+    pub queue: RenderQueue,
+}
+
 pub fn add(left: u64, right: u64) -> u64 {
     left + right
 }

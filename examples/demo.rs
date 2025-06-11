@@ -1,9 +1,14 @@
 use std::{collections::HashMap, sync::Arc};
 
-use draft_render::wgpu::{
-    CompositeAlphaMode, Device, DeviceDescriptor, Instance, InstanceDescriptor, PresentMode, Queue,
-    RequestAdapterOptions, Surface, SurfaceConfiguration, SurfaceTexture, TextureFormat,
-    TextureUsages, TextureView as RawTextureView, TextureViewDescriptor,
+use draft::renderer::WorldRenderer;
+use draft_render::{
+    RenderServer,
+    frame_graph::initialize_resources,
+    wgpu::{
+        self, CompositeAlphaMode, Instance, InstanceDescriptor, PresentMode, RequestAdapterOptions,
+        Surface, SurfaceConfiguration, SurfaceTexture, TextureFormat, TextureUsages,
+        TextureView as RawTextureView, TextureViewDescriptor,
+    },
 };
 use fyrox_core::{futures, task::TaskPool};
 use fyrox_resource::{io::FsResourceIo, manager::ResourceManager};
@@ -110,10 +115,9 @@ impl WindowData {
 
 struct State {
     windows: Windows,
-    _device: Device,
-    _queue: Queue,
     size: winit::dpi::PhysicalSize<u32>,
     _resource_manager: ResourceManager,
+    renderer: WorldRenderer,
 }
 
 impl State {
@@ -123,14 +127,17 @@ impl State {
             .request_adapter(&RequestAdapterOptions::default())
             .await
             .unwrap();
-        let (device, queue) = adapter
-            .request_device(&DeviceDescriptor::default(), None)
-            .await
-            .unwrap();
-
         let size = window.inner_size();
 
         let surface = instance.create_surface(window.clone()).unwrap();
+        let request_adapter_options = wgpu::RequestAdapterOptions {
+            compatible_surface: Some(&surface),
+            ..Default::default()
+        };
+
+        let (device, queue, _, _, _) =
+            initialize_resources(instance, &request_adapter_options).await;
+
         let cap = surface.get_capabilities(&adapter);
         let surface_format = cap.formats[0];
 
@@ -146,7 +153,7 @@ impl State {
             present_mode: PresentMode::AutoVsync,
         };
 
-        surface.configure(&device, &surface_config);
+        surface.configure(device.wgpu_device(), &surface_config);
 
         let windows = Windows::new(WindowData::new(window, surface));
 
@@ -154,6 +161,10 @@ impl State {
         let resource_manager = ResourceManager::new(Arc::new(FsResourceIo), task_pool);
 
         let (shader_event_sender, _shader_event_receiver) = std::sync::mpsc::channel();
+
+        let render_server = RenderServer { device, queue };
+
+        let renderer = WorldRenderer::new(render_server);
 
         resource_manager
             .state()
@@ -164,8 +175,7 @@ impl State {
             windows,
             size,
             _resource_manager: resource_manager,
-            _device: device,
-            _queue: queue,
+            renderer,
         }
     }
 
@@ -175,6 +185,8 @@ impl State {
 
     fn render(&mut self) {
         self.windows.set_swapchain_texture();
+
+        self.renderer.render();
 
         self.windows.present();
     }

@@ -5,6 +5,7 @@ use crate::{BindGroupLayoutDescriptor, FrameworkError, PipelineLayoutDescriptor}
 use frame_graph::{RenderDevice, wgpu};
 use fyrox_core::{log::Log, sparse::AtomicIndex};
 
+#[derive(Default)]
 pub struct PipelineLayoutCache {
     pub pipeline_layout_map: HashMap<PipelineLayoutDescriptor, PipelineLayout>,
     pub pipeline_layout_cache: TemporaryCache<PipelineLayoutData>,

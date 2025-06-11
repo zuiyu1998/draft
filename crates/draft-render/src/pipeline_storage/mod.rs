@@ -51,6 +51,7 @@ impl ShaderModuleData {
     }
 }
 
+#[derive(Default)]
 pub struct ShaderCache {
     composer: naga_oil::compose::Composer,
     cache: TemporaryCache<ShaderModuleData>,
@@ -207,10 +208,10 @@ pub struct CachedPipeline {
     pub pipeline: Pipeline,
 }
 
+#[derive(Default)]
 pub struct PipelineStorage {
     pub shader_cache: ShaderCache,
     pub pipeline_layout_cache: PipelineLayoutCache,
-    pub pipelie_cache: PipelineCache,
     pub material_cache: TemporaryCache<MaterialData>,
 }
 
