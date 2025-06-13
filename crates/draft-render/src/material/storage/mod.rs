@@ -1,7 +1,5 @@
-pub mod cache;
 pub mod layout_cache;
 
-pub use cache::*;
 pub use layout_cache::*;
 
 use std::{borrow::Cow, sync::Arc};
@@ -19,7 +17,7 @@ use fyrox_core::log::Log;
 
 use crate::{
     FrameworkError, MaterialResource, PipelineDescriptor, RenderPipelineDescriptor, Shader,
-    ShaderResource,
+    ShaderResource, TemporaryCache,
 };
 
 pub struct ShaderModuleData {
@@ -209,13 +207,13 @@ pub struct CachedPipeline {
 }
 
 #[derive(Default)]
-pub struct PipelineStorage {
+pub struct MaterialStorage {
     pub shader_cache: ShaderCache,
     pub pipeline_layout_cache: PipelineLayoutCache,
     pub material_cache: TemporaryCache<MaterialData>,
 }
 
-impl PipelineStorage {
+impl MaterialStorage {
     pub fn get(
         &mut self,
         device: &RenderDevice,
@@ -248,7 +246,7 @@ impl PipelineStorage {
     }
 }
 
-impl GetPipelineCache for PipelineStorage {
+impl GetPipelineCache for MaterialStorage {
     fn get_pipeline_cache(&self) -> PipelineCache {
         let mut target = vec![];
         for index in 0..self.material_cache.buffer.len() {

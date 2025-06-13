@@ -1,3 +1,7 @@
+pub mod storage;
+
+pub use storage::*;
+
 use std::{error::Error, path::Path, sync::Arc};
 
 use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, sparse::AtomicIndex, uuid, visitor::*};

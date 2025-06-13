@@ -1,13 +1,12 @@
 use draft_render::{
-    RenderServer,
+    RenderServer, RenderStorage,
     frame_graph::{ColorAttachmentOwned, FrameGraph, RenderContext, TransientResourceCache},
-    pipeline_storage::PipelineStorage,
     wgpu::{Color, LoadOp, Operations, StoreOp, TextureView},
 };
 
 pub struct WorldRenderer {
     pub server: RenderServer,
-    pub pipeline_storage: PipelineStorage,
+    pub render_storage: RenderStorage,
     pub node: MainOpaquePass2dNode,
     pub transient_resource_cache: TransientResourceCache,
 }
@@ -16,7 +15,7 @@ impl WorldRenderer {
     pub fn new(server: RenderServer) -> Self {
         WorldRenderer {
             server,
-            pipeline_storage: Default::default(),
+            render_storage: Default::default(),
             node: MainOpaquePass2dNode,
             transient_resource_cache: Default::default(),
         }
@@ -27,7 +26,7 @@ impl WorldRenderer {
 
         let mut frame_graph_context = FrameGraphContext {
             frame_graph: &mut frame_graph,
-            pipeline_storage: &mut self.pipeline_storage,
+            render_storage: &mut self.render_storage,
             texture_view,
         };
 
@@ -39,7 +38,7 @@ impl WorldRenderer {
         let mut render_context = RenderContext::new(
             &self.server.device,
             &mut self.transient_resource_cache,
-            &self.pipeline_storage,
+            &self.render_storage.material_storage,
         );
 
         frame_graph.execute(&mut render_context);
@@ -74,6 +73,6 @@ pub trait FrameGraphNode {
 
 pub struct FrameGraphContext<'a> {
     pub frame_graph: &'a mut FrameGraph,
-    pub pipeline_storage: &'a mut PipelineStorage,
+    pub render_storage: &'a mut RenderStorage,
     pub texture_view: TextureView,
 }

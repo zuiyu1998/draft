@@ -1,7 +1,6 @@
 pub mod common;
 pub mod error;
 pub mod material;
-pub mod pipeline_storage;
 pub mod shader;
 
 pub use common::*;
@@ -13,6 +12,11 @@ pub use frame_graph;
 pub use frame_graph::wgpu;
 
 use frame_graph::{RenderDevice, RenderQueue};
+
+#[derive(Default)]
+pub struct RenderStorage {
+    pub material_storage: MaterialStorage,
+}
 
 pub struct RenderServer {
     pub device: RenderDevice,
