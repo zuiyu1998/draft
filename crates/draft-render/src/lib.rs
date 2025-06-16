@@ -1,10 +1,12 @@
 pub mod common;
 pub mod error;
+pub mod geometry;
 pub mod material;
 pub mod shader;
 
 pub use common::*;
 pub use error::*;
+pub use geometry::*;
 pub use material::*;
 pub use shader::*;
 
