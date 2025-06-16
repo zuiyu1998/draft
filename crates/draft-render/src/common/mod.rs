@@ -1,3 +1,4 @@
+pub mod buffer;
 pub mod cache;
 pub mod color_target_state;
 pub mod depth_stencil;
@@ -5,6 +6,7 @@ pub mod multisample_state;
 pub mod primitive_state;
 pub mod vertex_buffer_layout;
 
+pub use buffer::*;
 pub use cache::*;
 pub use color_target_state::*;
 pub use depth_stencil::*;
