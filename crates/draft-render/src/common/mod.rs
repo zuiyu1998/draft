@@ -1,4 +1,4 @@
-pub mod buffer;
+mod buffer;
 pub mod cache;
 pub mod color_target_state;
 pub mod depth_stencil;
@@ -19,7 +19,7 @@ use std::{
     num::{NonZeroU32, NonZeroU64},
 };
 
-use frame_graph::wgpu::{
+pub use frame_graph::wgpu::{
     AstcBlock as RawAstcBlock, AstcChannel as RawAstcChannel,
     BindGroupLayoutEntry as RawBindGroupLayoutEntry, BindingType as RawBindingType,
     BufferBindingType as RawBufferBindingType,
@@ -27,6 +27,8 @@ use frame_graph::wgpu::{
     SamplerBindingType as RawSamplerBindingType, ShaderStages,
     StorageTextureAccess as RawStorageTextureAccess, TextureFormat as RawTextureFormat,
     TextureSampleType as RawTextureSampleType, TextureViewDimension as RawTextureViewDimension,
+    VertexAttribute as RawVertexAttribute, VertexFormat as RawVertexFormat,
+    VertexStepMode as RawVertexStepMode,
 };
 use fyrox_core::{reflect::*, visitor::*};
 

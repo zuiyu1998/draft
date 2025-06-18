@@ -546,6 +546,7 @@ dependencies = [
 name = "draft-render"
 version = "0.1.0"
 dependencies = [
+ "bytemuck",
  "frame-graph",
  "fyrox-core",
  "fyrox-resource",

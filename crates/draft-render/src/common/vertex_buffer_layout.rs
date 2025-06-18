@@ -1,7 +1,7 @@
-use frame_graph::wgpu::{
-    BufferAddress, ShaderLocation, VertexAttribute as RawVertexAttribute,
-    VertexFormat as RawVertexFormat, VertexStepMode as RawVertexStepMode,
-};
+use frame_graph::wgpu::{BufferAddress, ShaderLocation};
+
+use crate::{RawVertexAttribute, RawVertexFormat, RawVertexStepMode};
+
 use fyrox_core::{reflect::*, visitor::*};
 
 #[repr(C)]
@@ -98,6 +98,13 @@ pub enum VertexFormat {
     Unorm10_10_10_2 = 43,
     /// Four unsigned 8-bit integers, packed into a 32-bit integer (u32). [0, 255] converted to float [0, 1] `vec4<f32>` in shaders.
     Unorm8x4Bgra = 44,
+}
+
+impl VertexFormat {
+    pub fn size(&self) -> u64 {
+        let format: RawVertexFormat = (*self).into();
+        format.size()
+    }
 }
 
 impl From<VertexFormat> for RawVertexFormat {
