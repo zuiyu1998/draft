@@ -18,6 +18,7 @@ use frame_graph::{RenderDevice, RenderQueue};
 #[derive(Default)]
 pub struct RenderStorage {
     pub material_storage: MaterialStorage,
+    pub geometry_storage: GeometryStorage,
 }
 
 pub struct RenderServer {
