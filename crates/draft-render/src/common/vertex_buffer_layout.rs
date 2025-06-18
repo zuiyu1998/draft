@@ -8,7 +8,6 @@ use fyrox_core::{reflect::*, visitor::*};
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, Visit, Reflect, Default)]
 pub enum VertexFormat {
     /// One unsigned byte (u8). `u32` in shaders.
-    #[default]
     Uint8 = 0,
     /// Two unsigned bytes (u8). `vec2<u32>` in shaders.
     Uint8x2 = 1,
@@ -71,6 +70,7 @@ pub enum VertexFormat {
     /// Four single-precision floats (f32). `vec4<f32>` in shaders.
     Float32x4 = 30,
     /// One unsigned int (u32). `u32` in shaders.
+    #[default]
     Uint32 = 31,
     /// Two unsigned ints (u32). `vec2<u32>` in shaders.
     Uint32x2 = 32,

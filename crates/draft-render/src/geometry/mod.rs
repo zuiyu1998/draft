@@ -1,3 +1,7 @@
+pub mod vertex;
+
+pub use vertex::*;
+
 use std::sync::Arc;
 
 use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, sparse::AtomicIndex, uuid, visitor::*};
