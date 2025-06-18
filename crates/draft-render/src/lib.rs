@@ -1,13 +1,15 @@
-pub mod common;
-pub mod error;
-pub mod geometry;
-pub mod material;
-pub mod shader;
+mod common;
+mod error;
+mod geometry;
+mod material;
+mod mesh;
+mod shader;
 
 pub use common::*;
 pub use error::*;
 pub use geometry::*;
 pub use material::*;
+pub use mesh::*;
 pub use shader::*;
 
 pub use frame_graph;
