@@ -58,7 +58,7 @@ impl GeometryStorage {
         let mut geometry_state = geometry.state();
 
         if let Some(geometry_state) = geometry_state.data() {
-            match self.geometry_cache.get_or_insert_with(
+            match self.geometry_cache.get_mut_or_insert_with(
                 &geometry_state.cache_index,
                 Default::default(),
                 || GeometryData::new(device, geometry_state),

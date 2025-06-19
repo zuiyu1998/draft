@@ -665,7 +665,7 @@ checksum = "aa9a19cbb55df58761df49b23516a86d432839add4af60fc256da840f66ed35b"
 [[package]]
 name = "frame-graph"
 version = "0.1.0"
-source = "git+https://github.com/zuiyu1998/frame-graph.git#3d72253e177457601bfcf739bd3db11c2a4606b9"
+source = "git+https://github.com/zuiyu1998/frame-graph.git#3faa5b7cb229390776a39a929446918b5910e382"
 dependencies = [
  "encase",
  "serde",

@@ -47,7 +47,7 @@ impl PipelineLayoutCache {
         device: &RenderDevice,
         desc: &PipelineLayoutDescriptor,
     ) -> &PipelineLayout {
-        if self.pipeline_layout_map.contains_key(desc) {
+        if !self.pipeline_layout_map.contains_key(desc) {
             let bind_group_layouts = desc
                 .bind_group_layouts
                 .iter()
