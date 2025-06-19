@@ -35,6 +35,17 @@ pub struct Shader {
 }
 
 impl Shader {
+    pub fn from_memory(bytes: Vec<u8>) -> Result<Self, ShaderError> {
+        let source = String::from_utf8(bytes).map_err(|_| ShaderError::NotUtf8Source)?;
+
+        let definition = ShaderDefinition::from_wgsl(source, "");
+
+        Ok(Shader {
+            definition,
+            cache_index: Default::default(),
+        })
+    }
+
     /// Creates a shader from file.
     pub async fn from_file<P: AsRef<Path>>(
         path: P,

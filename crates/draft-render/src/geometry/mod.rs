@@ -22,6 +22,15 @@ pub struct Geometry {
     pub cache_index: Arc<AtomicIndex>,
 }
 
+impl Geometry {
+    pub fn new(vertex: Vertex) -> Self {
+        Self {
+            vertex,
+            cache_index: Arc::new(AtomicIndex::unassigned()),
+        }
+    }
+}
+
 impl ResourceData for Geometry {
     fn type_uuid(&self) -> Uuid {
         <Self as TypeUuidProvider>::type_uuid()

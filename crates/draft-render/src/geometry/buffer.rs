@@ -8,9 +8,27 @@ pub struct VertexAttributeId(u64);
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
 pub struct VertexAttributeDescriptor {
-    pub name: String,
     pub id: VertexAttributeId,
     pub format: VertexFormat,
+}
+
+impl VertexAttributeDescriptor {
+    pub const ATTRIBUTE_POSITION: VertexAttributeDescriptor =
+        VertexAttributeDescriptor::new(0, VertexFormat::Float32x3);
+
+    pub const ATTRIBUTE_NORMAL: VertexAttributeDescriptor =
+        VertexAttributeDescriptor::new(1, VertexFormat::Float32x3);
+
+    pub const fn new(id: u64, format: VertexFormat) -> Self {
+        Self {
+            id: VertexAttributeId(id),
+            format,
+        }
+    }
+
+    pub fn size(&self) -> u64 {
+        self.format.size()
+    }
 }
 
 #[derive(Clone, Debug, Reflect, Visit)]
@@ -158,6 +176,20 @@ impl VertexAttributeValues {
     }
 }
 
+macro_rules! impl_from {
+    ($from:ty, $variant:tt) => {
+        impl From<Vec<$from>> for VertexAttributeValues {
+            fn from(vec: Vec<$from>) -> Self {
+                VertexAttributeValues::$variant(vec)
+            }
+        }
+    };
+}
+
+impl_from!(f32, Float32);
+impl_from!([f32; 2], Float32x2);
+impl_from!([f32; 3], Float32x3);
+
 #[derive(Debug, Clone, Reflect, Visit, Default)]
 pub struct VertexAttributeData {
     pub desc: VertexAttributeDescriptor,
@@ -175,7 +207,7 @@ impl VertexBuffer {
         let vertex_count = self.count_vertices();
         let mut attribute_offset = 0;
         for attribute_data in self.attributes.values() {
-            let attribute_size = attribute_data.desc.format.size() as usize;
+            let attribute_size = attribute_data.desc.size() as usize;
             let attributes_bytes = attribute_data.values.get_bytes();
             for (vertex_index, attribute_bytes) in attributes_bytes
                 .chunks_exact(attribute_size)
@@ -202,11 +234,7 @@ impl VertexBuffer {
             let attribute_len = attribute_data.values.len();
             if let Some(previous_vertex_count) = vertex_count {
                 if previous_vertex_count != attribute_len {
-                    let name = self
-                        .attributes
-                        .get(attribute_id)
-                        .map(|data| data.desc.name.to_string())
-                        .unwrap_or_else(|| format!("{attribute_id:?}"));
+                    let name = format!("{attribute_id:?}");
 
                     warn!(
                         "{name} has a different vertex count ({attribute_len}) than other attributes ({previous_vertex_count}) in this mesh, \
@@ -223,10 +251,7 @@ impl VertexBuffer {
     }
 
     pub fn get_vertex_size(&self) -> u64 {
-        self.attributes
-            .values()
-            .map(|data| data.desc.format.size())
-            .sum()
+        self.attributes.values().map(|data| data.desc.size()).sum()
     }
 
     pub fn get_vertex_buffer_size(&self) -> usize {
@@ -248,8 +273,8 @@ impl VertexBuffer {
         let values_format = VertexFormat::from(&values);
         if values_format != desc.format {
             panic!(
-                "Failed to insert attribute. Invalid attribute format for {}. Given format is {values_format:?} but expected {:?}",
-                desc.name, desc.format
+                "Failed to insert attribute.Given format is {values_format:?} but expected {:?}",
+                desc.format
             );
         }
 

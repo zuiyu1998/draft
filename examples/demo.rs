@@ -2,16 +2,23 @@ use std::{collections::HashMap, sync::Arc};
 
 use draft::renderer::WorldRenderer;
 use draft_render::{
-    RenderServer,
+    Batch, FragmentState, Geometry, GeometryResource, Material, MaterialResource,
+    PipelineDescriptor, RawTextureView, RenderPipelineDescriptor, RenderServer, SceneRenderData,
+    Shader, ShaderResource, Vertex, VertexAttributeDescriptor,
     frame_graph::initialize_resources,
     wgpu::{
         self, CompositeAlphaMode, Instance, InstanceDescriptor, PresentMode, RequestAdapterOptions,
         Surface, SurfaceConfiguration, SurfaceTexture, TextureFormat, TextureUsages,
-        TextureView as RawTextureView, TextureViewDescriptor,
+        TextureViewDescriptor,
     },
 };
-use fyrox_core::{futures, task::TaskPool};
-use fyrox_resource::{io::FsResourceIo, manager::ResourceManager};
+use fyrox_core::{futures, task::TaskPool, uuid};
+use fyrox_resource::{
+    embedded_data_source,
+    io::FsResourceIo,
+    manager::{BuiltInResource, ResourceManager},
+    untyped::ResourceKind,
+};
 
 use winit::{
     application::ApplicationHandler,
@@ -19,6 +26,22 @@ use winit::{
     event_loop::{ActiveEventLoop, ControlFlow, EventLoop},
     window::{Window, WindowId},
 };
+
+use lazy_static::lazy_static;
+
+lazy_static! {
+    pub static ref BUILT_IN_SHADER: BuiltInResource<Shader> = BuiltInResource::new(
+        "__BUILT_IN_SHADER__",
+        embedded_data_source!("./shader.wgsl"),
+        |data| {
+            ShaderResource::new_ok(
+                uuid!("77260e8e-f6fa-429c-8009-13dda2673925"),
+                ResourceKind::External,
+                Shader::from_memory(data.to_vec()).unwrap(),
+            )
+        }
+    );
+}
 
 pub struct Windows {
     primary: WindowId,
@@ -192,10 +215,46 @@ impl State {
             .swap_chain_texture_view
             .clone()
         {
-            self.renderer.render(texture_view);
+            let batch = new_batch();
+
+            let scene_render_data = SceneRenderData {
+                texture_view,
+                batch: &batch,
+            };
+
+            self.renderer.render(scene_render_data);
         }
 
         self.windows.present();
+    }
+}
+
+fn new_batch() -> Batch {
+    let mut vertex = Vertex::default();
+    let mut modifier = vertex.modify();
+    modifier.insert_attribute(
+        VertexAttributeDescriptor::ATTRIBUTE_POSITION,
+        vec![[0.0, 0.5, 0.0], [-0.5, -0.5, 0.0], [0.5, -0.5, 0.0]],
+    );
+    modifier.set_need_update(true);
+
+    Batch {
+        geometry: GeometryResource::new_embedded(Geometry::new(vertex)),
+        material: MaterialResource::new_embedded(new_material()),
+    }
+}
+
+fn new_material() -> Material {
+    let mut desc = RenderPipelineDescriptor::default();
+    desc.vertex.shader = BUILT_IN_SHADER.resource().clone();
+    desc.fragment = Some(FragmentState {
+        shader: BUILT_IN_SHADER.resource().clone(),
+        ..Default::default()
+    });
+
+    Material {
+        desc: PipelineDescriptor::RenderPipelineDescriptor(Box::new(desc)),
+        cache_index: Default::default(),
     }
 }
 

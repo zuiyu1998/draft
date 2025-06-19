@@ -538,6 +538,7 @@ dependencies = [
  "draft-render",
  "fyrox-core",
  "fyrox-resource",
+ "lazy_static",
  "tracing-subscriber",
  "winit",
 ]

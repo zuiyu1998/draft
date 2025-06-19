@@ -1,7 +1,9 @@
 use draft_render::{
-    RenderServer, RenderStorage,
-    frame_graph::{ColorAttachmentOwned, FrameGraph, RenderContext, TransientResourceCache},
-    wgpu::{Color, LoadOp, Operations, StoreOp, TextureView},
+    RenderServer, RenderStorage, SceneRenderData,
+    frame_graph::{
+        ColorAttachmentOwned, FrameGraph, RenderContext, RenderDevice, TransientResourceCache,
+    },
+    wgpu::{Color, LoadOp, Operations, StoreOp},
 };
 
 pub struct WorldRenderer {
@@ -21,13 +23,14 @@ impl WorldRenderer {
         }
     }
 
-    pub fn render(&mut self, texture_view: TextureView) {
+    pub fn render(&mut self, scene_render_data: SceneRenderData) {
         let mut frame_graph = FrameGraph::default();
 
         let mut frame_graph_context = FrameGraphContext {
             frame_graph: &mut frame_graph,
             render_storage: &mut self.render_storage,
-            texture_view,
+            scene_render_data,
+            device: &self.server.device,
         };
 
         //setup
@@ -57,7 +60,7 @@ impl FrameGraphNode for MainOpaquePass2dNode {
         let mut render_pass_builder = pass_builder.create_render_pass_builder("test_pass");
 
         render_pass_builder.add_raw_color_attachment(ColorAttachmentOwned {
-            view: context.texture_view.clone(),
+            view: context.scene_render_data.texture_view.clone(),
             resolve_target: None,
             ops: Operations {
                 load: LoadOp::Clear(Color::BLUE),
@@ -74,5 +77,6 @@ pub trait FrameGraphNode {
 pub struct FrameGraphContext<'a> {
     pub frame_graph: &'a mut FrameGraph,
     pub render_storage: &'a mut RenderStorage,
-    pub texture_view: TextureView,
+    pub scene_render_data: SceneRenderData<'a>,
+    pub device: &'a RenderDevice,
 }

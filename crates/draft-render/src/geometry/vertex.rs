@@ -1,4 +1,6 @@
-use crate::{RawVertexFormat, VertexAttribute, VertexBuffer, VertexBufferLayout, VertexStepMode};
+use std::ops::{Deref, DerefMut};
+
+use crate::{VertexAttribute, VertexBuffer, VertexBufferLayout, VertexStepMode};
 use fyrox_core::{reflect::*, visitor::*};
 
 #[derive(Reflect, Clone, Visit, Default, Debug)]
@@ -11,6 +13,13 @@ pub struct Vertex {
 }
 
 impl Vertex {
+    pub fn modify(&mut self) -> VertexModifier {
+        VertexModifier {
+            vertex: self,
+            need_update: false,
+        }
+    }
+
     pub fn create_vertex_data(&self) -> Vec<u8> {
         self.buffer.create_packed_vertex_buffer_data()
     }
@@ -26,9 +35,7 @@ impl Vertex {
                 shader_location: index as u32,
             });
 
-            let format: RawVertexFormat = attribute_data.desc.format.into();
-
-            accumulated_offset += format.size();
+            accumulated_offset += attribute_data.desc.size();
         }
 
         VertexBufferLayout {
@@ -36,5 +43,30 @@ impl Vertex {
             step_mode: VertexStepMode::Vertex,
             attributes,
         }
+    }
+}
+
+pub struct VertexModifier<'a> {
+    vertex: &'a mut Vertex,
+    need_update: bool,
+}
+
+impl VertexModifier<'_> {
+    pub fn set_need_update(&mut self, value: bool) {
+        self.need_update = value;
+    }
+}
+
+impl Deref for VertexModifier<'_> {
+    type Target = VertexBuffer;
+
+    fn deref(&self) -> &Self::Target {
+        &self.vertex.buffer
+    }
+}
+
+impl DerefMut for VertexModifier<'_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.vertex.buffer
     }
 }

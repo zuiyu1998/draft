@@ -26,9 +26,9 @@ pub use frame_graph::wgpu::{
     PipelineCompilationOptions as RawPipelineCompilationOptions,
     SamplerBindingType as RawSamplerBindingType, ShaderStages,
     StorageTextureAccess as RawStorageTextureAccess, TextureFormat as RawTextureFormat,
-    TextureSampleType as RawTextureSampleType, TextureViewDimension as RawTextureViewDimension,
-    VertexAttribute as RawVertexAttribute, VertexFormat as RawVertexFormat,
-    VertexStepMode as RawVertexStepMode,
+    TextureSampleType as RawTextureSampleType, TextureView as RawTextureView,
+    TextureViewDimension as RawTextureViewDimension, VertexAttribute as RawVertexAttribute,
+    VertexFormat as RawVertexFormat, VertexStepMode as RawVertexStepMode,
 };
 use fyrox_core::{reflect::*, visitor::*};
 

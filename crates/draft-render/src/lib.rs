@@ -2,14 +2,14 @@ mod common;
 mod error;
 mod geometry;
 mod material;
-mod mesh;
+mod scene_render_data;
 mod shader;
 
 pub use common::*;
 pub use error::*;
 pub use geometry::*;
 pub use material::*;
-pub use mesh::*;
+pub use scene_render_data::*;
 pub use shader::*;
 
 pub use frame_graph;
