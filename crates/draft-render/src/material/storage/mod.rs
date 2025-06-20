@@ -5,7 +5,7 @@ pub use layout_cache::*;
 use std::{borrow::Cow, sync::Arc};
 
 use frame_graph::{
-    GetPipelineCache, Pipeline, PipelineCache, RenderDevice, RenderPipeline,
+    CachedPipelineId, GetPipelineCache, Pipeline, PipelineCache, RenderDevice, RenderPipeline,
     wgpu::{
         self, FragmentState as RawFragmentState,
         RenderPipelineDescriptor as RawRenderPipelineDescriptor, ShaderModuleDescriptor,
@@ -81,6 +81,7 @@ impl ShaderCache {
 pub struct MaterialData {
     pub pipeline: CachedPipeline,
     pub layout: wgpu::PipelineLayout,
+    pub pipeline_id: CachedPipelineId,
 }
 
 impl MaterialData {
@@ -176,6 +177,7 @@ impl MaterialData {
                 pipeline: Pipeline::RenderPipeline(RenderPipeline::new(pipeline)),
             },
             layout,
+            pipeline_id: Default::default(),
         })
     }
 
@@ -222,7 +224,7 @@ impl MaterialStorage {
         let mut material_state = material.state();
 
         if let Some(material_state) = material_state.data() {
-            match self.material_cache.get_or_insert_with(
+            match self.material_cache.get_mut_or_insert_with(
                 &material_state.cache_index,
                 Default::default(),
                 || {
@@ -234,7 +236,11 @@ impl MaterialStorage {
                     )
                 },
             ) {
-                Ok(data) => Some(data),
+                Ok(data) => {
+                    data.pipeline_id = CachedPipelineId::new(material_state.cache_index.get());
+
+                    Some(data)
+                }
                 Err(error) => {
                     Log::err(format!("{error}"));
                     None

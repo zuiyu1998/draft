@@ -16,3 +16,4 @@ ron = "0.8.0"
 thiserror = { version = "1.0"}
 naga_oil = "0.17.1"
 bytemuck = { version = "1.5" }
+bitflags = { version = "2.9"}

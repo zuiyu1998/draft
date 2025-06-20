@@ -1,10 +1,8 @@
 use fyrox_core::{reflect::*, visitor::*};
 
-use crate::TextureFormat;
-use frame_graph::wgpu::{
-    BlendComponent as RawBlendComponent, BlendFactor as RawBlendFactor,
-    BlendOperation as RawBlendOperation, BlendState as RawBlendState,
-    ColorTargetState as RawColorTargetState, ColorWrites as RawColorWrites,
+use crate::{
+    RawBlendComponent, RawBlendFactor, RawBlendOperation, RawBlendState, RawColorTargetState,
+    RawColorWrites, TextureFormat,
 };
 
 /// Color write mask. Disabled color channels will not be written to.
@@ -15,6 +13,22 @@ use frame_graph::wgpu::{
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Reflect, Visit, Default)]
 pub struct ColorWrites(u32);
 
+bitflags::bitflags! {
+    impl ColorWrites: u32 {
+        /// Enable red channel writes
+        const RED = 1 << 0;
+        /// Enable green channel writes
+        const GREEN = 1 << 1;
+        /// Enable blue channel writes
+        const BLUE = 1 << 2;
+        /// Enable alpha channel writes
+        const ALPHA = 1 << 3;
+        /// Enable red, green, and blue channel writes
+        const COLOR = Self::RED.bits() | Self::GREEN.bits() | Self::BLUE.bits();
+        /// Enable writes to all channels.
+        const ALL = Self::RED.bits() | Self::GREEN.bits() | Self::BLUE.bits() | Self::ALPHA.bits();
+    }
+}
 impl From<ColorWrites> for RawColorWrites {
     fn from(value: ColorWrites) -> Self {
         RawColorWrites::from_bits(value.0).unwrap_or(RawColorWrites::ALL)
@@ -143,6 +157,14 @@ pub struct BlendComponent {
     /// The binary operation applied to the source and destination,
     /// multiplied by their respective factors.
     pub operation: BlendOperation,
+}
+
+impl BlendComponent {
+    pub const REPLACE: Self = Self {
+        src_factor: BlendFactor::One,
+        dst_factor: BlendFactor::Zero,
+        operation: BlendOperation::Add,
+    };
 }
 
 impl From<BlendComponent> for RawBlendComponent {

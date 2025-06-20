@@ -2,14 +2,14 @@ use std::{collections::HashMap, sync::Arc};
 
 use draft::renderer::WorldRenderer;
 use draft_render::{
-    Batch, FragmentState, Geometry, GeometryResource, Material, MaterialResource,
-    PipelineDescriptor, RawTextureView, RenderPipelineDescriptor, RenderServer, SceneRenderData,
-    Shader, ShaderResource, Vertex, VertexAttributeDescriptor,
+    Batch, BlendComponent, BlendState, ColorTargetState, ColorWrites, FragmentState, Geometry,
+    GeometryResource, Material, MaterialResource, PipelineDescriptor, RawTextureView,
+    RenderPipelineDescriptor, RenderServer, SceneRenderData, Shader, ShaderResource, TextureFormat,
+    Vertex, VertexAttributeDescriptor,
     frame_graph::initialize_resources,
     wgpu::{
         self, CompositeAlphaMode, Instance, InstanceDescriptor, PresentMode, RequestAdapterOptions,
-        Surface, SurfaceConfiguration, SurfaceTexture, TextureFormat, TextureUsages,
-        TextureViewDescriptor,
+        Surface, SurfaceConfiguration, SurfaceTexture, TextureUsages, TextureViewDescriptor,
     },
 };
 use fyrox_core::{futures, task::TaskPool, uuid};
@@ -247,8 +247,18 @@ fn new_batch() -> Batch {
 fn new_material() -> Material {
     let mut desc = RenderPipelineDescriptor::default();
     desc.vertex.shader = BUILT_IN_SHADER.resource().clone();
+    desc.vertex.entry_point = Some("vs_main".into());
     desc.fragment = Some(FragmentState {
         shader: BUILT_IN_SHADER.resource().clone(),
+        entry_point: Some("fs_main".into()),
+        targets: vec![Some(ColorTargetState {
+            format: TextureFormat::Bgra8UnormSrgb,
+            blend: Some(BlendState {
+                color: BlendComponent::REPLACE,
+                alpha: BlendComponent::REPLACE,
+            }),
+            write_mask: ColorWrites::ALL,
+        })],
         ..Default::default()
     });
 

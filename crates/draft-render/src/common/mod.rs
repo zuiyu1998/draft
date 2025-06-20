@@ -22,8 +22,10 @@ use std::{
 pub use frame_graph::wgpu::{
     AstcBlock as RawAstcBlock, AstcChannel as RawAstcChannel,
     BindGroupLayoutEntry as RawBindGroupLayoutEntry, BindingType as RawBindingType,
-    BufferBindingType as RawBufferBindingType,
-    PipelineCompilationOptions as RawPipelineCompilationOptions,
+    BlendComponent as RawBlendComponent, BlendFactor as RawBlendFactor,
+    BlendOperation as RawBlendOperation, BlendState as RawBlendState,
+    BufferBindingType as RawBufferBindingType, ColorTargetState as RawColorTargetState,
+    ColorWrites as RawColorWrites, PipelineCompilationOptions as RawPipelineCompilationOptions,
     SamplerBindingType as RawSamplerBindingType, ShaderStages,
     StorageTextureAccess as RawStorageTextureAccess, TextureFormat as RawTextureFormat,
     TextureSampleType as RawTextureSampleType, TextureView as RawTextureView,

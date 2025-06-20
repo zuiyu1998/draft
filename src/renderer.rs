@@ -67,6 +67,20 @@ impl FrameGraphNode for MainOpaquePass2dNode {
                 store: StoreOp::Store,
             },
         });
+
+        let material_data = context
+            .render_storage
+            .material_storage
+            .get(context.device, &context.scene_render_data.batch.material)
+            .unwrap();
+
+        let _geometry_data = context
+            .render_storage
+            .geometry_storage
+            .get(context.device, &context.scene_render_data.batch.geometry)
+            .unwrap();
+
+        render_pass_builder.set_render_pipeline(material_data.pipeline_id);
     }
 }
 
