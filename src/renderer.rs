@@ -74,13 +74,24 @@ impl FrameGraphNode for MainOpaquePass2dNode {
             .get(context.device, &context.scene_render_data.batch.material)
             .unwrap();
 
-        let _geometry_data = context
+        let geometry_data = context
             .render_storage
             .geometry_storage
             .get(context.device, &context.scene_render_data.batch.geometry)
             .unwrap();
 
         render_pass_builder.set_render_pipeline(material_data.pipeline_id);
+
+        let buffer_ref = render_pass_builder.read_material(&geometry_data.vertex_buffer);
+        let buffer_slice = geometry_data.vertex_buffer.slice(0..);
+
+        render_pass_builder.set_vertex_buffer(
+            0,
+            &buffer_ref,
+            buffer_slice.offset,
+            buffer_slice.size,
+        );
+        render_pass_builder.draw(0..3, 0..1);
     }
 }
 
