@@ -1,7 +1,9 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crate::{BindGroupLayoutDescriptor, FrameworkError, PipelineLayoutDescriptor, TemporaryCache};
-use frame_graph::{RenderDevice, wgpu};
+use crate::{
+    BindGroupLayoutDescriptor, FrameworkError, PipelineLayoutDescriptor, TemporaryCache,
+    resource::RenderDevice,
+};
 use fyrox_core::{log::Log, sparse::AtomicIndex};
 
 #[derive(Default)]

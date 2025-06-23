@@ -1,4 +1,4 @@
-use frame_graph::wgpu::{BufferAddress, ShaderLocation};
+use crate::{BufferAddress, ShaderLocation};
 
 use crate::{RawVertexAttribute, RawVertexFormat, RawVertexStepMode};
 

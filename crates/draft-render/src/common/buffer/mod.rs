@@ -3,7 +3,9 @@ use std::{
     sync::Arc,
 };
 
-use frame_graph::{BufferInfo, FrameGraph, Handle, ResourceMaterial, TransientBuffer, wgpu};
+use crate::BufferAddress;
+
+use crate::frame_graph::{BufferInfo, FrameGraph, Handle, ResourceMaterial, TransientBuffer};
 
 pub struct Buffer {
     pub key: String,
@@ -12,7 +14,7 @@ pub struct Buffer {
 }
 
 impl Buffer {
-    pub fn slice(&self, bounds: impl RangeBounds<wgpu::BufferAddress>) -> BufferSlice {
+    pub fn slice(&self, bounds: impl RangeBounds<BufferAddress>) -> BufferSlice {
         let offset = match bounds.start_bound() {
             Bound::Included(&bound) => bound,
             Bound::Excluded(&bound) => bound + 1,

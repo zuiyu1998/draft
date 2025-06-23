@@ -1,9 +1,7 @@
 use draft_render::{
-    RenderServer, RenderStorage, SceneRenderData,
-    frame_graph::{
-        ColorAttachmentOwned, FrameGraph, RenderContext, RenderDevice, TransientResourceCache,
-    },
-    wgpu::{Color, LoadOp, Operations, StoreOp},
+    Color, LoadOp, Operations, RenderServer, RenderStorage, SceneRenderData, StoreOp,
+    frame_graph::{ColorAttachmentOwned, FrameGraph, RenderContext, TransientResourceCache},
+    resource::RenderDevice,
 };
 
 pub struct WorldRenderer {

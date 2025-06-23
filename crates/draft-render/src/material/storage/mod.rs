@@ -4,15 +4,17 @@ pub use layout_cache::*;
 
 use std::{borrow::Cow, sync::Arc};
 
-use frame_graph::{
-    CachedPipelineId, GetPipelineCache, Pipeline, PipelineCache, RenderDevice, RenderPipeline,
-    wgpu::{
-        self, FragmentState as RawFragmentState,
-        RenderPipelineDescriptor as RawRenderPipelineDescriptor, ShaderModuleDescriptor,
-        ShaderSource, VertexAttribute as RawVertexAttribute,
-        VertexBufferLayout as RawVertexBufferLayout, VertexState as RawVertexState,
-    },
+use crate::{
+    RawFragmentState, RawRenderPipelineDescriptor, RawVertexAttribute, RawVertexBufferLayout,
+    RawVertexState,
 };
+
+use crate::resource::{
+    CachedPipelineId, GetPipelineCache, Pipeline, PipelineCache, RenderDevice, RenderPipeline,
+};
+
+use wgpu::{ShaderModuleDescriptor, ShaderSource};
+
 use fyrox_core::log::Log;
 
 use crate::{

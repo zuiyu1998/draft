@@ -19,20 +19,28 @@ use std::{
     num::{NonZeroU32, NonZeroU64},
 };
 
-pub use frame_graph::wgpu::{
+use fyrox_core::{reflect::*, visitor::*};
+pub use wgpu::{
     AstcBlock as RawAstcBlock, AstcChannel as RawAstcChannel,
     BindGroupLayoutEntry as RawBindGroupLayoutEntry, BindingType as RawBindingType,
     BlendComponent as RawBlendComponent, BlendFactor as RawBlendFactor,
-    BlendOperation as RawBlendOperation, BlendState as RawBlendState,
-    BufferBindingType as RawBufferBindingType, ColorTargetState as RawColorTargetState,
-    ColorWrites as RawColorWrites, PipelineCompilationOptions as RawPipelineCompilationOptions,
-    SamplerBindingType as RawSamplerBindingType, ShaderStages,
-    StorageTextureAccess as RawStorageTextureAccess, TextureFormat as RawTextureFormat,
+    BlendOperation as RawBlendOperation, BlendState as RawBlendState, Buffer as RawBuffer,
+    BufferAddress, BufferBindingType as RawBufferBindingType, Color,
+    ColorTargetState as RawColorTargetState, ColorWrites as RawColorWrites, Face as RawFace,
+    FragmentState as RawFragmentState, FrontFace as RawFrontFace, IndexFormat as RawIndexFormat,
+    LoadOp, MultisampleState as RawMultisampleState, Operations,
+    PipelineCompilationOptions as RawPipelineCompilationOptions, PolygonMode as RawPolygonMode,
+    PrimitiveState as RawPrimitiveState, PrimitiveTopology as RawPrimitiveTopology,
+    RenderPipelineDescriptor as RawRenderPipelineDescriptor,
+    SamplerBindingType as RawSamplerBindingType, ShaderLocation, ShaderStages,
+    StorageTextureAccess as RawStorageTextureAccess, StoreOp, TextureFormat as RawTextureFormat,
     TextureSampleType as RawTextureSampleType, TextureView as RawTextureView,
     TextureViewDimension as RawTextureViewDimension, VertexAttribute as RawVertexAttribute,
-    VertexFormat as RawVertexFormat, VertexStepMode as RawVertexStepMode,
+    VertexBufferLayout as RawVertexBufferLayout, VertexFormat as RawVertexFormat,
+    VertexState as RawVertexState, VertexStepMode as RawVertexStepMode,
 };
-use fyrox_core::{reflect::*, visitor::*};
+
+pub use wgpu::COPY_BUFFER_ALIGNMENT;
 
 /// Advanced options for use when a pipeline is compiled
 ///

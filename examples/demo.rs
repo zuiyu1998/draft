@@ -6,12 +6,13 @@ use draft_render::{
     GeometryResource, Material, MaterialResource, PipelineDescriptor, RawTextureView,
     RenderPipelineDescriptor, RenderServer, SceneRenderData, Shader, ShaderResource, TextureFormat,
     Vertex, VertexAttributeDescriptor,
-    frame_graph::initialize_resources,
+    resource::initialize_resources,
     wgpu::{
         self, CompositeAlphaMode, Instance, InstanceDescriptor, PresentMode, RequestAdapterOptions,
         Surface, SurfaceConfiguration, SurfaceTexture, TextureUsages, TextureViewDescriptor,
     },
 };
+
 use fyrox_core::{futures, task::TaskPool, uuid};
 use fyrox_resource::{
     embedded_data_source,

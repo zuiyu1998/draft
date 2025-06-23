@@ -6,6 +6,9 @@ mod scene_render_data;
 mod shader;
 mod texture;
 
+pub mod frame_graph;
+pub mod resource;
+
 pub use common::*;
 pub use error::*;
 pub use geometry::*;
@@ -14,10 +17,9 @@ pub use scene_render_data::*;
 pub use shader::*;
 pub use texture::*;
 
-pub use frame_graph;
-pub use frame_graph::wgpu;
+pub use wgpu;
 
-use frame_graph::{RenderDevice, RenderQueue};
+use crate::resource::{RenderDevice, RenderQueue};
 
 #[derive(Default)]
 pub struct RenderStorage {

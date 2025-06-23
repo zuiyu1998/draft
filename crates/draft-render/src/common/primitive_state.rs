@@ -1,7 +1,5 @@
-use frame_graph::wgpu::{
-    Face as RawFace, FrontFace as RawFrontFace, IndexFormat as RawIndexFormat,
-    PolygonMode as RawPolygonMode, PrimitiveState as RawPrimitiveState,
-    PrimitiveTopology as RawPrimitiveTopology,
+use crate::{
+    RawFace, RawFrontFace, RawIndexFormat, RawPolygonMode, RawPrimitiveState, RawPrimitiveTopology,
 };
 use fyrox_core::{reflect::*, visitor::*};
 

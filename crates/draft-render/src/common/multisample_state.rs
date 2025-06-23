@@ -1,6 +1,6 @@
 use fyrox_core::{reflect::*, visitor::*};
 
-use frame_graph::wgpu::MultisampleState as RawMultisampleState;
+use crate::RawMultisampleState;
 
 /// Describes the multi-sampling state of a render pipeline.
 ///

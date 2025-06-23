@@ -1,11 +1,10 @@
-use frame_graph::{
-    BufferInfo, RenderDevice,
-    wgpu::{
-        BufferUsages,
-        util::{BufferInitDescriptor, DeviceExt},
-    },
-};
+use crate::{frame_graph::BufferInfo, resource::RenderDevice};
 use fyrox_core::log::Log;
+
+use wgpu::{
+    BufferUsages,
+    util::{BufferInitDescriptor, DeviceExt},
+};
 
 use crate::{Buffer, FrameworkError, Geometry, GeometryResource, TemporaryCache};
 
