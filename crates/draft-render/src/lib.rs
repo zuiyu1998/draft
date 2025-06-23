@@ -4,6 +4,7 @@ mod geometry;
 mod material;
 mod scene_render_data;
 mod shader;
+mod texture;
 
 pub use common::*;
 pub use error::*;
@@ -11,6 +12,7 @@ pub use geometry::*;
 pub use material::*;
 pub use scene_render_data::*;
 pub use shader::*;
+pub use texture::*;
 
 pub use frame_graph;
 pub use frame_graph::wgpu;
