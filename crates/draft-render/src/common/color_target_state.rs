@@ -1,6 +1,6 @@
 use fyrox_core::{reflect::*, visitor::*};
 
-use crate::{
+use crate::gfx_base::{
     RawBlendComponent, RawBlendFactor, RawBlendOperation, RawBlendState, RawColorTargetState,
     RawColorWrites, TextureFormat,
 };

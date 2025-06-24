@@ -2,7 +2,8 @@ use super::{
     AnyTransientResource, AnyTransientResourceDescriptor, ArcTransientResource,
     IntoArcTransientResource, TransientResource, TransientResourceDescriptor,
 };
-use std::borrow::Cow;
+use crate::gfx_base::{Extent3d, TextureDimension, TextureFormat, TextureUsages};
+use fyrox_core::{reflect::*, visitor::*};
 use std::sync::Arc;
 
 impl IntoArcTransientResource for TransientTexture {
@@ -34,42 +35,33 @@ impl TransientResource for TransientTexture {
     }
 }
 
-#[derive(Clone, Hash, PartialEq, Eq, Debug)]
+#[derive(Clone, Hash, PartialEq, Eq, Debug, Reflect, Visit, Default)]
 pub struct TextureInfo {
-    pub label: Option<Cow<'static, str>>,
-    pub size: wgpu::Extent3d,
+    pub label: Option<String>,
+    pub size: Extent3d,
     pub mip_level_count: u32,
     pub sample_count: u32,
-    pub dimension: wgpu::TextureDimension,
-    pub format: wgpu::TextureFormat,
-    pub usage: wgpu::TextureUsages,
-    pub view_formats: Vec<wgpu::TextureFormat>,
+    pub dimension: TextureDimension,
+    pub format: TextureFormat,
+    pub usage: TextureUsages,
+    pub view_formats: Vec<TextureFormat>,
 }
 
 impl TextureInfo {
     pub fn from_texture_desc(desc: &wgpu::TextureDescriptor) -> Self {
         TextureInfo {
-            label: desc.label.map(|label| label.to_string().into()),
-            size: desc.size,
+            label: desc.label.map(|label| label.to_string()),
+            size: desc.size.into(),
             mip_level_count: desc.mip_level_count,
             sample_count: desc.sample_count,
-            dimension: desc.dimension,
-            format: desc.format,
-            usage: desc.usage,
-            view_formats: desc.view_formats.to_vec(),
-        }
-    }
-
-    pub fn get_texture_desc(&self) -> wgpu::TextureDescriptor {
-        wgpu::TextureDescriptor {
-            label: self.label.as_deref(),
-            size: self.size,
-            mip_level_count: self.mip_level_count,
-            sample_count: self.sample_count,
-            dimension: self.dimension,
-            format: self.format,
-            usage: self.usage,
-            view_formats: &self.view_formats,
+            dimension: desc.dimension.into(),
+            format: desc.format.into(),
+            usage: desc.usage.into(),
+            view_formats: desc
+                .view_formats
+                .iter()
+                .map(|format| (*format).into())
+                .collect(),
         }
     }
 }

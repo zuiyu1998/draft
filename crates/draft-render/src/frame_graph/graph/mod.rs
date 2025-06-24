@@ -241,7 +241,7 @@ impl FrameGraph {
 
 #[cfg(test)]
 mod test {
-    use wgpu::{Extent3d, TextureDimension, TextureFormat, TextureUsages};
+    use crate::gfx_base::{Extent3d, TextureDimension, TextureFormat, TextureUsages};
 
     use crate::frame_graph::{FrameGraph, TextureInfo};
 

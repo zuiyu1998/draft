@@ -1,4 +1,4 @@
-use crate::{GeometryResource, MaterialResource, RawTextureView};
+use crate::{GeometryResource, MaterialResource, gfx_base::RawTextureView};
 
 pub struct Batch {
     pub geometry: GeometryResource,

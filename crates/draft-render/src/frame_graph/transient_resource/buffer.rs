@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use std::sync::Arc;
 
-use crate::{BufferAddress, COPY_BUFFER_ALIGNMENT};
+use crate::gfx_base::{BufferAddress, COPY_BUFFER_ALIGNMENT};
 
 use super::{
     AnyTransientResource, AnyTransientResourceDescriptor, ArcTransientResource,

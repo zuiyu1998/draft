@@ -18,7 +18,22 @@ impl TransientResourceCreator for RenderDevice {
     fn create_resource(&self, desc: &AnyTransientResourceDescriptor) -> AnyTransientResource {
         match desc {
             AnyTransientResourceDescriptor::Texture(desc) => {
-                let resource = self.wgpu_device().create_texture(&desc.get_texture_desc());
+                let view_formats = desc
+                    .view_formats
+                    .iter()
+                    .map(|format| (*format).into())
+                    .collect::<Vec<_>>();
+
+                let resource = self.wgpu_device().create_texture(&wgpu::TextureDescriptor {
+                    label: desc.label.as_deref(),
+                    size: desc.size.into(),
+                    mip_level_count: desc.mip_level_count,
+                    sample_count: desc.sample_count,
+                    dimension: desc.dimension.into(),
+                    format: desc.format.into(),
+                    usage: desc.usage.into(),
+                    view_formats: &view_formats,
+                });
                 TransientTexture {
                     resource,
                     desc: desc.clone(),

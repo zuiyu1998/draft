@@ -5,6 +5,8 @@ use std::{
     sync::Arc,
 };
 
+use crate::frame_graph::TextureInfo;
+
 #[derive(Debug, Clone, Reflect, Visit, Default)]
 pub struct SamplerInfo {}
 
@@ -13,6 +15,7 @@ pub struct SamplerInfo {}
 pub struct Texture {
     bytes: TextureBytes,
     sampler_info: SamplerInfo,
+    texture_info: TextureInfo,
     #[reflect(hidden)]
     #[visit(skip)]
     pub cache_index: Arc<AtomicIndex>,

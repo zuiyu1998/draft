@@ -7,6 +7,7 @@ mod shader;
 mod texture;
 
 pub mod frame_graph;
+pub mod gfx_base;
 pub mod resource;
 
 pub use common::*;

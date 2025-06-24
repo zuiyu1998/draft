@@ -1,6 +1,7 @@
 use draft_render::{
-    Color, LoadOp, Operations, RenderServer, RenderStorage, SceneRenderData, StoreOp,
+    RenderServer, RenderStorage, SceneRenderData,
     frame_graph::{ColorAttachmentOwned, FrameGraph, RenderContext, TransientResourceCache},
+    gfx_base::{Color, LoadOp, Operations, StoreOp},
     resource::RenderDevice,
 };
 

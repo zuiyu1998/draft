@@ -4,7 +4,7 @@ pub use layout_cache::*;
 
 use std::{borrow::Cow, sync::Arc};
 
-use crate::{
+use crate::gfx_base::{
     RawFragmentState, RawRenderPipelineDescriptor, RawVertexAttribute, RawVertexBufferLayout,
     RawVertexState,
 };

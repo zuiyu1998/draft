@@ -1,12 +1,10 @@
 use std::hash::{Hash, Hasher};
 
-use crate::TextureFormat;
-use fyrox_core::{reflect::*, visitor::*};
-use wgpu::{
-    CompareFunction as RawCompareFunction, DepthBiasState as RawDepthBiasState,
-    DepthStencilState as RawDepthStencilState, StencilFaceState as RawStencilFaceState,
-    StencilOperation as RawStencilOperation, StencilState as RawStencilState,
+use crate::gfx_base::{
+    RawCompareFunction, RawDepthBiasState, RawDepthStencilState, RawStencilFaceState,
+    RawStencilOperation, RawStencilState, TextureFormat,
 };
+use fyrox_core::{reflect::*, visitor::*};
 
 /// Describes the biasing setting for the depth target.
 ///

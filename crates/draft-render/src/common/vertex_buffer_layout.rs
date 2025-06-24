@@ -1,6 +1,6 @@
-use crate::{BufferAddress, ShaderLocation};
-
-use crate::{RawVertexAttribute, RawVertexFormat, RawVertexStepMode};
+use crate::gfx_base::{
+    BufferAddress, RawVertexAttribute, RawVertexFormat, RawVertexStepMode, ShaderLocation,
+};
 
 use fyrox_core::{reflect::*, visitor::*};
 
