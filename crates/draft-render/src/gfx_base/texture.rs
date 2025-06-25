@@ -80,6 +80,18 @@ impl From<RawTextureDimension> for TextureDimension {
     }
 }
 
+/// Used to calculate the volume of an item.
+pub trait Volume {
+    fn volume(&self) -> usize;
+}
+
+impl Volume for Extent3d {
+    /// Calculates the volume of the [`Extent3d`].
+    fn volume(&self) -> usize {
+        (self.width * self.height * self.depth_or_array_layers) as usize
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Reflect, Visit, Debug, Default)]
 pub struct Extent3d {
     /// Width of the extent
@@ -556,6 +568,21 @@ pub enum TextureFormat {
         /// ASTC RGBA channel
         channel: AstcChannel,
     },
+}
+
+pub trait TextureFormatPixelInfo {
+    /// Returns the size of a pixel in bytes of the format.
+    fn pixel_size(&self) -> usize;
+}
+
+impl TextureFormatPixelInfo for TextureFormat {
+    fn pixel_size(&self) -> usize {
+        let info: RawTextureFormat = (*self).into();
+        match info.block_dimensions() {
+            (1, 1) => info.block_copy_size(None).unwrap() as usize,
+            _ => panic!("Using pixel_size for compressed textures is invalid"),
+        }
+    }
 }
 
 impl From<TextureFormat> for RawTextureFormat {

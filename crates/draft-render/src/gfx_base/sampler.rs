@@ -2,10 +2,12 @@ use super::{
     CompareFunction, RawAddressMode, RawFilterMode, RawSampler, RawSamplerBorderColor,
     RawSamplerDescriptor,
 };
-
 use fyrox_core::{reflect::*, visitor::*};
+use serde::{Deserialize, Serialize};
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Visit, Reflect, Default)]
+#[derive(
+    Copy, Clone, Debug, Eq, PartialEq, Hash, Visit, Reflect, Default, Deserialize, Serialize,
+)]
 pub enum SamplerBorderColor {
     TransparentBlack,
     OpaqueBlack,
@@ -36,7 +38,9 @@ impl From<RawSamplerBorderColor> for SamplerBorderColor {
     }
 }
 
-#[derive(Copy, Clone, Debug, Default, Hash, Eq, PartialEq, Reflect, Visit)]
+#[derive(
+    Copy, Clone, Debug, Default, Hash, Eq, PartialEq, Reflect, Visit, Deserialize, Serialize,
+)]
 pub enum FilterMode {
     #[default]
     Nearest = 0,
@@ -61,7 +65,9 @@ impl From<RawFilterMode> for FilterMode {
     }
 }
 
-#[derive(Copy, Clone, Debug, Default, Hash, Eq, PartialEq, Reflect, Visit)]
+#[derive(
+    Copy, Clone, Debug, Default, Hash, Eq, PartialEq, Reflect, Visit, Deserialize, Serialize,
+)]
 pub enum AddressMode {
     #[default]
     ClampToEdge = 0,
@@ -92,7 +98,7 @@ impl From<RawAddressMode> for AddressMode {
     }
 }
 
-#[derive(Debug, Clone, Reflect, Visit)]
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize)]
 pub struct SamplerInfo {
     pub label: Option<String>,
     pub address_mode_u: AddressMode,
@@ -109,7 +115,7 @@ pub struct SamplerInfo {
 }
 
 impl SamplerInfo {
-    pub fn get_desc(&self) -> RawSamplerDescriptor {
+    pub fn as_desc(&self) -> RawSamplerDescriptor {
         RawSamplerDescriptor {
             label: self.label.as_deref(),
             address_mode_u: self.address_mode_u.into(),

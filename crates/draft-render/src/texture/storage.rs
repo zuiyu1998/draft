@@ -3,7 +3,7 @@ use wgpu::util::DeviceExt;
 
 use crate::{
     FrameworkError, TemporaryCache, Texture, TextureResource,
-    gfx_base::Sampler,
+    gfx_base::{RawTextureDescriptor, Sampler},
     resource::{RenderDevice, RenderQueue, RenderTexture},
 };
 
@@ -61,9 +61,26 @@ impl TextureData {
         queue: &RenderQueue,
         texture: &Texture,
     ) -> Result<Self, FrameworkError> {
+        let texture_info = &texture.image.texture_info;
+
+        let view_formats: Vec<_> = texture_info
+            .view_formats
+            .iter()
+            .map(|format| (*format).into())
+            .collect();
+
         let raw_texture = device.wgpu_device().create_texture_with_data(
             queue.wgpu_queue(),
-            texture.get_desc(),
+            &RawTextureDescriptor {
+                label: texture_info.label.as_deref(),
+                size: texture_info.size.into(),
+                mip_level_count: texture_info.mip_level_count,
+                sample_count: texture_info.sample_count,
+                dimension: texture_info.dimension.into(),
+                format: texture_info.format.into(),
+                usage: texture_info.usage.into(),
+                view_formats: &view_formats,
+            },
             Default::default(),
             texture.as_bytes(),
         );
@@ -78,7 +95,7 @@ impl TextureData {
 
         let raw_sampler = device
             .wgpu_device()
-            .create_sampler(texture.sampler_info.get_desc());
+            .create_sampler(&texture.sampler_info.as_desc());
 
         let sampler = Sampler::new(raw_sampler, texture.sampler_info.info.clone());
 

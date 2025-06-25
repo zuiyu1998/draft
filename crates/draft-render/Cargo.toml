@@ -17,3 +17,4 @@ bitflags = { version = "2.9" }
 tracing = { version = "0.1" }
 wgpu = { version = "24", features = ["wgsl", "dx12", "metal", "naga-ir"] }
 encase = { version = "0.10" }
+image = { version = "0.25.1", default-features = false, features = ["gif", "jpeg", "png", "tga", "tiff", "bmp"] }

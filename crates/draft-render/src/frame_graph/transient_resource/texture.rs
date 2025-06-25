@@ -2,7 +2,9 @@ use super::{
     AnyTransientResource, AnyTransientResourceDescriptor, ArcTransientResource,
     IntoArcTransientResource, TransientResource, TransientResourceDescriptor,
 };
-use crate::gfx_base::{Extent3d, TextureDimension, TextureFormat, TextureUsages};
+use crate::gfx_base::{
+    Extent3d, RawTextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
+};
 use fyrox_core::{reflect::*, visitor::*};
 use std::sync::Arc;
 
@@ -48,7 +50,7 @@ pub struct TextureInfo {
 }
 
 impl TextureInfo {
-    pub fn from_texture_desc(desc: &wgpu::TextureDescriptor) -> Self {
+    pub fn from_texture_desc(desc: &RawTextureDescriptor) -> Self {
         TextureInfo {
             label: desc.label.map(|label| label.to_string()),
             size: desc.size.into(),

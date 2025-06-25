@@ -5,6 +5,7 @@ use crate::gfx_base::{
     RawStencilOperation, RawStencilState, TextureFormat,
 };
 use fyrox_core::{reflect::*, visitor::*};
+use serde::{Deserialize, Serialize};
 
 /// Describes the biasing setting for the depth target.
 ///
@@ -160,7 +161,9 @@ impl<'a> From<&'a StencilState> for RawStencilState {
 /// Corresponds to [WebGPU `GPUCompareFunction`](
 /// https://gpuweb.github.io/gpuweb/#enumdef-gpucomparefunction).
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, Visit, Reflect, Default)]
+#[derive(
+    Copy, Clone, Debug, Hash, Eq, PartialEq, Visit, Reflect, Default, Deserialize, Serialize,
+)]
 pub enum CompareFunction {
     /// Function never passes
     #[default]
