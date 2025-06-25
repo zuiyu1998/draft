@@ -6,7 +6,7 @@ use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
 };
 
-use crate::{Buffer, FrameworkError, Geometry, GeometryResource, TemporaryCache};
+use crate::{FrameworkError, Geometry, GeometryResource, TemporaryCache, resource::Buffer};
 
 pub struct GeometryData {
     pub vertex_buffer: Buffer,

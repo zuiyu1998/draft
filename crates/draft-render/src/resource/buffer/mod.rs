@@ -3,13 +3,13 @@ use std::{
     sync::Arc,
 };
 
-use crate::gfx_base::BufferAddress;
+use crate::gfx_base::{BufferAddress, RawBuffer};
 
 use crate::frame_graph::{BufferInfo, FrameGraph, Handle, ResourceMaterial, TransientBuffer};
 
 pub struct Buffer {
     pub key: String,
-    pub value: wgpu::Buffer,
+    pub value: RawBuffer,
     pub desc: BufferInfo,
 }
 

@@ -1,10 +1,12 @@
-pub mod bind_group_layout;
-pub mod pipeline;
-pub mod pipeline_cache;
+mod bind_group_layout;
+mod buffer;
+mod pipeline;
+mod pipeline_cache;
 
 use std::sync::Arc;
 
 pub use bind_group_layout::*;
+pub use buffer::*;
 pub use pipeline::*;
 pub use pipeline_cache::*;
 
