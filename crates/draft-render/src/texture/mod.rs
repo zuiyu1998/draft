@@ -5,10 +5,7 @@ use std::{
     sync::Arc,
 };
 
-use crate::frame_graph::TextureInfo;
-
-#[derive(Debug, Clone, Reflect, Visit, Default)]
-pub struct SamplerInfo {}
+use crate::{frame_graph::TextureInfo, gfx_base::SamplerInfo};
 
 #[derive(Debug, Clone, Reflect, Visit, Default, TypeUuidProvider)]
 #[type_uuid(id = "8ebc2e08-a5ae-4fd0-9ef7-6882d73ac871")]

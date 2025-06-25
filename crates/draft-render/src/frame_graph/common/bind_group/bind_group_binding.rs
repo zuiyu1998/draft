@@ -86,7 +86,7 @@ impl ResourceBinding for BindGroupBinding {
         for entry in self.entries.iter() {
             let resource = match &entry.resource {
                 BindGroupResourceBinding::Sampler(sampler) => {
-                    BindingResourceTemp::Sampler(sampler.wgpu_sampler().clone())
+                    BindingResourceTemp::Sampler(sampler.clone())
                 }
                 BindGroupResourceBinding::TextureView(binding) => {
                     let texture = render_context.get_resource(&binding.texture);

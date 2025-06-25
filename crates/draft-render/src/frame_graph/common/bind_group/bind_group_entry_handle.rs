@@ -9,7 +9,7 @@ use crate::{
         IntoBindGroupResourceBinding, PassNodeBuilder, TextureViewInfo, TransientBuffer,
         TransientTexture,
     },
-    resource::Sampler,
+    gfx_base::RawSampler,
 };
 
 use super::BindGroupEntryBinding;
@@ -59,7 +59,7 @@ impl BindGroupEntryHandle {
 #[derive(Clone)]
 pub enum BindGroupResourceHandle {
     Buffer(BindGroupBufferHandle),
-    Sampler(Sampler),
+    Sampler(RawSampler),
     TextureView(BindGroupTextureViewHandle),
     TextureViewArray(Vec<BindGroupTextureViewHandle>),
 }
@@ -189,13 +189,13 @@ impl IntoBindGroupResourceHandle for BindGroupBufferHandle {
     }
 }
 
-impl IntoBindGroupResourceHandle for Sampler {
+impl IntoBindGroupResourceHandle for RawSampler {
     fn into_binding(self) -> BindGroupResourceHandle {
         BindGroupResourceHandle::Sampler(self)
     }
 }
 
-impl IntoBindGroupResourceHandle for &Sampler {
+impl IntoBindGroupResourceHandle for &RawSampler {
     fn into_binding(self) -> BindGroupResourceHandle {
         BindGroupResourceHandle::Sampler(self.clone())
     }

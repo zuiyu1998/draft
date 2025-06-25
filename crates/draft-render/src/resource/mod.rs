@@ -13,17 +13,6 @@ use tracing::info;
 use wgpu::{Instance, RequestAdapterOptions};
 
 #[derive(Clone)]
-pub struct Sampler {
-    sampler: wgpu::Sampler,
-}
-
-impl Sampler {
-    pub fn wgpu_sampler(&self) -> &wgpu::Sampler {
-        &self.sampler
-    }
-}
-
-#[derive(Clone)]
 pub struct RenderDevice {
     device: wgpu::Device,
 }
