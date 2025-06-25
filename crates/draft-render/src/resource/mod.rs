@@ -16,19 +16,27 @@ use tracing::info;
 
 use wgpu::{Instance, RequestAdapterOptions};
 
+use crate::gfx_base::{RawDevice, RawQueue};
+
 #[derive(Clone)]
 pub struct RenderDevice {
     device: wgpu::Device,
 }
 
 impl RenderDevice {
-    pub fn wgpu_device(&self) -> &wgpu::Device {
+    pub fn wgpu_device(&self) -> &RawDevice {
         &self.device
     }
 }
 
 #[derive(Clone)]
-pub struct RenderQueue(pub Arc<wgpu::Queue>);
+pub struct RenderQueue(Arc<RawQueue>);
+
+impl RenderQueue {
+    pub fn wgpu_queue(&self) -> &RawQueue {
+        &self.0
+    }
+}
 
 #[derive(Clone)]
 pub struct RenderAdapter(pub Arc<wgpu::Adapter>);

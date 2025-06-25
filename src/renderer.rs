@@ -47,7 +47,7 @@ impl WorldRenderer {
 
         let command_buffers = render_context.finish();
 
-        self.server.queue.0.submit(command_buffers);
+        self.server.queue.wgpu_queue().submit(command_buffers);
     }
 }
 

@@ -6,13 +6,13 @@ use crate::{
 };
 
 #[derive(Clone)]
-pub struct Texture {
+pub struct RenderTexture {
     pub key: String,
     pub value: RawTexture,
     pub desc: TextureInfo,
 }
 
-impl ResourceMaterial for Texture {
+impl ResourceMaterial for RenderTexture {
     type ResourceType = TransientTexture;
 
     fn imported(&self, frame_graph: &mut FrameGraph) -> Handle<Self::ResourceType> {

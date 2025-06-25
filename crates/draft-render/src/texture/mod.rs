@@ -1,21 +1,35 @@
 mod storage;
 
+use fyrox_resource::{Resource, ResourceData};
 pub use storage::*;
 
 use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, sparse::AtomicIndex, uuid, visitor::*};
 use std::{
+    error::Error,
     fmt::{Debug, Formatter},
     ops::{Deref, DerefMut},
+    path::Path,
     sync::Arc,
 };
 
-use crate::{frame_graph::TextureInfo, gfx_base::SamplerInfo};
+use crate::{
+    frame_graph::TextureInfo,
+    gfx_base::{RawSamplerDescriptor, RawTextureDescriptor, SamplerInfo},
+};
+
+pub type TextureResource = Resource<Texture>;
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
 pub struct TextureSamplerInfo {
-    sampler_info: SamplerInfo,
+    info: SamplerInfo,
     #[visit(optional)]
     modifications_counter: u64,
+}
+
+impl TextureSamplerInfo {
+    pub fn get_desc(&self) -> &RawSamplerDescriptor {
+        todo!()
+    }
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
@@ -34,6 +48,35 @@ pub struct Texture {
     #[reflect(hidden)]
     #[visit(skip)]
     pub cache_index: Arc<AtomicIndex>,
+}
+
+impl Texture {
+    pub fn get_desc(&self) -> &RawTextureDescriptor {
+        todo!()
+    }
+
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.image.bytes
+    }
+}
+
+impl ResourceData for Texture {
+    fn type_uuid(&self) -> Uuid {
+        <Self as TypeUuidProvider>::type_uuid()
+    }
+
+    fn save(&mut self, _path: &Path) -> Result<(), Box<dyn Error>> {
+        //todo
+        Ok(())
+    }
+
+    fn can_be_saved(&self) -> bool {
+        true
+    }
+
+    fn try_clone_box(&self) -> Option<Box<dyn ResourceData>> {
+        Some(Box::new(self.clone()))
+    }
 }
 
 #[derive(Default, Clone, Reflect)]

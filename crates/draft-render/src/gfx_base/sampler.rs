@@ -153,6 +153,10 @@ pub struct Sampler {
 }
 
 impl Sampler {
+    pub fn new(sampler: RawSampler, info: SamplerInfo) -> Self {
+        Sampler { sampler, info }
+    }
+
     pub fn sampler(&self) -> &RawSampler {
         &self.sampler
     }
