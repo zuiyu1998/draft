@@ -26,6 +26,7 @@ use crate::resource::{RenderDevice, RenderQueue};
 pub struct RenderStorage {
     pub material_storage: MaterialStorage,
     pub geometry_storage: GeometryStorage,
+    pub texture_storage: TextureStorage,
 }
 
 pub struct RenderServer {

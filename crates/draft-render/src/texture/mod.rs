@@ -1,3 +1,7 @@
+mod storage;
+
+pub use storage::*;
+
 use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, sparse::AtomicIndex, uuid, visitor::*};
 use std::{
     fmt::{Debug, Formatter},
@@ -7,12 +11,26 @@ use std::{
 
 use crate::{frame_graph::TextureInfo, gfx_base::SamplerInfo};
 
+#[derive(Debug, Clone, Reflect, Visit, Default)]
+pub struct TextureSamplerInfo {
+    sampler_info: SamplerInfo,
+    #[visit(optional)]
+    modifications_counter: u64,
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Default)]
+pub struct Image {
+    pub bytes: TextureBytes,
+    pub texture_info: TextureInfo,
+    #[visit(optional)]
+    modifications_counter: u64,
+}
+
 #[derive(Debug, Clone, Reflect, Visit, Default, TypeUuidProvider)]
 #[type_uuid(id = "8ebc2e08-a5ae-4fd0-9ef7-6882d73ac871")]
 pub struct Texture {
-    bytes: TextureBytes,
-    sampler_info: SamplerInfo,
-    texture_info: TextureInfo,
+    sampler_info: TextureSamplerInfo,
+    image: Image,
     #[reflect(hidden)]
     #[visit(skip)]
     pub cache_index: Arc<AtomicIndex>,
