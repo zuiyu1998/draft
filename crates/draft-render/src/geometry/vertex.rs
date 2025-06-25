@@ -1,6 +1,8 @@
 use std::ops::{Deref, DerefMut};
 
-use crate::{VertexAttribute, VertexBuffer, VertexBufferLayout, VertexStepMode};
+use super::VertexBuffer;
+use crate::gfx_base::{VertexAttribute, VertexBufferLayout, VertexStepMode};
+
 use fyrox_core::{reflect::*, visitor::*};
 
 #[derive(Reflect, Clone, Visit, Default, Debug)]

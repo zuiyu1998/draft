@@ -1,10 +1,18 @@
+mod color_target_state;
+mod depth_stencil;
 mod multisample_state;
+mod primitive_state;
 mod sampler;
 mod texture;
+mod vertex_buffer_layout;
 
+pub use color_target_state::*;
+pub use depth_stencil::*;
 pub use multisample_state::*;
+pub use primitive_state::*;
 pub use sampler::*;
 pub use texture::*;
+pub use vertex_buffer_layout::*;
 
 pub use wgpu::{
     AddressMode as RawAddressMode, AstcBlock as RawAstcBlock, AstcChannel as RawAstcChannel,

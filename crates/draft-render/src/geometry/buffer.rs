@@ -1,7 +1,8 @@
-use crate::VertexFormat;
 use bytemuck::cast_slice;
 use fyrox_core::{reflect::*, visitor::*, warn};
 use std::collections::BTreeMap;
+
+use crate::gfx_base::VertexFormat;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Reflect, Visit, Default)]
 pub struct VertexAttributeId(u64);

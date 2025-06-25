@@ -1,7 +1,8 @@
 use super::{
-    RawAddressMode, RawFilterMode, RawSampler, RawSamplerBorderColor, RawSamplerDescriptor,
+    CompareFunction, RawAddressMode, RawFilterMode, RawSampler, RawSamplerBorderColor,
+    RawSamplerDescriptor,
 };
-use crate::CompareFunction;
+
 use fyrox_core::{reflect::*, visitor::*};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Visit, Reflect, Default)]

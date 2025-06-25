@@ -2,10 +2,12 @@ use std::{collections::HashMap, sync::Arc};
 
 use draft::renderer::WorldRenderer;
 use draft_render::{
-    Batch, BlendComponent, BlendState, ColorTargetState, ColorWrites, FragmentState, Geometry,
-    GeometryResource, Material, MaterialResource, PipelineDescriptor, RenderPipelineDescriptor,
-    RenderServer, SceneRenderData, Shader, ShaderResource, Vertex, VertexAttributeDescriptor,
-    gfx_base::{RawTextureView, TextureFormat},
+    Batch, FragmentState, Geometry, GeometryResource, Material, MaterialResource,
+    PipelineDescriptor, RenderPipelineDescriptor, RenderServer, SceneRenderData, Shader,
+    ShaderResource, Vertex, VertexAttributeDescriptor,
+    gfx_base::{
+        BlendComponent, BlendState, ColorTargetState, ColorWrites, RawTextureView, TextureFormat,
+    },
     resource::initialize_resources,
     wgpu::{
         self, CompositeAlphaMode, Instance, InstanceDescriptor, PresentMode, RequestAdapterOptions,
