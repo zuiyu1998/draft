@@ -1,4 +1,4 @@
-use crate::{frame_graph::BufferInfo, resource::RenderDevice};
+use crate::{frame_graph::BufferInfo, gfx_base::RenderDevice};
 use fyrox_core::log::Log;
 
 use wgpu::{
@@ -6,10 +6,12 @@ use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
 };
 
-use crate::{FrameworkError, Geometry, GeometryResource, TemporaryCache, resource::Buffer};
+use crate::{
+    FrameworkError, Geometry, GeometryResource, TemporaryCache, render_resource::RenderBuffer,
+};
 
 pub struct GeometryData {
-    pub vertex_buffer: Buffer,
+    pub vertex_buffer: RenderBuffer,
 }
 
 fn get_vertex_buffer_key(geometry: &Geometry) -> String {
@@ -41,7 +43,7 @@ impl GeometryData {
 
         let key = get_vertex_buffer_key(geometry);
 
-        let vertex_buffer = Buffer {
+        let vertex_buffer = RenderBuffer {
             key,
             value: buffer,
             desc: buffer_info,

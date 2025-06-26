@@ -12,13 +12,15 @@ pub use render_pass_context::*;
 
 use wgpu::CommandEncoder;
 
-use crate::frame_graph::{
-    Ref, RenderPassOwned, ResourceTable, ResourceView, TransientResource, TransientResourceCache,
-};
-
-use crate::resource::{
-    CachedPipelineId, ComputePipeline, GetPipelineCache, PipelineCache, RenderDevice,
-    RenderPipeline,
+use crate::{
+    frame_graph::{
+        Ref, RenderPassOwned, ResourceTable, ResourceView, TransientResource,
+        TransientResourceCache,
+    },
+    gfx_base::{
+        CachedPipelineId, ComputePipeline, GetPipelineCache, PipelineCache, RenderDevice,
+        RenderPipeline,
+    },
 };
 
 pub struct RenderContext<'a> {

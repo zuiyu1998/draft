@@ -1,26 +1,26 @@
-mod common;
 mod error;
 mod geometry;
 mod material;
 mod scene_render_data;
 mod shader;
 mod texture;
+mod utils;
 
 pub mod frame_graph;
 pub mod gfx_base;
-pub mod resource;
+pub mod render_resource;
 
-pub use common::*;
 pub use error::*;
 pub use geometry::*;
 pub use material::*;
 pub use scene_render_data::*;
 pub use shader::*;
 pub use texture::*;
+pub use utils::*;
 
 pub use wgpu;
 
-use crate::resource::{RenderDevice, RenderQueue};
+use crate::gfx_base::{RenderDevice, RenderQueue};
 
 #[derive(Default)]
 pub struct RenderStorage {

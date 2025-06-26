@@ -1,9 +1,12 @@
+mod entry;
+
+pub use entry::*;
+
+use crate::gfx_base::{RawBindGroupLayoutEntry, RawBindingType, ShaderStages};
 use std::{collections::HashMap, num::NonZero};
 
-use wgpu::{BindGroupLayoutEntry, BindingType, ShaderStages};
-
 pub struct BindGroupLayoutEntriesBuilder {
-    entries: Vec<wgpu::BindGroupLayoutEntry>,
+    entries: Vec<RawBindGroupLayoutEntry>,
     default_visibility: ShaderStages,
     binding_to_entries: HashMap<u32, usize>,
 }
@@ -39,7 +42,7 @@ impl BindGroupLayoutEntriesBuilder {
 
 #[derive(Clone, Copy)]
 pub struct BindGroupLayoutEntryBuilder {
-    ty: BindingType,
+    ty: RawBindingType,
     visibility: Option<ShaderStages>,
     count: Option<NonZero<u32>>,
 }
@@ -55,8 +58,8 @@ impl BindGroupLayoutEntryBuilder {
         self
     }
 
-    pub fn build(&self, binding: u32, default_visibility: ShaderStages) -> BindGroupLayoutEntry {
-        BindGroupLayoutEntry {
+    pub fn build(&self, binding: u32, default_visibility: ShaderStages) -> RawBindGroupLayoutEntry {
+        RawBindGroupLayoutEntry {
             binding,
             ty: self.ty,
             visibility: self.visibility.unwrap_or(default_visibility),
@@ -69,7 +72,7 @@ pub trait IntoBindGroupLayoutEntryBuilder {
     fn into_bind_group_layout_entry_builder(self) -> BindGroupLayoutEntryBuilder;
 }
 
-impl IntoBindGroupLayoutEntryBuilder for BindingType {
+impl IntoBindGroupLayoutEntryBuilder for RawBindingType {
     fn into_bind_group_layout_entry_builder(self) -> BindGroupLayoutEntryBuilder {
         BindGroupLayoutEntryBuilder {
             ty: self,
@@ -79,7 +82,7 @@ impl IntoBindGroupLayoutEntryBuilder for BindingType {
     }
 }
 
-impl IntoBindGroupLayoutEntryBuilder for BindGroupLayoutEntry {
+impl IntoBindGroupLayoutEntryBuilder for RawBindGroupLayoutEntry {
     fn into_bind_group_layout_entry_builder(self) -> BindGroupLayoutEntryBuilder {
         BindGroupLayoutEntryBuilder {
             ty: self.ty,
@@ -111,7 +114,7 @@ pub mod binding_types {
         has_dynamic_offset: bool,
         min_binding_size: Option<NonZero<u64>>,
     ) -> BindGroupLayoutEntryBuilder {
-        BindingType::Buffer {
+        RawBindingType::Buffer {
             ty: BufferBindingType::Storage { read_only: false },
             has_dynamic_offset,
             min_binding_size,
@@ -129,7 +132,7 @@ pub mod binding_types {
         has_dynamic_offset: bool,
         min_binding_size: Option<NonZero<u64>>,
     ) -> BindGroupLayoutEntryBuilder {
-        BindingType::Buffer {
+        RawBindingType::Buffer {
             ty: BufferBindingType::Storage { read_only: true },
             has_dynamic_offset,
             min_binding_size,
@@ -145,7 +148,7 @@ pub mod binding_types {
         has_dynamic_offset: bool,
         min_binding_size: Option<NonZero<u64>>,
     ) -> BindGroupLayoutEntryBuilder {
-        BindingType::Buffer {
+        RawBindingType::Buffer {
             ty: BufferBindingType::Uniform,
             has_dynamic_offset,
             min_binding_size,
@@ -154,7 +157,7 @@ pub mod binding_types {
     }
 
     pub fn texture_1d(sample_type: TextureSampleType) -> BindGroupLayoutEntryBuilder {
-        BindingType::Texture {
+        RawBindingType::Texture {
             sample_type,
             view_dimension: TextureViewDimension::D1,
             multisampled: false,
@@ -163,7 +166,7 @@ pub mod binding_types {
     }
 
     pub fn texture_2d(sample_type: TextureSampleType) -> BindGroupLayoutEntryBuilder {
-        BindingType::Texture {
+        RawBindingType::Texture {
             sample_type,
             view_dimension: TextureViewDimension::D2,
             multisampled: false,
@@ -172,7 +175,7 @@ pub mod binding_types {
     }
 
     pub fn texture_2d_multisampled(sample_type: TextureSampleType) -> BindGroupLayoutEntryBuilder {
-        BindingType::Texture {
+        RawBindingType::Texture {
             sample_type,
             view_dimension: TextureViewDimension::D2,
             multisampled: true,
@@ -181,7 +184,7 @@ pub mod binding_types {
     }
 
     pub fn texture_2d_array(sample_type: TextureSampleType) -> BindGroupLayoutEntryBuilder {
-        BindingType::Texture {
+        RawBindingType::Texture {
             sample_type,
             view_dimension: TextureViewDimension::D2Array,
             multisampled: false,
@@ -192,7 +195,7 @@ pub mod binding_types {
     pub fn texture_2d_array_multisampled(
         sample_type: TextureSampleType,
     ) -> BindGroupLayoutEntryBuilder {
-        BindingType::Texture {
+        RawBindingType::Texture {
             sample_type,
             view_dimension: TextureViewDimension::D2Array,
             multisampled: true,
@@ -209,7 +212,7 @@ pub mod binding_types {
     }
 
     pub fn texture_cube(sample_type: TextureSampleType) -> BindGroupLayoutEntryBuilder {
-        BindingType::Texture {
+        RawBindingType::Texture {
             sample_type,
             view_dimension: TextureViewDimension::Cube,
             multisampled: false,
@@ -220,7 +223,7 @@ pub mod binding_types {
     pub fn texture_cube_multisampled(
         sample_type: TextureSampleType,
     ) -> BindGroupLayoutEntryBuilder {
-        BindingType::Texture {
+        RawBindingType::Texture {
             sample_type,
             view_dimension: TextureViewDimension::Cube,
             multisampled: true,
@@ -229,7 +232,7 @@ pub mod binding_types {
     }
 
     pub fn texture_cube_array(sample_type: TextureSampleType) -> BindGroupLayoutEntryBuilder {
-        BindingType::Texture {
+        RawBindingType::Texture {
             sample_type,
             view_dimension: TextureViewDimension::CubeArray,
             multisampled: false,
@@ -240,7 +243,7 @@ pub mod binding_types {
     pub fn texture_cube_array_multisampled(
         sample_type: TextureSampleType,
     ) -> BindGroupLayoutEntryBuilder {
-        BindingType::Texture {
+        RawBindingType::Texture {
             sample_type,
             view_dimension: TextureViewDimension::CubeArray,
             multisampled: true,
@@ -249,7 +252,7 @@ pub mod binding_types {
     }
 
     pub fn texture_3d(sample_type: TextureSampleType) -> BindGroupLayoutEntryBuilder {
-        BindingType::Texture {
+        RawBindingType::Texture {
             sample_type,
             view_dimension: TextureViewDimension::D3,
             multisampled: false,
@@ -258,7 +261,7 @@ pub mod binding_types {
     }
 
     pub fn texture_3d_multisampled(sample_type: TextureSampleType) -> BindGroupLayoutEntryBuilder {
-        BindingType::Texture {
+        RawBindingType::Texture {
             sample_type,
             view_dimension: TextureViewDimension::D3,
             multisampled: true,
@@ -267,14 +270,14 @@ pub mod binding_types {
     }
 
     pub fn sampler(sampler_binding_type: SamplerBindingType) -> BindGroupLayoutEntryBuilder {
-        BindingType::Sampler(sampler_binding_type).into_bind_group_layout_entry_builder()
+        RawBindingType::Sampler(sampler_binding_type).into_bind_group_layout_entry_builder()
     }
 
     pub fn texture_storage_2d(
         format: TextureFormat,
         access: StorageTextureAccess,
     ) -> BindGroupLayoutEntryBuilder {
-        BindingType::StorageTexture {
+        RawBindingType::StorageTexture {
             access,
             format,
             view_dimension: TextureViewDimension::D2,
@@ -286,7 +289,7 @@ pub mod binding_types {
         format: TextureFormat,
         access: StorageTextureAccess,
     ) -> BindGroupLayoutEntryBuilder {
-        BindingType::StorageTexture {
+        RawBindingType::StorageTexture {
             access,
             format,
             view_dimension: TextureViewDimension::D2Array,
@@ -298,7 +301,7 @@ pub mod binding_types {
         format: TextureFormat,
         access: StorageTextureAccess,
     ) -> BindGroupLayoutEntryBuilder {
-        BindingType::StorageTexture {
+        RawBindingType::StorageTexture {
             access,
             format,
             view_dimension: TextureViewDimension::D3,

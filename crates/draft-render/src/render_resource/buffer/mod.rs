@@ -7,13 +7,13 @@ use crate::gfx_base::{BufferAddress, RawBuffer};
 
 use crate::frame_graph::{BufferInfo, FrameGraph, Handle, ResourceMaterial, TransientBuffer};
 
-pub struct Buffer {
+pub struct RenderBuffer {
     pub key: String,
     pub value: RawBuffer,
     pub desc: BufferInfo,
 }
 
-impl Buffer {
+impl RenderBuffer {
     pub fn slice(&self, bounds: impl RangeBounds<BufferAddress>) -> BufferSlice {
         let offset = match bounds.start_bound() {
             Bound::Included(&bound) => bound,
@@ -40,7 +40,7 @@ pub struct BufferSlice<'a> {
     pub size: wgpu::BufferAddress,
 }
 
-impl ResourceMaterial for Buffer {
+impl ResourceMaterial for RenderBuffer {
     type ResourceType = TransientBuffer;
 
     fn imported(&self, frame_graph: &mut FrameGraph) -> Handle<Self::ResourceType> {

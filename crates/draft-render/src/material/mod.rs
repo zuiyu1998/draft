@@ -7,9 +7,10 @@ use std::{error::Error, path::Path, sync::Arc};
 use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, sparse::AtomicIndex, uuid, visitor::*};
 
 use crate::{
-    BindGroupLayoutEntry, PipelineCompilationOptions, ShaderResource,
+    ShaderResource,
     gfx_base::{
-        ColorTargetState, DepthStencilState, MultisampleState, PrimitiveState, VertexBufferLayout,
+        BindGroupLayoutEntry, ColorTargetState, DepthStencilState, MultisampleState,
+        PipelineCompilationOptions, PrimitiveState, VertexBufferLayout,
     },
 };
 

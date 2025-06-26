@@ -7,8 +7,8 @@ use draft_render::{
     ShaderResource, Vertex, VertexAttributeDescriptor,
     gfx_base::{
         BlendComponent, BlendState, ColorTargetState, ColorWrites, RawTextureView, TextureFormat,
+        initialize_resources,
     },
-    resource::initialize_resources,
     wgpu::{
         self, CompositeAlphaMode, Instance, InstanceDescriptor, PresentMode, RequestAdapterOptions,
         Surface, SurfaceConfiguration, SurfaceTexture, TextureUsages, TextureViewDescriptor,

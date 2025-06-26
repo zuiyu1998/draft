@@ -6,7 +6,7 @@ use crate::{
         ResourceRelease, ResourceRequese, ResourceView, TransientResource, TransientResourceCache,
         TransientResourceCreator, VirtualResource,
     },
-    resource::RenderDevice,
+    gfx_base::RenderDevice,
 };
 
 #[derive(Default)]

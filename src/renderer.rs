@@ -1,8 +1,7 @@
 use draft_render::{
     RenderServer, RenderStorage, SceneRenderData,
     frame_graph::{ColorAttachmentOwned, FrameGraph, RenderContext, TransientResourceCache},
-    gfx_base::{Color, LoadOp, Operations, StoreOp},
-    resource::RenderDevice,
+    gfx_base::{Color, LoadOp, Operations, RenderDevice, StoreOp},
 };
 
 pub struct WorldRenderer {

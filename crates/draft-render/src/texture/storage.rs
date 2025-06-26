@@ -3,8 +3,8 @@ use wgpu::util::DeviceExt;
 
 use crate::{
     FrameworkError, TemporaryCache, Texture, TextureResource,
-    gfx_base::{RawTextureDescriptor, Sampler},
-    resource::{RenderDevice, RenderQueue, RenderTexture},
+    gfx_base::{RawTextureDescriptor, RenderDevice, RenderQueue, Sampler},
+    render_resource::RenderTexture,
 };
 
 #[derive(Default)]

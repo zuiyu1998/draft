@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use crate::{
     BindGroupLayoutDescriptor, FrameworkError, PipelineLayoutDescriptor, TemporaryCache,
-    resource::RenderDevice,
+    gfx_base::RenderDevice,
 };
 use fyrox_core::{log::Log, sparse::AtomicIndex};
 

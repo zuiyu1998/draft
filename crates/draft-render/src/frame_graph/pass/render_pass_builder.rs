@@ -8,7 +8,7 @@ use crate::{
         RenderPass, RenderPassCommandBuilder, ResourceMaterial, ResourceRead, ResourceWrite,
         TransientBuffer,
     },
-    resource::CachedPipelineId,
+    gfx_base::CachedPipelineId,
 };
 
 use super::PassBuilder;

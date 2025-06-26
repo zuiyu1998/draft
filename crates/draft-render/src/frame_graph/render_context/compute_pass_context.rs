@@ -13,7 +13,7 @@ use crate::{
         BindGroupBinding, Ref, ResourceBinding, ResourceRead, ResourceWrite, TexelCopyBufferInfo,
         TexelCopyTextureInfo, TransientBuffer, TransientTexture,
     },
-    resource::CachedPipelineId,
+    gfx_base::CachedPipelineId,
 };
 
 pub trait ComputePassCommandBuilder {

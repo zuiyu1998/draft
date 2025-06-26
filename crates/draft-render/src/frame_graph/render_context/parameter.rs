@@ -7,7 +7,7 @@ use crate::{
         BindGroupBinding, Ref, RenderPassContext, ResourceRead, ResourceWrite, TexelCopyBufferInfo,
         TexelCopyTextureInfo, TransientBuffer, TransientTexture,
     },
-    resource::CachedPipelineId,
+    gfx_base::CachedPipelineId,
 };
 
 use super::{

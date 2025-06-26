@@ -5,12 +5,9 @@ pub use layout_cache::*;
 use std::{borrow::Cow, sync::Arc};
 
 use crate::gfx_base::{
-    RawFragmentState, RawRenderPipelineDescriptor, RawVertexAttribute, RawVertexBufferLayout,
-    RawVertexState,
-};
-
-use crate::resource::{
-    CachedPipelineId, GetPipelineCache, Pipeline, PipelineCache, RenderDevice, RenderPipeline,
+    CachedPipelineId, GetPipelineCache, Pipeline, PipelineCache, RawFragmentState,
+    RawRenderPipelineDescriptor, RawVertexAttribute, RawVertexBufferLayout, RawVertexState,
+    RenderDevice, RenderPipeline,
 };
 
 use wgpu::{ShaderModuleDescriptor, ShaderSource};
