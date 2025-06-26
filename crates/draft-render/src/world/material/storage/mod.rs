@@ -55,6 +55,17 @@ pub struct ShaderCache {
 }
 
 impl ShaderCache {
+    pub fn remove(&mut self, shader: &ShaderResource) {
+        let mut state = shader.state();
+        if let Some(shader_state) = state.data() {
+            self.cache.remove(&shader_state.cache_index);
+        }
+    }
+
+    pub fn update(&mut self, dt: f32) {
+        self.cache.update(dt)
+    }
+
     pub fn get(
         &mut self,
         device: &RenderDevice,

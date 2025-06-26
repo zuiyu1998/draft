@@ -3,6 +3,7 @@ use draft_render::{
     frame_graph::{ColorAttachmentOwned, FrameGraph, RenderContext, TransientResourceCache},
     gfx_base::{Color, LoadOp, Operations, StoreOp},
 };
+use fyrox_resource::manager::ResourceManager;
 
 pub struct WorldRenderer {
     pub world: RenderWorld,
@@ -11,12 +12,16 @@ pub struct WorldRenderer {
 }
 
 impl WorldRenderer {
-    pub fn new(server: RenderServer) -> Self {
+    pub fn new(server: RenderServer, resource_manager: &ResourceManager) -> Self {
         WorldRenderer {
-            world: RenderWorld::new(server, Default::default()),
+            world: RenderWorld::new(server, resource_manager),
             node: MainOpaquePass2dNode,
             transient_resource_cache: Default::default(),
         }
+    }
+
+    pub fn update(&mut self, dt: f32) {
+        self.world.update(dt);
     }
 
     pub fn render(&mut self, scene_render_data: SceneRenderData) {
@@ -36,7 +41,7 @@ impl WorldRenderer {
         let mut render_context = RenderContext::new(
             &self.world.server().device,
             &mut self.transient_resource_cache,
-            &self.world.render_storage.material_storage,
+            self.world.render_storage.material_storage(),
         );
 
         frame_graph.execute(&mut render_context);
@@ -67,6 +72,13 @@ impl FrameGraphNode for MainOpaquePass2dNode {
             },
         });
 
+        if let Some(texture_data) = context
+            .world
+            .get_texture_data(context.scene_render_data.image)
+        {
+            let _texture_ref = render_pass_builder.read_material(&texture_data.texture);
+        }
+
         let material_data = context
             .world
             .get_material_data(&context.scene_render_data.batch.material)
@@ -88,6 +100,7 @@ impl FrameGraphNode for MainOpaquePass2dNode {
             buffer_slice.offset,
             buffer_slice.size,
         );
+
         render_pass_builder.draw(0..3, 0..1);
     }
 }

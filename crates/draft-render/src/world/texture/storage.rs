@@ -13,6 +13,17 @@ pub struct TextureStorage {
 }
 
 impl TextureStorage {
+    pub fn remove(&mut self, texture: &TextureResource) {
+        let mut state = texture.state();
+        if let Some(texture_state) = state.data() {
+            self.texture_cache.remove(&texture_state.cache_index);
+        }
+    }
+
+    pub fn update(&mut self, dt: f32) {
+        self.texture_cache.update(dt)
+    }
+
     pub fn get(
         &mut self,
         device: &RenderDevice,

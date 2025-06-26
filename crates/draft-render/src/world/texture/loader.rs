@@ -12,6 +12,7 @@ use crate::TextureImportOptions;
 
 use super::Texture;
 
+#[derive(Default)]
 pub struct TextureLoader {
     pub default_import_options: TextureImportOptions,
 }

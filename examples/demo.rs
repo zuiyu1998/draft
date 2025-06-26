@@ -4,7 +4,7 @@ use draft::renderer::WorldRenderer;
 use draft_render::{
     Batch, FragmentState, Geometry, GeometryResource, Material, MaterialResource,
     PipelineDescriptor, RenderPipelineDescriptor, RenderServer, SceneRenderData, Shader,
-    ShaderResource, Vertex, VertexAttributeDescriptor,
+    ShaderResource, Texture, TextureResource, Vertex, VertexAttributeDescriptor,
     gfx_base::{
         BlendComponent, BlendState, ColorTargetState, ColorWrites, RawTextureView, TextureFormat,
         initialize_resources,
@@ -144,6 +144,8 @@ struct State {
     size: winit::dpi::PhysicalSize<u32>,
     _resource_manager: ResourceManager,
     renderer: WorldRenderer,
+    batch: Batch,
+    image: TextureResource,
 }
 
 impl State {
@@ -186,22 +188,20 @@ impl State {
         let task_pool = Arc::new(TaskPool::new());
         let resource_manager = ResourceManager::new(Arc::new(FsResourceIo), task_pool);
 
-        let (shader_event_sender, _shader_event_receiver) = std::sync::mpsc::channel();
-
         let render_server = RenderServer { device, queue };
 
-        let renderer = WorldRenderer::new(render_server);
+        let renderer = WorldRenderer::new(render_server, &resource_manager);
 
-        resource_manager
-            .state()
-            .event_broadcaster
-            .add(shader_event_sender);
+        let image = resource_manager.request::<Texture>("./happy-tree.png");
+        let batch = new_batch();
 
         State {
             windows,
             size,
             _resource_manager: resource_manager,
             renderer,
+            image,
+            batch,
         }
     }
 
@@ -210,6 +210,8 @@ impl State {
     }
 
     fn render(&mut self) {
+        self.renderer.update(0.0);
+
         self.windows.set_swapchain_texture();
 
         if let Some(texture_view) = self
@@ -218,11 +220,10 @@ impl State {
             .swap_chain_texture_view
             .clone()
         {
-            let batch = new_batch();
-
             let scene_render_data = SceneRenderData {
                 texture_view,
-                batch: &batch,
+                batch: &self.batch,
+                image: &self.image,
             };
 
             self.renderer.render(scene_render_data);
