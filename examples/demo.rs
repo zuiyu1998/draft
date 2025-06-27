@@ -1,6 +1,5 @@
 use std::{collections::HashMap, sync::Arc};
 
-use draft::renderer::WorldRenderer;
 use draft_render::{
     Batch, FragmentState, Geometry, GeometryResource, Material, MaterialResource,
     PipelineDescriptor, RenderPipelineDescriptor, RenderServer, SceneRenderData, Shader,
@@ -9,6 +8,7 @@ use draft_render::{
         BlendComponent, BlendState, ColorTargetState, ColorWrites, RawTextureFormat,
         RawTextureView, TextureFormat, initialize_resources,
     },
+    renderer::WorldRenderer,
     wgpu::{
         self, CompositeAlphaMode, Instance, InstanceDescriptor, PresentMode, Surface,
         SurfaceConfiguration, SurfaceTexture, TextureUsages, TextureViewDescriptor,

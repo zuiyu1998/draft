@@ -6,6 +6,7 @@ mod world;
 pub mod frame_graph;
 pub mod gfx_base;
 pub mod render_resource;
+pub mod renderer;
 
 pub use error::*;
 
