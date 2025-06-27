@@ -232,8 +232,6 @@ impl State {
         let task_pool = Arc::new(TaskPool::new());
         let resource_manager = ResourceManager::new(Arc::new(FsResourceIo), task_pool);
 
-        resource_manager.update_or_load_registry();
-
         let size = window.inner_size();
 
         let render_server = new_server(window.clone());
@@ -242,7 +240,9 @@ impl State {
 
         let renderer = WorldRenderer::new(render_server, &resource_manager);
 
-        let image = resource_manager.request::<Texture>("happy-tree.png");
+        resource_manager.update_or_load_registry();
+
+        let image = resource_manager.request::<Texture>("data/happy-tree.png");
         let batch = new_batch();
 
         State {
@@ -277,6 +277,10 @@ impl State {
             };
 
             self.renderer.render(scene_render_data);
+
+            // let header = self.image.header();
+
+            // println!("{:?}", header.state);
         }
 
         self.windows.present();
@@ -364,8 +368,6 @@ impl ApplicationHandler for App {
 }
 
 fn main() {
-    tracing_subscriber::fmt().init();
-
     let event_loop = EventLoop::new().unwrap();
 
     event_loop.set_control_flow(ControlFlow::Poll);
