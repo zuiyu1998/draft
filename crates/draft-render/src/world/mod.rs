@@ -10,7 +10,7 @@ pub use material::*;
 pub use shader::*;
 pub use texture::*;
 
-use crate::gfx_base::{RenderDevice, RenderQueue};
+use crate::gfx_base::{RenderAdapter, RenderDevice, RenderInstance, RenderQueue};
 use fyrox_resource::{event::ResourceEvent, manager::ResourceManager};
 
 #[derive(Default)]
@@ -101,4 +101,6 @@ impl RenderWorld {
 pub struct RenderServer {
     pub device: RenderDevice,
     pub queue: RenderQueue,
+    pub instance: RenderInstance,
+    pub adapter: RenderAdapter,
 }

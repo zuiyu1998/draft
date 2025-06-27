@@ -6,12 +6,12 @@ use draft_render::{
     PipelineDescriptor, RenderPipelineDescriptor, RenderServer, SceneRenderData, Shader,
     ShaderResource, Texture, TextureResource, Vertex, VertexAttributeDescriptor,
     gfx_base::{
-        BlendComponent, BlendState, ColorTargetState, ColorWrites, RawTextureView, TextureFormat,
-        initialize_resources,
+        BlendComponent, BlendState, ColorTargetState, ColorWrites, RawTextureFormat,
+        RawTextureView, TextureFormat, initialize_resources,
     },
     wgpu::{
-        self, CompositeAlphaMode, Instance, InstanceDescriptor, PresentMode, RequestAdapterOptions,
-        Surface, SurfaceConfiguration, SurfaceTexture, TextureUsages, TextureViewDescriptor,
+        self, CompositeAlphaMode, Instance, InstanceDescriptor, PresentMode, Surface,
+        SurfaceConfiguration, SurfaceTexture, TextureUsages, TextureViewDescriptor,
     },
 };
 
@@ -52,6 +52,10 @@ pub struct Windows {
 }
 
 impl Windows {
+    pub fn from_server(render_server: &RenderServer, window: Arc<Window>) -> Self {
+        Windows::new(WindowData::from_server(render_server, window))
+    }
+
     pub fn get_window(&self, window_id: Option<WindowId>) -> Option<&WindowData> {
         if let Some(window_id) = window_id {
             self.windows.get(&window_id)
@@ -101,16 +105,20 @@ pub struct WindowData {
 
     pub swap_chain_texture_view: Option<RawTextureView>,
     pub swap_chain_texture: Option<SurfaceTexture>,
-    pub swap_chain_texture_format: Option<TextureFormat>,
+    pub swap_chain_texture_format: RawTextureFormat,
 }
 
 impl WindowData {
-    pub fn new(window: Arc<Window>, surface: Surface<'static>) -> Self {
+    pub fn new(
+        window: Arc<Window>,
+        surface: Surface<'static>,
+        swap_chain_texture_format: RawTextureFormat,
+    ) -> Self {
         Self {
             window,
             surface,
             swap_chain_texture: None,
-            swap_chain_texture_format: None,
+            swap_chain_texture_format,
             swap_chain_texture_view: None,
         }
     }
@@ -131,42 +139,22 @@ impl WindowData {
 
     pub fn present(&mut self) {
         self.swap_chain_texture_view = None;
-        self.swap_chain_texture_format = None;
 
         if let Some(frame) = self.swap_chain_texture.take() {
             frame.present();
         }
     }
-}
 
-struct State {
-    windows: Windows,
-    size: winit::dpi::PhysicalSize<u32>,
-    _resource_manager: ResourceManager,
-    renderer: WorldRenderer,
-    batch: Batch,
-    image: TextureResource,
-}
-
-impl State {
-    async fn new(window: Arc<Window>) -> State {
-        let instance = Instance::new(&InstanceDescriptor::default());
-        let adapter = instance
-            .request_adapter(&RequestAdapterOptions::default())
-            .await
-            .unwrap();
+    pub fn from_server(render_server: &RenderServer, window: Arc<Window>) -> Self {
         let size = window.inner_size();
 
-        let surface = instance.create_surface(window.clone()).unwrap();
-        let request_adapter_options = wgpu::RequestAdapterOptions {
-            compatible_surface: Some(&surface),
-            ..Default::default()
-        };
+        let surface = render_server
+            .instance
+            .0
+            .create_surface(window.clone())
+            .unwrap();
 
-        let (device, queue, _, _, _) =
-            initialize_resources(instance, &request_adapter_options).await;
-
-        let cap = surface.get_capabilities(&adapter);
+        let cap = surface.get_capabilities(&render_server.adapter.0);
         let surface_format = cap.formats[0];
 
         let surface_config = SurfaceConfiguration {
@@ -181,18 +169,80 @@ impl State {
             present_mode: PresentMode::AutoVsync,
         };
 
-        surface.configure(device.wgpu_device(), &surface_config);
+        surface.configure(render_server.device.wgpu_device(), &surface_config);
 
-        let windows = Windows::new(WindowData::new(window, surface));
+        WindowData::new(window, surface, surface_format)
+    }
+}
 
+fn new_server(window: Arc<Window>) -> RenderServer {
+    futures::executor::block_on(async_server(window))
+}
+
+async fn async_server(window: Arc<Window>) -> RenderServer {
+    let instance = Instance::new(&InstanceDescriptor::default());
+
+    let size = window.inner_size();
+
+    let surface = instance.create_surface(window.clone()).unwrap();
+    let request_adapter_options = wgpu::RequestAdapterOptions {
+        compatible_surface: Some(&surface),
+        ..Default::default()
+    };
+
+    let (device, queue, adapter, _, instance) =
+        initialize_resources(instance, &request_adapter_options).await;
+
+    let cap = surface.get_capabilities(&adapter.0);
+    let surface_format = cap.formats[0];
+
+    let surface_config = SurfaceConfiguration {
+        usage: TextureUsages::RENDER_ATTACHMENT,
+        format: surface_format,
+        // Request compatibility with the sRGB-format texture view we‘re going to create later.
+        view_formats: vec![surface_format.add_srgb_suffix()],
+        alpha_mode: CompositeAlphaMode::Auto,
+        width: size.width,
+        height: size.height,
+        desired_maximum_frame_latency: 2,
+        present_mode: PresentMode::AutoVsync,
+    };
+
+    surface.configure(device.wgpu_device(), &surface_config);
+
+    RenderServer {
+        device,
+        queue,
+        instance,
+        adapter,
+    }
+}
+
+struct State {
+    windows: Windows,
+    size: winit::dpi::PhysicalSize<u32>,
+    _resource_manager: ResourceManager,
+    renderer: WorldRenderer,
+    batch: Batch,
+    image: TextureResource,
+}
+
+impl State {
+    fn new(window: Arc<Window>) -> State {
         let task_pool = Arc::new(TaskPool::new());
         let resource_manager = ResourceManager::new(Arc::new(FsResourceIo), task_pool);
 
-        let render_server = RenderServer { device, queue };
+        resource_manager.update_or_load_registry();
+
+        let size = window.inner_size();
+
+        let render_server = new_server(window.clone());
+
+        let windows = Windows::from_server(&render_server, window);
 
         let renderer = WorldRenderer::new(render_server, &resource_manager);
 
-        let image = resource_manager.request::<Texture>("./happy-tree.png");
+        let image = resource_manager.request::<Texture>("happy-tree.png");
         let batch = new_batch();
 
         State {
@@ -286,7 +336,7 @@ impl ApplicationHandler for App {
                 .unwrap(),
         );
 
-        let state = futures::executor::block_on(State::new(window.clone()));
+        let state = State::new(window.clone());
         self.state = Some(state);
 
         window.request_redraw();
