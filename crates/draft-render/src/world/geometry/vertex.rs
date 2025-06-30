@@ -41,7 +41,7 @@ impl Vertex {
         }
 
         VertexBufferLayout {
-            array_stride: 0,
+            array_stride: accumulated_offset,
             step_mode: VertexStepMode::Vertex,
             attributes,
         }

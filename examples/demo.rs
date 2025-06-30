@@ -96,7 +96,7 @@ impl PipelineNode for TestNode {
         );
         if let Some(index_buffer) = &geometry_data.index_buffer {
             let buffer_ref = render_pass_builder.read_material(&index_buffer.buffer);
-            let buffer_slice = geometry_data.vertex_buffer.slice(0..);
+            let buffer_slice = index_buffer.buffer.slice(0..);
             render_pass_builder.set_index_buffer(
                 &buffer_ref,
                 index_buffer.index_format,
@@ -106,6 +106,7 @@ impl PipelineNode for TestNode {
 
             render_pass_builder.draw_indexed(0..index_buffer.num_indices, 0, 0..1);
         } else {
+            println!("draw");
             render_pass_builder.draw(0..3, 0..1);
         }
     }

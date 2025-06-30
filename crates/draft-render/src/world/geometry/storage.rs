@@ -46,7 +46,7 @@ fn create_index_render_buffer(
         .create_buffer_init(&BufferInitDescriptor {
             label: None,
             contents: &bytes,
-            usage: BufferUsages::VERTEX,
+            usage: BufferUsages::INDEX,
         });
 
     let buffer_info = BufferInfo {
@@ -77,7 +77,6 @@ fn create_vertex_render_buffer(
     vertex: &Vertex,
 ) -> RenderBuffer {
     let bytes = vertex.create_buffer();
-
     let buffer = device
         .wgpu_device()
         .create_buffer_init(&BufferInitDescriptor {
