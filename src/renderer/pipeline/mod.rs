@@ -1,4 +1,4 @@
-use crate::{
+use draft_render::{
     GeometryResource, MaterialResource, RenderWorld, TextureResource, frame_graph::FrameGraph,
     gfx_base::RawTextureView,
 };

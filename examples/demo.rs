@@ -9,13 +9,14 @@ use draft_render::{
         BlendComponent, BlendState, ColorTargetState, ColorWrites, RawTextureFormat,
         RawTextureView, TextureFormat, initialize_resources,
     },
-    renderer::{Batch, PipelineContext, PipelineNode, WorldRenderer},
     wgpu::{
         self, Color, CompositeAlphaMode, Instance, InstanceDescriptor, LoadOp, Operations,
         PresentMode, StoreOp, Surface, SurfaceConfiguration, SurfaceTexture, TextureUsages,
         TextureViewDescriptor,
     },
 };
+
+use draft::renderer::{Batch, PipelineContext, PipelineNode, WorldRenderer};
 
 use fyrox_core::{futures, task::TaskPool, uuid};
 use fyrox_resource::{

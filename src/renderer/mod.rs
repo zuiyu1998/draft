@@ -2,7 +2,7 @@ mod pipeline;
 
 pub use pipeline::*;
 
-use crate::{
+use draft_render::{
     RenderServer, RenderWorld,
     frame_graph::{FrameGraph, RenderContext, TransientResourceCache},
 };
