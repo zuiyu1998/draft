@@ -1,13 +1,16 @@
+mod pipeline;
+
+pub use pipeline::*;
+
 use crate::{
-    RenderServer, RenderWorld, SceneRenderData,
-    frame_graph::{ColorAttachmentOwned, FrameGraph, RenderContext, TransientResourceCache},
-    gfx_base::{Color, LoadOp, Operations, StoreOp},
+    RenderServer, RenderWorld,
+    frame_graph::{FrameGraph, RenderContext, TransientResourceCache},
 };
 use fyrox_resource::manager::ResourceManager;
 
 pub struct WorldRenderer {
     pub world: RenderWorld,
-    pub node: MainOpaquePass2dNode,
+    pub pipeline: Pipeline,
     pub transient_resource_cache: TransientResourceCache,
 }
 
@@ -15,7 +18,7 @@ impl WorldRenderer {
     pub fn new(server: RenderServer, resource_manager: &ResourceManager) -> Self {
         WorldRenderer {
             world: RenderWorld::new(server, resource_manager),
-            node: MainOpaquePass2dNode,
+            pipeline: Pipeline::empty(),
             transient_resource_cache: Default::default(),
         }
     }
@@ -24,17 +27,11 @@ impl WorldRenderer {
         self.world.update(dt);
     }
 
-    pub fn render(&mut self, scene_render_data: SceneRenderData) {
+    pub fn render(&mut self, pipeline_context: &PipelineContext) {
         let mut frame_graph = FrameGraph::default();
 
-        let mut frame_graph_context = FrameGraphContext {
-            frame_graph: &mut frame_graph,
-            world: &mut self.world,
-            scene_render_data,
-        };
-
-        //setup
-        self.node.run(&mut frame_graph_context);
+        self.pipeline
+            .run(&mut frame_graph, &mut self.world, pipeline_context);
 
         frame_graph.compile();
 
@@ -54,63 +51,4 @@ impl WorldRenderer {
             .wgpu_queue()
             .submit(command_buffers);
     }
-}
-
-pub struct MainOpaquePass2dNode;
-
-impl FrameGraphNode for MainOpaquePass2dNode {
-    fn run(&mut self, context: &mut FrameGraphContext) {
-        let mut pass_builder = context.frame_graph.create_pass_builder("test_node");
-        let mut render_pass_builder = pass_builder.create_render_pass_builder("test_pass");
-
-        render_pass_builder.add_raw_color_attachment(ColorAttachmentOwned {
-            view: context.scene_render_data.texture_view.clone(),
-            resolve_target: None,
-            ops: Operations {
-                load: LoadOp::Clear(Color::BLUE),
-                store: StoreOp::Store,
-            },
-        });
-
-        if let Some(texture_data) = context
-            .world
-            .get_texture_data(context.scene_render_data.image)
-        {
-            let _texture_ref = render_pass_builder.read_material(&texture_data.texture);
-        }
-
-        let material_data = context
-            .world
-            .get_material_data(&context.scene_render_data.batch.material)
-            .unwrap();
-
-        render_pass_builder.set_render_pipeline(material_data.pipeline_id);
-
-        let geometry_data = context
-            .world
-            .get_geometry_data(&context.scene_render_data.batch.geometry)
-            .unwrap();
-
-        let buffer_ref = render_pass_builder.read_material(&geometry_data.vertex_buffer);
-        let buffer_slice = geometry_data.vertex_buffer.slice(0..);
-
-        render_pass_builder.set_vertex_buffer(
-            0,
-            &buffer_ref,
-            buffer_slice.offset,
-            buffer_slice.size,
-        );
-
-        render_pass_builder.draw(0..3, 0..1);
-    }
-}
-
-pub trait FrameGraphNode {
-    fn run(&mut self, context: &mut FrameGraphContext);
-}
-
-pub struct FrameGraphContext<'a> {
-    pub frame_graph: &'a mut FrameGraph,
-    pub world: &'a mut RenderWorld,
-    pub scene_render_data: SceneRenderData<'a>,
 }

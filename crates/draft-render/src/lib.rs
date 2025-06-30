@@ -1,5 +1,4 @@
 mod error;
-mod scene_render_data;
 mod utils;
 mod world;
 
@@ -10,7 +9,6 @@ pub mod renderer;
 
 pub use error::*;
 
-pub use scene_render_data::*;
 pub use utils::*;
 pub use world::*;
 

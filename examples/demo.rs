@@ -1,17 +1,19 @@
 use std::{collections::HashMap, sync::Arc};
 
 use draft_render::{
-    Batch, FragmentState, Geometry, GeometryResource, Material, MaterialResource,
-    PipelineDescriptor, RenderPipelineDescriptor, RenderServer, SceneRenderData, Shader,
-    ShaderResource, Texture, TextureResource, Vertex, VertexAttributeDescriptor,
+    FragmentState, Geometry, GeometryResource, Material, MaterialResource, PipelineDescriptor,
+    RenderPipelineDescriptor, RenderServer, RenderWorld, Shader, ShaderResource, Texture,
+    TextureResource, Vertex, VertexAttributeDescriptor,
+    frame_graph::{ColorAttachmentOwned, FrameGraph},
     gfx_base::{
         BlendComponent, BlendState, ColorTargetState, ColorWrites, RawTextureFormat,
         RawTextureView, TextureFormat, initialize_resources,
     },
-    renderer::WorldRenderer,
+    renderer::{Batch, PipelineContext, PipelineNode, WorldRenderer},
     wgpu::{
-        self, CompositeAlphaMode, Instance, InstanceDescriptor, PresentMode, Surface,
-        SurfaceConfiguration, SurfaceTexture, TextureUsages, TextureViewDescriptor,
+        self, Color, CompositeAlphaMode, Instance, InstanceDescriptor, LoadOp, Operations,
+        PresentMode, StoreOp, Surface, SurfaceConfiguration, SurfaceTexture, TextureUsages,
+        TextureViewDescriptor,
     },
 };
 
@@ -44,6 +46,51 @@ lazy_static! {
             )
         }
     );
+}
+
+pub struct TestNode;
+
+impl PipelineNode for TestNode {
+    fn run(
+        &mut self,
+        frame_graph: &mut FrameGraph,
+        world: &mut RenderWorld,
+        context: &PipelineContext,
+    ) {
+        let mut pass_builder = frame_graph.create_pass_builder("test_node");
+        let mut render_pass_builder = pass_builder.create_render_pass_builder("test_pass");
+
+        render_pass_builder.add_raw_color_attachment(ColorAttachmentOwned {
+            view: context.texture_view.clone(),
+            resolve_target: None,
+            ops: Operations {
+                load: LoadOp::Clear(Color::BLUE),
+                store: StoreOp::Store,
+            },
+        });
+
+        if let Some(texture_data) = world.get_texture_data(context.image) {
+            let _texture_ref = render_pass_builder.read_material(&texture_data.texture);
+        }
+
+        let material_data = world.get_material_data(&context.batch.material).unwrap();
+
+        render_pass_builder.set_render_pipeline(material_data.pipeline_id);
+
+        let geometry_data = world.get_geometry_data(&context.batch.geometry).unwrap();
+
+        let buffer_ref = render_pass_builder.read_material(&geometry_data.vertex_buffer);
+        let buffer_slice = geometry_data.vertex_buffer.slice(0..);
+
+        render_pass_builder.set_vertex_buffer(
+            0,
+            &buffer_ref,
+            buffer_slice.offset,
+            buffer_slice.size,
+        );
+
+        render_pass_builder.draw(0..3, 0..1);
+    }
 }
 
 pub struct Windows {
@@ -238,7 +285,9 @@ impl State {
 
         let windows = Windows::from_server(&render_server, window);
 
-        let renderer = WorldRenderer::new(render_server, &resource_manager);
+        let mut renderer = WorldRenderer::new(render_server, &resource_manager);
+
+        renderer.pipeline.push_node(TestNode);
 
         resource_manager.update_or_load_registry();
 
@@ -270,13 +319,13 @@ impl State {
             .swap_chain_texture_view
             .clone()
         {
-            let scene_render_data = SceneRenderData {
+            let pipeline_context = PipelineContext {
                 texture_view,
                 batch: &self.batch,
                 image: &self.image,
             };
 
-            self.renderer.render(scene_render_data);
+            self.renderer.render(&pipeline_context);
 
             // let header = self.image.header();
 
