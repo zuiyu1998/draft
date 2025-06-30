@@ -20,6 +20,9 @@ impl VertexAttributeDescriptor {
     pub const ATTRIBUTE_NORMAL: VertexAttributeDescriptor =
         VertexAttributeDescriptor::new(1, VertexFormat::Float32x3);
 
+    pub const ATTRIBUTE_COLOR: VertexAttributeDescriptor =
+        VertexAttributeDescriptor::new(1, VertexFormat::Float32x3);
+
     pub const fn new(id: u64, format: VertexFormat) -> Self {
         Self {
             id: VertexAttributeId(id),

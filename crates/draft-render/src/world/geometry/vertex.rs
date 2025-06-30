@@ -22,7 +22,7 @@ impl Vertex {
         }
     }
 
-    pub fn create_vertex_data(&self) -> Vec<u8> {
+    pub fn create_buffer(&self) -> Vec<u8> {
         self.buffer.create_packed_vertex_buffer_data()
     }
 

@@ -10,7 +10,9 @@ pub use material::*;
 pub use shader::*;
 pub use texture::*;
 
-use crate::gfx_base::{RenderAdapter, RenderDevice, RenderInstance, RenderQueue};
+use crate::gfx_base::{
+    RenderAdapter, RenderDevice, RenderInstance, RenderQueue, VertexBufferLayout,
+};
 use fyrox_resource::{event::ResourceEvent, manager::ResourceManager};
 
 #[derive(Default)]
@@ -62,10 +64,16 @@ impl RenderWorld {
         &self.server
     }
 
-    pub fn get_material_data(&mut self, material: &MaterialResource) -> Option<&MaterialData> {
-        self.render_storage
-            .material_storage
-            .get(&self.server.device, material)
+    pub fn get_material_data(
+        &mut self,
+        material: &MaterialResource,
+        vertex_buffer_layouts: &[VertexBufferLayout],
+    ) -> Option<&MaterialData> {
+        self.render_storage.material_storage.get(
+            &self.server.device,
+            material,
+            vertex_buffer_layouts,
+        )
     }
 
     pub fn get_geometry_data(&mut self, geometry: &GeometryResource) -> Option<&GeometryData> {

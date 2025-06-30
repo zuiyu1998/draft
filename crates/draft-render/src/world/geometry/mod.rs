@@ -1,9 +1,11 @@
 mod buffer;
+mod index;
 mod storage;
 mod vertex;
 
 pub use buffer::*;
 use fyrox_resource::{Resource, ResourceData};
+pub use index::*;
 pub use storage::*;
 pub use vertex::*;
 
@@ -17,16 +19,18 @@ pub type GeometryResource = Resource<Geometry>;
 #[type_uuid(id = "2c7b56fb-ce99-4830-acd6-d9937fa4c8a1")]
 pub struct Geometry {
     vertex: Vertex,
+    index: Index,
     #[reflect(hidden)]
     #[visit(skip)]
     pub cache_index: Arc<AtomicIndex>,
 }
 
 impl Geometry {
-    pub fn new(vertex: Vertex) -> Self {
+    pub fn new(vertex: Vertex, index: Index) -> Self {
         Self {
             vertex,
             cache_index: Arc::new(AtomicIndex::unassigned()),
+            index,
         }
     }
 }

@@ -7,7 +7,7 @@ use std::{borrow::Cow, sync::Arc};
 use crate::gfx_base::{
     CachedPipelineId, GetPipelineCache, Pipeline, PipelineCache, RawFragmentState,
     RawRenderPipelineDescriptor, RawVertexAttribute, RawVertexBufferLayout, RawVertexState,
-    RenderDevice, RenderPipeline,
+    RenderDevice, RenderPipeline, VertexBufferLayout,
 };
 
 use wgpu::{ShaderModuleDescriptor, ShaderSource};
@@ -100,6 +100,7 @@ impl MaterialData {
         pipeline_layout_cache: &mut PipelineLayoutCache,
         device: &RenderDevice,
         desc: &RenderPipelineDescriptor,
+        vertex_buffer_layouts: &[VertexBufferLayout],
     ) -> Result<MaterialData, FrameworkError> {
         let vertex_module = shader_cache.get(device, &desc.vertex.shader)?.clone();
         let fragment_module = match &desc.fragment {
@@ -112,9 +113,7 @@ impl MaterialData {
 
         let layout = pipeline_layout_cache.get(device, &desc.layout)?.clone();
 
-        let vertex_buffer_layouts = desc
-            .vertex
-            .buffers
+        let vertex_buffer_layouts = vertex_buffer_layouts
             .iter()
             .map(|layout| {
                 (
@@ -196,6 +195,7 @@ impl MaterialData {
         pipeline_layout_cache: &mut PipelineLayoutCache,
         device: &RenderDevice,
         desc: &PipelineDescriptor,
+        vertex_buffer_layouts: &[VertexBufferLayout],
     ) -> Result<Self, FrameworkError> {
         match &desc {
             PipelineDescriptor::RenderPipelineDescriptor(desc) => {
@@ -204,6 +204,7 @@ impl MaterialData {
                     pipeline_layout_cache,
                     device,
                     desc,
+                    vertex_buffer_layouts,
                 )
             }
             _ => {
@@ -230,6 +231,7 @@ impl MaterialStorage {
         &mut self,
         device: &RenderDevice,
         material: &MaterialResource,
+        vertex_buffer_layouts: &[VertexBufferLayout],
     ) -> Option<&MaterialData> {
         let mut material_state = material.state();
 
@@ -243,6 +245,7 @@ impl MaterialStorage {
                         &mut self.pipeline_layout_cache,
                         device,
                         &material_state.desc,
+                        vertex_buffer_layouts,
                     )
                 },
             ) {

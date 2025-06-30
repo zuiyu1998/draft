@@ -74,7 +74,13 @@ impl PipelineNode for TestNode {
             let _texture_ref = render_pass_builder.read_material(&texture_data.texture);
         }
 
-        let material_data = world.get_material_data(&context.batch.material).unwrap();
+        let geometry_data = world.get_geometry_data(&context.batch.geometry).unwrap();
+
+        let layouts = vec![geometry_data.layout.clone()];
+
+        let material_data = world
+            .get_material_data(&context.batch.material, &layouts)
+            .unwrap();
 
         render_pass_builder.set_render_pipeline(material_data.pipeline_id);
 
@@ -82,15 +88,26 @@ impl PipelineNode for TestNode {
 
         let buffer_ref = render_pass_builder.read_material(&geometry_data.vertex_buffer);
         let buffer_slice = geometry_data.vertex_buffer.slice(0..);
-
         render_pass_builder.set_vertex_buffer(
             0,
             &buffer_ref,
             buffer_slice.offset,
             buffer_slice.size,
         );
+        if let Some(index_buffer) = &geometry_data.index_buffer {
+            let buffer_ref = render_pass_builder.read_material(&index_buffer.buffer);
+            let buffer_slice = geometry_data.vertex_buffer.slice(0..);
+            render_pass_builder.set_index_buffer(
+                &buffer_ref,
+                index_buffer.index_format,
+                buffer_slice.offset,
+                buffer_slice.size,
+            );
 
-        render_pass_builder.draw(0..3, 0..1);
+            render_pass_builder.draw_indexed(0..index_buffer.num_indices, 0, 0..1);
+        } else {
+            render_pass_builder.draw(0..3, 0..1);
+        }
     }
 }
 
@@ -342,12 +359,32 @@ fn new_batch() -> Batch {
     let mut modifier = vertex.modify();
     modifier.insert_attribute(
         VertexAttributeDescriptor::ATTRIBUTE_POSITION,
-        vec![[0.0, 0.5, 0.0], [-0.5, -0.5, 0.0], [0.5, -0.5, 0.0]],
+        vec![
+            [-0.0868241, 0.49240386, 0.0],
+            [-0.49513406, 0.06958647, 0.0],
+            [-0.21918549, -0.44939706, 0.0],
+            [0.35966998, -0.3473291, 0.0],
+            [0.44147372, 0.2347359, 0.0],
+        ],
     );
+
+    modifier.insert_attribute(
+        VertexAttributeDescriptor::ATTRIBUTE_COLOR,
+        vec![
+            [0.5, 0.0, 0.5],
+            [0.5, 0.0, 0.5],
+            [0.5, 0.0, 0.5],
+            [0.5, 0.0, 0.5],
+            [0.5, 0.0, 0.5],
+        ],
+    );
+
     modifier.set_need_update(true);
 
+    let indexes: Vec<u16> = vec![0, 1, 4, 1, 2, 4, 2, 3, 4];
+
     Batch {
-        geometry: GeometryResource::new_embedded(Geometry::new(vertex)),
+        geometry: GeometryResource::new_embedded(Geometry::new(vertex, indexes.into())),
         material: MaterialResource::new_embedded(new_material()),
     }
 }
