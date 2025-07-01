@@ -115,7 +115,7 @@ impl BindGroupLayoutData {
             device
                 .wgpu_device()
                 .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                    label: Some(&layout.desc.label),
+                    label: None,
                     entries: &entries,
                 });
 
@@ -140,7 +140,7 @@ impl PipelineLayoutData {
         let layout = device
             .wgpu_device()
             .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some(&layout.desc.label),
+                label: None,
                 bind_group_layouts: &bind_group_layouts,
                 //todo PushConstantRange
                 push_constant_ranges: &[],

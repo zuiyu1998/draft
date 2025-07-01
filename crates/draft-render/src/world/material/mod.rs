@@ -36,13 +36,11 @@ pub struct FragmentState {
 
 #[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
 pub struct BindGroupLayoutDescriptor {
-    pub label: String,
     pub entries: Vec<BindGroupLayoutEntry>,
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
 pub struct PipelineLayoutDescriptor {
-    pub label: String,
     pub bind_group_layouts: Vec<BindGroupLayoutDescriptor>,
 }
 

@@ -5,11 +5,41 @@ use std::{
 
 use crate::gfx_base::{
     RawBindGroupLayoutEntry, RawBindingType, RawBufferBindingType, RawPipelineCompilationOptions,
-    RawSamplerBindingType, RawStorageTextureAccess, RawTextureSampleType, RawTextureViewDimension,
-    ShaderStages, TextureFormat,
+    RawSamplerBindingType, RawShaderStages, RawStorageTextureAccess, RawTextureSampleType,
+    RawTextureViewDimension, TextureFormat,
 };
 
 use fyrox_core::{reflect::*, visitor::*};
+
+#[derive(Clone, Debug, Visit, Reflect, Copy, PartialEq, Eq, Hash)]
+pub struct ShaderStages(u32);
+
+impl Default for ShaderStages {
+    fn default() -> Self {
+        ShaderStages::VERTEX_FRAGMENT
+    }
+}
+
+impl From<ShaderStages> for RawShaderStages {
+    fn from(value: ShaderStages) -> Self {
+        RawShaderStages::from_bits(value.0).unwrap()
+    }
+}
+
+bitflags::bitflags! {
+    impl ShaderStages: u32 {
+           /// Binding is not visible from any shader stage.
+        const NONE = 0;
+        /// Binding is visible from the vertex shader of a render pipeline.
+        const VERTEX = 1 << 0;
+        /// Binding is visible from the fragment shader of a render pipeline.
+        const FRAGMENT = 1 << 1;
+        /// Binding is visible from the compute shader of a compute pipeline.
+        const COMPUTE = 1 << 2;
+        /// Binding is visible from the vertex and fragment shaders of a render pipeline.
+        const VERTEX_FRAGMENT = Self::VERTEX.bits() | Self::FRAGMENT.bits();
+    }
+}
 
 /// Advanced options for use when a pipeline is compiled
 ///
@@ -490,7 +520,7 @@ pub struct BindGroupLayoutEntry {
     /// of index 1, would be described as `layout(set = 0, binding = 1) uniform` in shaders.
     pub binding: u32,
     /// Which shader stages can see this binding.
-    pub visibility: u32,
+    pub visibility: ShaderStages,
     /// The type of the binding
     pub ty: BindingType,
     /// If this value is Some, indicates this entry is an array. Array size must be 1 or greater.
@@ -542,7 +572,7 @@ impl From<BindGroupLayoutEntry> for RawBindGroupLayoutEntry {
     fn from(value: BindGroupLayoutEntry) -> Self {
         RawBindGroupLayoutEntry {
             binding: value.binding,
-            visibility: ShaderStages::from_bits(value.visibility).unwrap_or(ShaderStages::NONE),
+            visibility: value.visibility.into(),
             ty: value.ty.into(),
             count: value
                 .count
