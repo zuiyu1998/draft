@@ -18,8 +18,8 @@ pub type GeometryResource = Resource<Geometry>;
 #[derive(Debug, Clone, Reflect, Visit, Default, TypeUuidProvider)]
 #[type_uuid(id = "2c7b56fb-ce99-4830-acd6-d9937fa4c8a1")]
 pub struct Geometry {
-    vertex: Vertex,
-    index: Index,
+    pub vertex: Vertex,
+    pub index: Index,
     #[reflect(hidden)]
     #[visit(skip)]
     pub cache_index: Arc<AtomicIndex>,

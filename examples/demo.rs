@@ -74,12 +74,8 @@ impl PipelineNode for TestNode {
             let _texture_ref = render_pass_builder.read_material(&texture_data.texture);
         }
 
-        let geometry_data = world.get_geometry_data(&context.batch.geometry).unwrap();
-
-        let layouts = vec![geometry_data.layout.clone()];
-
         let material_data = world
-            .get_material_data(&context.batch.material, &layouts)
+            .get_or_insert_material_data(&context.batch.material)
             .unwrap();
 
         render_pass_builder.set_render_pipeline(material_data.pipeline_id);
@@ -383,10 +379,21 @@ fn new_batch() -> Batch {
     modifier.set_need_update(true);
 
     let indexes: Vec<u16> = vec![0, 1, 4, 1, 2, 4, 2, 3, 4];
+    let geometry = Geometry::new(vertex, indexes.into());
+
+    let mut material = new_material();
+
+    material
+        .desc
+        .render_pipeline_descriptor()
+        .unwrap()
+        .vertex
+        .buffers
+        .insert(0, geometry.vertex.get_vertex_layout());
 
     Batch {
-        geometry: GeometryResource::new_embedded(Geometry::new(vertex, indexes.into())),
-        material: MaterialResource::new_embedded(new_material()),
+        geometry: GeometryResource::new_embedded(geometry),
+        material: MaterialResource::new_embedded(material),
     }
 }
 

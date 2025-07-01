@@ -64,6 +64,15 @@ pub enum PipelineDescriptor {
     ComputePipelineDescriptor(Box<ComputePipelineDescriptor>),
 }
 
+impl PipelineDescriptor {
+    pub fn render_pipeline_descriptor(&mut self) -> Option<&mut RenderPipelineDescriptor> {
+        match self {
+            PipelineDescriptor::RenderPipelineDescriptor(desc) => Some(desc),
+            _ => None,
+        }
+    }
+}
+
 impl Default for PipelineDescriptor {
     fn default() -> Self {
         PipelineDescriptor::RenderPipelineDescriptor(Box::default())
