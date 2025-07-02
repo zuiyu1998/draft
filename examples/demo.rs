@@ -1,13 +1,13 @@
 use std::{collections::HashMap, sync::Arc};
 
 use draft_render::{
-    FragmentState, Geometry, GeometryResource, Material, MaterialResource, PipelineDescriptor,
-    RenderPipelineDescriptor, RenderServer, RenderWorld, Shader, ShaderResource, Texture,
-    TextureResource, Vertex, VertexAttributeDescriptor,
+    FragmentState, Geometry, GeometryResource, Material, MaterialDefinition, MaterialResource,
+    RenderMaterial, RenderPipelineDescriptor, RenderServer, RenderWorld, Shader, ShaderResource,
+    Texture, TextureResource, Vertex, VertexAttributeDescriptor,
     frame_graph::{ColorAttachmentOwned, FrameGraph},
     gfx_base::{
         BlendComponent, BlendState, ColorTargetState, ColorWrites, RawTextureFormat,
-        RawTextureView, TextureFormat, initialize_resources,
+        RawTextureView, TextureFormat, VertexBufferLayout, initialize_resources,
     },
     wgpu::{
         self, Color, CompositeAlphaMode, Instance, InstanceDescriptor, LoadOp, Operations,
@@ -18,7 +18,7 @@ use draft_render::{
 
 use draft::renderer::{Batch, PipelineContext, PipelineNode, WorldRenderer};
 
-use fyrox_core::{futures, task::TaskPool, uuid};
+use fyrox_core::{futures, reflect::*, task::TaskPool, uuid, visitor::*};
 use fyrox_resource::{
     embedded_data_source,
     io::FsResourceIo,
@@ -49,6 +49,42 @@ lazy_static! {
     );
 }
 
+#[derive(Debug, Clone, Visit, Reflect, Default)]
+pub struct CustomMaterial;
+
+impl RenderMaterial for CustomMaterial {
+    type Data = ();
+
+    fn specialize(&self, layouts: &[VertexBufferLayout]) -> RenderPipelineDescriptor {
+        let mut desc = RenderPipelineDescriptor::default();
+        desc.vertex.buffers = layouts.to_vec();
+        desc.vertex.shader = BUILT_IN_SHADER.resource().clone();
+        desc.vertex.entry_point = Some("vs_main".into());
+        desc.fragment = Some(FragmentState {
+            shader: BUILT_IN_SHADER.resource().clone(),
+            entry_point: Some("fs_main".into()),
+            targets: vec![Some(ColorTargetState {
+                format: TextureFormat::Bgra8UnormSrgb,
+                blend: Some(BlendState {
+                    color: BlendComponent::REPLACE,
+                    alpha: BlendComponent::REPLACE,
+                }),
+                write_mask: ColorWrites::ALL,
+            })],
+            ..Default::default()
+        });
+
+        desc
+    }
+
+    fn prepare(
+        &self,
+        _device: &draft_render::gfx_base::RenderDevice,
+        _pipeline_layout_cache: &mut draft_render::PipelineLayoutCache,
+    ) -> Self::Data {
+    }
+}
+
 pub struct TestNode;
 
 impl PipelineNode for TestNode {
@@ -75,7 +111,7 @@ impl PipelineNode for TestNode {
         }
 
         let material_data = world
-            .get_or_insert_material_data(&context.batch.material)
+            .get_or_insert_material_data(&context.batch.material, context.batch.layouts())
             .unwrap();
 
         render_pass_builder.set_render_pipeline(material_data.pipeline_id);
@@ -381,42 +417,17 @@ fn new_batch() -> Batch {
     let indexes: Vec<u16> = vec![0, 1, 4, 1, 2, 4, 2, 3, 4];
     let geometry = Geometry::new(vertex, indexes.into());
 
-    let mut material = new_material();
+    let material = new_material();
 
-    material
-        .desc
-        .render_pipeline_descriptor()
-        .unwrap()
-        .vertex
-        .buffers
-        .insert(0, geometry.vertex.get_vertex_layout());
-
-    Batch {
-        geometry: GeometryResource::new_embedded(geometry),
-        material: MaterialResource::new_embedded(material),
-    }
+    Batch::new(
+        GeometryResource::new_embedded(geometry),
+        MaterialResource::new_embedded(material),
+    )
 }
 
 fn new_material() -> Material {
-    let mut desc = RenderPipelineDescriptor::default();
-    desc.vertex.shader = BUILT_IN_SHADER.resource().clone();
-    desc.vertex.entry_point = Some("vs_main".into());
-    desc.fragment = Some(FragmentState {
-        shader: BUILT_IN_SHADER.resource().clone(),
-        entry_point: Some("fs_main".into()),
-        targets: vec![Some(ColorTargetState {
-            format: TextureFormat::Bgra8UnormSrgb,
-            blend: Some(BlendState {
-                color: BlendComponent::REPLACE,
-                alpha: BlendComponent::REPLACE,
-            }),
-            write_mask: ColorWrites::ALL,
-        })],
-        ..Default::default()
-    });
-
     Material {
-        desc: PipelineDescriptor::RenderPipelineDescriptor(Box::new(desc)),
+        definition: MaterialDefinition::new(CustomMaterial),
         cache_index: Default::default(),
     }
 }

@@ -1,11 +1,37 @@
 use draft_render::{
-    GeometryResource, MaterialResource, RenderWorld, TextureResource, frame_graph::FrameGraph,
-    gfx_base::RawTextureView,
+    GeometryResource, MaterialResource, RenderWorld, TextureResource,
+    frame_graph::FrameGraph,
+    gfx_base::{RawTextureView, VertexBufferLayout},
 };
 
 pub struct Batch {
     pub geometry: GeometryResource,
     pub material: MaterialResource,
+    layouts: Vec<VertexBufferLayout>,
+}
+
+impl Batch {
+    pub fn new(geometry: GeometryResource, material: MaterialResource) -> Self {
+        let geometry_clone = geometry.clone();
+        let geometry_state = geometry_clone.state();
+        let layouts = vec![
+            geometry_state
+                .data_ref()
+                .unwrap()
+                .vertex
+                .get_vertex_layout(),
+        ];
+
+        Self {
+            geometry,
+            material,
+            layouts,
+        }
+    }
+
+    pub fn layouts(&self) -> &[VertexBufferLayout] {
+        &self.layouts
+    }
 }
 
 pub struct PipelineContext<'a> {

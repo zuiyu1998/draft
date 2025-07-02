@@ -4,10 +4,13 @@ pub use layout_cache::*;
 
 use std::{borrow::Cow, sync::Arc};
 
-use crate::gfx_base::{
-    CachedPipelineId, GetPipelineCache, Pipeline, PipelineCache, RawFragmentState,
-    RawRenderPipelineDescriptor, RawVertexAttribute, RawVertexBufferLayout, RawVertexState,
-    RenderDevice, RenderPipeline,
+use crate::{
+    MaterialDefinition, RenderMaterialData,
+    gfx_base::{
+        CachedPipelineId, GetPipelineCache, Pipeline, PipelineCache, RawFragmentState,
+        RawRenderPipelineDescriptor, RawVertexAttribute, RawVertexBufferLayout, RawVertexState,
+        RenderDevice, RenderPipeline, VertexBufferLayout,
+    },
 };
 
 use wgpu::{ShaderModuleDescriptor, ShaderSource};
@@ -90,8 +93,8 @@ impl ShaderCache {
 
 pub struct MaterialData {
     pub pipeline: CachedPipeline,
-    pub layout: wgpu::PipelineLayout,
     pub pipeline_id: CachedPipelineId,
+    pub data: Box<dyn RenderMaterialData>,
 }
 
 impl MaterialData {
@@ -100,7 +103,7 @@ impl MaterialData {
         pipeline_layout_cache: &mut PipelineLayoutCache,
         device: &RenderDevice,
         desc: &RenderPipelineDescriptor,
-    ) -> Result<MaterialData, FrameworkError> {
+    ) -> Result<CachedPipeline, FrameworkError> {
         let vertex_module = shader_cache.get(device, &desc.vertex.shader)?.clone();
         let fragment_module = match &desc.fragment {
             Some(fragment) => match shader_cache.get(device, &fragment.shader) {
@@ -181,13 +184,9 @@ impl MaterialData {
 
         let pipeline = device.wgpu_device().create_render_pipeline(&descriptor);
 
-        Ok(MaterialData {
-            pipeline: CachedPipeline {
-                descriptor: PipelineDescriptor::RenderPipelineDescriptor(Box::new(desc.clone())),
-                pipeline: Pipeline::RenderPipeline(RenderPipeline::new(pipeline)),
-            },
-            layout,
-            pipeline_id: Default::default(),
+        Ok(CachedPipeline {
+            descriptor: PipelineDescriptor::RenderPipelineDescriptor(Box::new(desc.clone())),
+            pipeline: Pipeline::RenderPipeline(RenderPipeline::new(pipeline)),
         })
     }
 
@@ -195,21 +194,24 @@ impl MaterialData {
         shader_cache: &mut ShaderCache,
         pipeline_layout_cache: &mut PipelineLayoutCache,
         device: &RenderDevice,
-        desc: &PipelineDescriptor,
+        material: &MaterialDefinition,
+        layouts: &[VertexBufferLayout],
     ) -> Result<Self, FrameworkError> {
-        match &desc {
-            PipelineDescriptor::RenderPipelineDescriptor(desc) => {
-                Self::get_render_pipeline_descriptor(
-                    shader_cache,
-                    pipeline_layout_cache,
-                    device,
-                    desc,
-                )
-            }
-            _ => {
-                unimplemented!()
-            }
-        }
+        let desc = material.0.specialize(layouts);
+        let pipeline = Self::get_render_pipeline_descriptor(
+            shader_cache,
+            pipeline_layout_cache,
+            device,
+            &desc,
+        )?;
+
+        let data = material.0.prepare(device, pipeline_layout_cache);
+
+        Ok(MaterialData {
+            pipeline,
+            pipeline_id: Default::default(),
+            data,
+        })
     }
 }
 
@@ -230,6 +232,7 @@ impl MaterialStorage {
         &mut self,
         device: &RenderDevice,
         material: &MaterialResource,
+        layouts: &[VertexBufferLayout],
     ) -> Option<&MaterialData> {
         let mut material_state = material.state();
 
@@ -242,7 +245,8 @@ impl MaterialStorage {
                         &mut self.shader_cache,
                         &mut self.pipeline_layout_cache,
                         device,
-                        &material_state.desc,
+                        &material_state.definition,
+                        layouts,
                     )
                 },
             ) {
