@@ -22,7 +22,8 @@ pub use vertex_buffer_layout::*;
 
 pub use wgpu::{
     AddressMode as RawAddressMode, AstcBlock as RawAstcBlock, AstcChannel as RawAstcChannel,
-    BindGroupEntry, BindGroupLayoutEntry as RawBindGroupLayoutEntry, BindingType as RawBindingType,
+    BindGroupEntry, BindGroupLayout as RawBindGroupLayout,
+    BindGroupLayoutEntry as RawBindGroupLayoutEntry, BindingType as RawBindingType,
     BlendComponent as RawBlendComponent, BlendFactor as RawBlendFactor,
     BlendOperation as RawBlendOperation, BlendState as RawBlendState, Buffer as RawBuffer,
     BufferAddress, BufferBindingType as RawBufferBindingType, COPY_BUFFER_ALIGNMENT, Color,

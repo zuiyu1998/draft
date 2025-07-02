@@ -1,8 +1,8 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, ops::Deref, sync::Arc};
 
 use crate::{
     BindGroupLayoutDescriptor, FrameworkError, PipelineLayoutDescriptor, TemporaryCache,
-    gfx_base::RenderDevice,
+    gfx_base::{RawBindGroupLayout, RenderDevice},
 };
 use fyrox_core::{log::Log, sparse::AtomicIndex};
 
@@ -20,7 +20,7 @@ impl PipelineLayoutCache {
         device: &RenderDevice,
         desc: &BindGroupLayoutDescriptor,
     ) -> Option<BindGroupLayoutData> {
-        let layout = self.get_bind_group_layout(desc).clone();
+        let layout = self.get_or_insert_bind_group_layout(desc).clone();
 
         match self.bind_group_layout_cache.get_or_insert_with(
             &layout.cache_index,
@@ -35,8 +35,23 @@ impl PipelineLayoutCache {
         }
     }
 
-    pub fn get_bind_group_layout(&mut self, desc: &BindGroupLayoutDescriptor) -> &BindGroupLayout {
-        if self.bind_group_layout_map.contains_key(desc) {
+    pub fn get_bind_group_layout(
+        &self,
+        desc: &BindGroupLayoutDescriptor,
+    ) -> Option<&RawBindGroupLayout> {
+        self.bind_group_layout_map.get(desc).and_then(|layout| {
+            self.bind_group_layout_cache
+                .buffer
+                .get(&layout.cache_index)
+                .map(|entry| entry.bind_group_layout.deref())
+        })
+    }
+
+    pub fn get_or_insert_bind_group_layout(
+        &mut self,
+        desc: &BindGroupLayoutDescriptor,
+    ) -> &BindGroupLayout {
+        if !self.bind_group_layout_map.contains_key(desc) {
             let layout = BindGroupLayout::new(desc.clone());
             self.bind_group_layout_map.insert(desc.clone(), layout);
         }

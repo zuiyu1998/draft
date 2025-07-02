@@ -1,5 +1,6 @@
 pub mod storage;
 
+use downcast_rs::{Downcast, impl_downcast};
 pub use storage::*;
 
 use std::{error::Error, fmt::Debug, path::Path, sync::Arc};
@@ -220,6 +221,10 @@ impl MaterialData {
         MaterialData(Box::new(value))
     }
 
+    pub fn downcast<T: RenderMaterialData>(&self) -> Option<&T> {
+        self.0.downcast_ref()
+    }
+
     fn get_pipeline(&self) -> Pipeline {
         self.0.get_pipeline()
     }
@@ -348,12 +353,14 @@ impl RenderMaterialDataBase {
     }
 }
 
-pub trait RenderMaterialData: 'static {
+pub trait RenderMaterialData: 'static + Downcast {
     fn get_pipeline(&self) -> Pipeline;
     fn get_cached_pipeline_id(&self) -> CachedPipelineId;
 
     fn set_cached_pipeline_id(&mut self, id: CachedPipelineId);
 }
+
+impl_downcast!(RenderMaterialData);
 
 impl RenderMaterialData for RenderMaterialDataBase {
     fn get_pipeline(&self) -> Pipeline {

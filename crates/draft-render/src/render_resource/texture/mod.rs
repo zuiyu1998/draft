@@ -1,7 +1,10 @@
 use std::sync::Arc;
 
 use crate::{
-    frame_graph::{FrameGraph, Handle, ResourceMaterial, TextureInfo, TransientTexture},
+    frame_graph::{
+        BindGroupTextureViewHandle, BindGroupTextureViewHandleHelper, FrameGraph, Handle,
+        ResourceMaterial, TextureInfo, TextureViewInfo, TransientTexture,
+    },
     gfx_base::RawTexture,
 };
 
@@ -10,6 +13,20 @@ pub struct RenderTexture {
     pub key: String,
     pub value: RawTexture,
     pub desc: TextureInfo,
+}
+
+impl BindGroupTextureViewHandleHelper for RenderTexture {
+    fn make_bind_group_texture_view_handle(
+        &self,
+        frame_graph: &mut FrameGraph,
+    ) -> BindGroupTextureViewHandle {
+        let texture = self.imported(frame_graph);
+
+        BindGroupTextureViewHandle {
+            texture,
+            texture_view_info: TextureViewInfo::default(),
+        }
+    }
 }
 
 impl ResourceMaterial for RenderTexture {

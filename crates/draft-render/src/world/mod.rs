@@ -10,16 +10,14 @@ pub use material::*;
 pub use shader::*;
 pub use texture::*;
 
-use crate::gfx_base::{
-    RenderAdapter, RenderDevice, RenderInstance, RenderQueue, VertexBufferLayout,
-};
+use crate::gfx_base::{RenderAdapter, RenderDevice, RenderInstance, RenderQueue};
 use fyrox_resource::{event::ResourceEvent, manager::ResourceManager};
 
 #[derive(Default)]
 pub struct RenderStorage {
-    material_storage: MaterialStorage,
-    geometry_storage: GeometryStorage,
-    texture_storage: TextureStorage,
+    pub material_storage: MaterialStorage,
+    pub geometry_storage: GeometryStorage,
+    pub texture_storage: TextureStorage,
 }
 
 impl RenderStorage {
@@ -33,9 +31,11 @@ impl RenderStorage {
 }
 
 pub struct RenderWorld {
-    server: RenderServer,
-    pub render_storage: RenderStorage,
+    pub server: RenderServer,
     texture_event_receiver: Receiver<ResourceEvent>,
+    pub material_storage: MaterialStorage,
+    pub geometry_storage: GeometryStorage,
+    pub texture_storage: TextureStorage,
 }
 
 impl RenderWorld {
@@ -51,7 +51,9 @@ impl RenderWorld {
 
         Self {
             server,
-            render_storage: Default::default(),
+            material_storage: Default::default(),
+            geometry_storage: Default::default(),
+            texture_storage: Default::default(),
             texture_event_receiver,
         }
     }
@@ -60,47 +62,25 @@ impl RenderWorld {
         self.update_texture(dt);
     }
 
-    pub fn server(&self) -> &RenderServer {
-        &self.server
-    }
-
-    pub fn get_or_insert_material_data(
-        &mut self,
-        material: &MaterialResource,
-        layouts: &[VertexBufferLayout],
-    ) -> Option<&MaterialData> {
-        self.render_storage
-            .material_storage
-            .get_or_insert(&self.server.device, material, layouts)
-    }
-
-    pub fn get_geometry_data(&mut self, geometry: &GeometryResource) -> Option<&GeometryData> {
-        self.render_storage
-            .geometry_storage
-            .get(&self.server.device, geometry)
-    }
-
     fn update_texture(&mut self, dt: f32) {
         while let Ok(event) = self.texture_event_receiver.try_recv() {
             if let ResourceEvent::Loaded(resource) | ResourceEvent::Reloaded(resource) = event {
                 if let Some(texture) = resource.try_cast::<Texture>() {
                     self.remove_texture(&texture);
-                    let _ = self.get_texture_data(&texture);
+                    let _ = self.texture_storage.get_or_insert(
+                        &self.server.device,
+                        &self.server.queue,
+                        &texture,
+                    );
                 }
             }
         }
 
-        self.render_storage.update_texture(dt);
+        self.texture_storage.update(dt);
     }
 
     fn remove_texture(&mut self, texture: &TextureResource) {
-        self.render_storage.texture_storage.remove(texture);
-    }
-
-    pub fn get_texture_data(&mut self, texture: &TextureResource) -> Option<&TextureData> {
-        self.render_storage
-            .texture_storage
-            .get(&self.server.device, &self.server.queue, texture)
+        self.texture_storage.remove(texture);
     }
 }
 

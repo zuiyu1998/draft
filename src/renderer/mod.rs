@@ -36,19 +36,15 @@ impl WorldRenderer {
         frame_graph.compile();
 
         let mut render_context = RenderContext::new(
-            &self.world.server().device,
+            &self.world.server.device,
             &mut self.transient_resource_cache,
-            self.world.render_storage.material_storage(),
+            &self.world.material_storage,
         );
 
         frame_graph.execute(&mut render_context);
 
         let command_buffers = render_context.finish();
 
-        self.world
-            .server()
-            .queue
-            .wgpu_queue()
-            .submit(command_buffers);
+        self.world.server.queue.wgpu_queue().submit(command_buffers);
     }
 }

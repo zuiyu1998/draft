@@ -131,7 +131,7 @@ pub struct GeometryStorage {
 }
 
 impl GeometryStorage {
-    pub fn get(
+    pub fn get_or_insert(
         &mut self,
         device: &RenderDevice,
         geometry: &GeometryResource,

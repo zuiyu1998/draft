@@ -24,7 +24,7 @@ impl TextureStorage {
         self.texture_cache.update(dt)
     }
 
-    pub fn get(
+    pub fn get_or_insert(
         &mut self,
         device: &RenderDevice,
         queue: &RenderQueue,

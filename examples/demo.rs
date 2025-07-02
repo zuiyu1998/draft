@@ -1,14 +1,19 @@
 use std::{collections::HashMap, sync::Arc};
 
 use draft_render::{
-    FragmentState, FrameworkError, Geometry, GeometryResource, Material, MaterialDefinition,
-    MaterialResource, PipelineLayoutCache, RenderMaterial, RenderMaterialDataBase,
-    RenderPipelineDescriptor, RenderServer, RenderWorld, Shader, ShaderCache, ShaderResource,
-    Texture, TextureResource, Vertex, VertexAttributeDescriptor,
+    BindGroupLayoutDescriptor, FragmentState, FrameworkError, Geometry, GeometryResource, Material,
+    MaterialDefinition, MaterialResource, PipelineLayoutCache, PipelineLayoutDescriptor,
+    RenderMaterial, RenderMaterialData, RenderMaterialDataBase, RenderPipelineDescriptor,
+    RenderServer, RenderWorld, Shader, ShaderCache, ShaderResource, Texture, TextureResource,
+    Vertex, VertexAttributeDescriptor,
     frame_graph::{ColorAttachmentOwned, FrameGraph},
     gfx_base::{
-        BlendComponent, BlendState, ColorTargetState, ColorWrites, RawTextureFormat,
-        RawTextureView, RenderDevice, TextureFormat, VertexBufferLayout, initialize_resources,
+        BindGroupLayoutEntriesBuilder, BlendComponent, BlendState, CachedPipelineId,
+        ColorTargetState, ColorWrites, Pipeline, RawBindGroupLayout, RawTextureFormat,
+        RawTextureView, RenderDevice, SamplerBindingType, ShaderStages, TextureFormat,
+        TextureSampleType, VertexBufferLayout,
+        binding_types::{sampler, texture_2d},
+        initialize_resources,
     },
     wgpu::{
         self, Color, CompositeAlphaMode, Instance, InstanceDescriptor, LoadOp, Operations,
@@ -50,14 +55,44 @@ lazy_static! {
     );
 }
 
+pub struct CustomRenderMaterialData {
+    base: RenderMaterialDataBase,
+    diffuse_bind_group_layout: RawBindGroupLayout,
+}
+
+impl RenderMaterialData for CustomRenderMaterialData {
+    fn get_pipeline(&self) -> Pipeline {
+        self.base.get_pipeline()
+    }
+
+    fn get_cached_pipeline_id(&self) -> CachedPipelineId {
+        self.base.get_cached_pipeline_id()
+    }
+
+    fn set_cached_pipeline_id(&mut self, id: CachedPipelineId) {
+        self.base.set_cached_pipeline_id(id);
+    }
+}
+
 #[derive(Debug, Clone, Visit, Reflect, Default)]
 pub struct CustomMaterial;
 
 impl RenderMaterial for CustomMaterial {
-    type Data = RenderMaterialDataBase;
+    type Data = CustomRenderMaterialData;
 
     fn specialize(&self, layouts: &[VertexBufferLayout]) -> RenderPipelineDescriptor {
-        let mut desc = RenderPipelineDescriptor::default();
+        let mut builder = BindGroupLayoutEntriesBuilder::new(ShaderStages::FRAGMENT);
+        builder.add_bind_group_layout(0, texture_2d(TextureSampleType::Float { filterable: true }));
+        builder.add_bind_group_layout(1, sampler(SamplerBindingType::Filtering));
+        let entries = builder.build();
+
+        let mut desc = RenderPipelineDescriptor {
+            label: "test".into(),
+            ..RenderPipelineDescriptor::default()
+        };
+        desc.layout = PipelineLayoutDescriptor {
+            bind_group_layouts: vec![BindGroupLayoutDescriptor { entries }],
+        };
         desc.vertex.buffers = layouts.to_vec();
         desc.vertex.shader = BUILT_IN_SHADER.resource().clone();
         desc.vertex.entry_point = Some("vs_main".into());
@@ -87,12 +122,22 @@ impl RenderMaterial for CustomMaterial {
     ) -> Result<Self::Data, FrameworkError> {
         let desc = self.specialize(layouts);
 
-        RenderMaterialDataBase::get_render_pipeline_descriptor(
+        let base = RenderMaterialDataBase::get_render_pipeline_descriptor(
             device,
             &desc,
             shader_cache,
             pipeline_layout_cache,
-        )
+        )?;
+
+        let diffuse_bind_group_layout = pipeline_layout_cache
+            .get_bind_group_layout(&desc.layout.bind_group_layouts[0])
+            .unwrap()
+            .clone();
+
+        Ok(CustomRenderMaterialData {
+            base,
+            diffuse_bind_group_layout,
+        })
     }
 }
 
@@ -105,6 +150,36 @@ impl PipelineNode for TestNode {
         world: &mut RenderWorld,
         context: &PipelineContext,
     ) {
+        let material_data = world
+            .material_storage
+            .get_or_insert(
+                &world.server.device,
+                &context.batch.material,
+                context.batch.layouts(),
+            )
+            .unwrap();
+
+        let Some(texture_data) = world.texture_storage.get_or_insert(
+            &world.server.device,
+            &world.server.queue,
+            context.image,
+        ) else {
+            return;
+        };
+        let Some(custom_material_data) = material_data.downcast::<CustomRenderMaterialData>()
+        else {
+            return;
+        };
+
+        let bind_group_handle = frame_graph
+            .create_bind_group_handle_builder(
+                None,
+                custom_material_data.diffuse_bind_group_layout.clone(),
+            )
+            .add_texture_view(0, &texture_data.texture)
+            .add_handle(1, texture_data.sampler.sampler())
+            .build();
+
         let mut pass_builder = frame_graph.create_pass_builder("test_node");
         let mut render_pass_builder = pass_builder.create_render_pass_builder("test_pass");
 
@@ -112,22 +187,17 @@ impl PipelineNode for TestNode {
             view: context.texture_view.clone(),
             resolve_target: None,
             ops: Operations {
-                load: LoadOp::Clear(Color::BLUE),
+                load: LoadOp::Clear(Color::WHITE),
                 store: StoreOp::Store,
             },
         });
 
-        if let Some(texture_data) = world.get_texture_data(context.image) {
-            let _texture_ref = render_pass_builder.read_material(&texture_data.texture);
-        }
-
-        let material_data = world
-            .get_or_insert_material_data(&context.batch.material, context.batch.layouts())
-            .unwrap();
-
         render_pass_builder.set_render_pipeline(material_data.get_cached_pipeline_id());
 
-        let geometry_data = world.get_geometry_data(&context.batch.geometry).unwrap();
+        let geometry_data = world
+            .geometry_storage
+            .get_or_insert(&world.server.device, &context.batch.geometry)
+            .unwrap();
 
         let buffer_ref = render_pass_builder.read_material(&geometry_data.vertex_buffer);
         let buffer_slice = geometry_data.vertex_buffer.slice(0..);
@@ -137,6 +207,9 @@ impl PipelineNode for TestNode {
             buffer_slice.offset,
             buffer_slice.size,
         );
+
+        render_pass_builder.set_bind_group_handle(0, &bind_group_handle, &[]);
+
         if let Some(index_buffer) = &geometry_data.index_buffer {
             let buffer_ref = render_pass_builder.read_material(&index_buffer.buffer);
             let buffer_slice = index_buffer.buffer.slice(0..);

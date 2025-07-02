@@ -4,9 +4,9 @@ use wgpu::{QuerySet, ShaderStages};
 
 use crate::{
     frame_graph::{
-        BindGroupBinding, ColorAttachment, ColorAttachmentOwned, DepthStencilAttachment, Ref,
-        RenderPass, RenderPassCommandBuilder, ResourceMaterial, ResourceRead, ResourceWrite,
-        TransientBuffer,
+        BindGroupBinding, BindGroupHandle, ColorAttachment, ColorAttachmentOwned,
+        DepthStencilAttachment, Ref, RenderPass, RenderPassCommandBuilder, ResourceMaterial,
+        ResourceRead, ResourceWrite, TransientBuffer,
     },
     gfx_base::CachedPipelineId,
 };
@@ -47,6 +47,18 @@ impl<'a, 'b> RenderPassBuilder<'a, 'b> {
         material: &M,
     ) -> Ref<M::ResourceType, ResourceWrite> {
         self.pass_builder.pass_node_builder.write_material(material)
+    }
+
+    pub fn set_bind_group_handle(
+        &mut self,
+        index: u32,
+        bind_group: &BindGroupHandle,
+        offsets: &[u32],
+    ) -> &mut Self {
+        let bind_group = bind_group.make_binding(&mut self.pass_builder.pass_node_builder);
+        self.render_pass.set_bind_group(index, &bind_group, offsets);
+
+        self
     }
 
     pub fn set_bind_group_binding(
