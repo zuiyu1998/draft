@@ -7,10 +7,12 @@ use std::{error::Error, fmt::Debug, path::Path, sync::Arc};
 use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, sparse::AtomicIndex, uuid, visitor::*};
 
 use crate::{
-    ShaderResource,
+    FrameworkError, ShaderResource,
     gfx_base::{
-        BindGroupLayoutEntry, ColorTargetState, DepthStencilState, MultisampleState,
-        PipelineCompilationOptions, PrimitiveState, RenderDevice, VertexBufferLayout,
+        BindGroupLayoutEntry, CachedPipelineId, ColorTargetState, DepthStencilState,
+        MultisampleState, Pipeline, PipelineCompilationOptions, PrimitiveState, RawFragmentState,
+        RawRenderPipelineDescriptor, RawVertexAttribute, RawVertexBufferLayout, RawVertexState,
+        RenderDevice, RenderPipeline, VertexBufferLayout,
     },
 };
 
@@ -211,16 +213,167 @@ impl Default for MaterialDefinition {
     }
 }
 
-pub trait RenderMaterialData: 'static {}
+pub struct MaterialData(Box<dyn RenderMaterialData>);
 
-impl RenderMaterialData for () {}
+impl MaterialData {
+    pub fn new<T: RenderMaterialData>(value: T) -> Self {
+        MaterialData(Box::new(value))
+    }
+
+    fn get_pipeline(&self) -> Pipeline {
+        self.0.get_pipeline()
+    }
+
+    pub fn get_cached_pipeline_id(&self) -> CachedPipelineId {
+        self.0.get_cached_pipeline_id()
+    }
+
+    pub fn set_cached_pipeline_id(&mut self, id: CachedPipelineId) {
+        self.0.set_cached_pipeline_id(id);
+    }
+
+    pub fn prepare(
+        material: &MaterialDefinition,
+        device: &RenderDevice,
+        layouts: &[VertexBufferLayout],
+        shader_cache: &mut ShaderCache,
+        pipeline_layout_cache: &mut PipelineLayoutCache,
+    ) -> Result<Self, FrameworkError> {
+        material
+            .0
+            .prepare(device, layouts, shader_cache, pipeline_layout_cache)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct RenderMaterialDataBase {
+    cached: CachedPipeline,
+    id: CachedPipelineId,
+}
+
+impl RenderMaterialDataBase {
+    pub fn get_render_pipeline_descriptor(
+        device: &RenderDevice,
+        desc: &RenderPipelineDescriptor,
+        shader_cache: &mut ShaderCache,
+        pipeline_layout_cache: &mut PipelineLayoutCache,
+    ) -> Result<Self, FrameworkError> {
+        let vertex_module = shader_cache.get(device, &desc.vertex.shader)?.clone();
+        let fragment_module = match &desc.fragment {
+            Some(fragment) => match shader_cache.get(device, &fragment.shader) {
+                Ok(module) => Some(module.clone()),
+                Err(err) => return Err(err),
+            },
+            None => None,
+        };
+
+        let layout = pipeline_layout_cache.get(device, &desc.layout)?.clone();
+
+        let vertex_buffer_layouts = desc
+            .vertex
+            .buffers
+            .iter()
+            .map(|layout| {
+                (
+                    layout.array_stride,
+                    layout
+                        .attributes
+                        .iter()
+                        .map(|attribute| attribute.into())
+                        .collect::<Vec<RawVertexAttribute>>(),
+                    layout.step_mode,
+                )
+            })
+            .collect::<Vec<_>>();
+        let vertex_buffer_layouts = vertex_buffer_layouts
+            .iter()
+            .map(
+                |(array_stride, attributes, step_mode)| RawVertexBufferLayout {
+                    array_stride: *array_stride,
+                    attributes,
+                    step_mode: (*step_mode).into(),
+                },
+            )
+            .collect::<Vec<_>>();
+
+        let fragment_data = desc.fragment.clone().map(|fragment| {
+            (
+                fragment_module.unwrap(),
+                fragment.entry_point,
+                fragment
+                    .targets
+                    .iter()
+                    .map(|target| target.as_ref().map(|target| target.into()))
+                    .collect::<Vec<_>>(),
+                fragment.compilation_options,
+            )
+        });
+
+        let descriptor = RawRenderPipelineDescriptor {
+            multiview: None,
+            depth_stencil: desc
+                .depth_stencil
+                .as_ref()
+                .map(|depth_stencil| depth_stencil.into()),
+            label: Some(&desc.label),
+            layout: Some(&layout),
+            multisample: desc.multisample.into(),
+            primitive: desc.primitive.into(),
+            vertex: RawVertexState {
+                buffers: &vertex_buffer_layouts,
+                entry_point: desc.vertex.entry_point.as_deref(),
+                module: &vertex_module,
+                compilation_options: desc.vertex.compilation_options.get_raw(),
+            },
+            fragment: fragment_data.as_ref().map(
+                |(module, entry_point, targets, compilation_options)| RawFragmentState {
+                    entry_point: entry_point.as_deref(),
+                    module,
+                    targets,
+                    compilation_options: compilation_options.get_raw(),
+                },
+            ),
+            cache: None,
+        };
+
+        let pipeline = device.wgpu_device().create_render_pipeline(&descriptor);
+
+        Ok(RenderMaterialDataBase {
+            cached: CachedPipeline {
+                descriptor: PipelineDescriptor::RenderPipelineDescriptor(Box::new(desc.clone())),
+                pipeline: Pipeline::RenderPipeline(RenderPipeline::new(pipeline)),
+            },
+            id: CachedPipelineId::default(),
+        })
+    }
+}
+
+pub trait RenderMaterialData: 'static {
+    fn get_pipeline(&self) -> Pipeline;
+    fn get_cached_pipeline_id(&self) -> CachedPipelineId;
+
+    fn set_cached_pipeline_id(&mut self, id: CachedPipelineId);
+}
+
+impl RenderMaterialData for RenderMaterialDataBase {
+    fn get_pipeline(&self) -> Pipeline {
+        self.cached.pipeline.clone()
+    }
+
+    fn get_cached_pipeline_id(&self) -> CachedPipelineId {
+        self.id
+    }
+
+    fn set_cached_pipeline_id(&mut self, id: CachedPipelineId) {
+        self.id = id;
+    }
+}
 
 impl RenderMaterial for RenderPipelineDescriptor {
-    type Data = ();
+    type Data = RenderMaterialDataBase;
 
     fn specialize(&self, layouts: &[VertexBufferLayout]) -> RenderPipelineDescriptor {
         let mut desc = self.clone();
-
         desc.vertex.buffers = layouts.to_vec();
 
         desc
@@ -228,13 +381,20 @@ impl RenderMaterial for RenderPipelineDescriptor {
 
     fn prepare(
         &self,
-        _device: &RenderDevice,
-        _pipeline_layout_cache: &mut PipelineLayoutCache,
-    ) -> Self::Data {
+        device: &RenderDevice,
+        layouts: &[VertexBufferLayout],
+        shader_cache: &mut ShaderCache,
+        pipeline_layout_cache: &mut PipelineLayoutCache,
+    ) -> Result<Self::Data, FrameworkError> {
+        let desc = self.specialize(layouts);
+        RenderMaterialDataBase::get_render_pipeline_descriptor(
+            device,
+            &desc,
+            shader_cache,
+            pipeline_layout_cache,
+        )
     }
 }
-
-pub type BoxedRenderMaterialData = Box<dyn RenderMaterialData>;
 
 pub trait RenderMaterial:
     'static + Debug + Clone + Reflect + Visit + Default + Send + Sync
@@ -246,37 +406,34 @@ pub trait RenderMaterial:
     fn prepare(
         &self,
         device: &RenderDevice,
+        layouts: &[VertexBufferLayout],
+        shader_cache: &mut ShaderCache,
         pipeline_layout_cache: &mut PipelineLayoutCache,
-    ) -> Self::Data;
+    ) -> Result<Self::Data, FrameworkError>;
 }
 
 pub trait ErasedRenderMaterial: 'static + Debug + Reflect + Visit + Send + Sync {
-    fn specialize(&self, layouts: &[VertexBufferLayout]) -> RenderPipelineDescriptor;
-
     fn prepare(
         &self,
         device: &RenderDevice,
+        layouts: &[VertexBufferLayout],
+        shader_cache: &mut ShaderCache,
         pipeline_layout_cache: &mut PipelineLayoutCache,
-    ) -> BoxedRenderMaterialData;
+    ) -> Result<MaterialData, FrameworkError>;
 
     fn clone_box(&self) -> Box<dyn ErasedRenderMaterial>;
 }
 
 impl<T: RenderMaterial> ErasedRenderMaterial for T {
-    fn specialize(&self, layouts: &[VertexBufferLayout]) -> RenderPipelineDescriptor {
-        <T as RenderMaterial>::specialize(self, layouts)
-    }
-
     fn prepare(
         &self,
         device: &RenderDevice,
+        layouts: &[VertexBufferLayout],
+        shader_cache: &mut ShaderCache,
         pipeline_layout_cache: &mut PipelineLayoutCache,
-    ) -> BoxedRenderMaterialData {
-        Box::new(<T as RenderMaterial>::prepare(
-            self,
-            device,
-            pipeline_layout_cache,
-        ))
+    ) -> Result<MaterialData, FrameworkError> {
+        let data = self.prepare(device, layouts, shader_cache, pipeline_layout_cache)?;
+        Ok(MaterialData::new(data))
     }
 
     fn clone_box(&self) -> Box<dyn ErasedRenderMaterial> {

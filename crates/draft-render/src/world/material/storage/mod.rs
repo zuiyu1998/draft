@@ -5,11 +5,10 @@ pub use layout_cache::*;
 use std::{borrow::Cow, sync::Arc};
 
 use crate::{
-    MaterialDefinition, RenderMaterialData,
+    MaterialData,
     gfx_base::{
-        CachedPipelineId, GetPipelineCache, Pipeline, PipelineCache, RawFragmentState,
-        RawRenderPipelineDescriptor, RawVertexAttribute, RawVertexBufferLayout, RawVertexState,
-        RenderDevice, RenderPipeline, VertexBufferLayout,
+        CachedPipelineId, GetPipelineCache, Pipeline, PipelineCache, RenderDevice,
+        VertexBufferLayout,
     },
 };
 
@@ -18,8 +17,7 @@ use wgpu::{ShaderModuleDescriptor, ShaderSource};
 use fyrox_core::log::Log;
 
 use crate::{
-    FrameworkError, MaterialResource, PipelineDescriptor, RenderPipelineDescriptor, Shader,
-    ShaderResource, TemporaryCache,
+    FrameworkError, MaterialResource, PipelineDescriptor, Shader, ShaderResource, TemporaryCache,
 };
 
 pub struct ShaderModuleData {
@@ -91,130 +89,7 @@ impl ShaderCache {
     }
 }
 
-pub struct MaterialData {
-    pub pipeline: CachedPipeline,
-    pub pipeline_id: CachedPipelineId,
-    pub data: Box<dyn RenderMaterialData>,
-}
-
-impl MaterialData {
-    pub fn get_render_pipeline_descriptor(
-        shader_cache: &mut ShaderCache,
-        pipeline_layout_cache: &mut PipelineLayoutCache,
-        device: &RenderDevice,
-        desc: &RenderPipelineDescriptor,
-    ) -> Result<CachedPipeline, FrameworkError> {
-        let vertex_module = shader_cache.get(device, &desc.vertex.shader)?.clone();
-        let fragment_module = match &desc.fragment {
-            Some(fragment) => match shader_cache.get(device, &fragment.shader) {
-                Ok(module) => Some(module.clone()),
-                Err(err) => return Err(err),
-            },
-            None => None,
-        };
-
-        let layout = pipeline_layout_cache.get(device, &desc.layout)?.clone();
-
-        let vertex_buffer_layouts = desc
-            .vertex
-            .buffers
-            .iter()
-            .map(|layout| {
-                (
-                    layout.array_stride,
-                    layout
-                        .attributes
-                        .iter()
-                        .map(|attribute| attribute.into())
-                        .collect::<Vec<RawVertexAttribute>>(),
-                    layout.step_mode,
-                )
-            })
-            .collect::<Vec<_>>();
-        let vertex_buffer_layouts = vertex_buffer_layouts
-            .iter()
-            .map(
-                |(array_stride, attributes, step_mode)| RawVertexBufferLayout {
-                    array_stride: *array_stride,
-                    attributes,
-                    step_mode: (*step_mode).into(),
-                },
-            )
-            .collect::<Vec<_>>();
-
-        let fragment_data = desc.fragment.clone().map(|fragment| {
-            (
-                fragment_module.unwrap(),
-                fragment.entry_point,
-                fragment
-                    .targets
-                    .iter()
-                    .map(|target| target.as_ref().map(|target| target.into()))
-                    .collect::<Vec<_>>(),
-                fragment.compilation_options,
-            )
-        });
-
-        let descriptor = RawRenderPipelineDescriptor {
-            multiview: None,
-            depth_stencil: desc
-                .depth_stencil
-                .as_ref()
-                .map(|depth_stencil| depth_stencil.into()),
-            label: Some(&desc.label),
-            layout: Some(&layout),
-            multisample: desc.multisample.into(),
-            primitive: desc.primitive.into(),
-            vertex: RawVertexState {
-                buffers: &vertex_buffer_layouts,
-                entry_point: desc.vertex.entry_point.as_deref(),
-                module: &vertex_module,
-                compilation_options: desc.vertex.compilation_options.get_raw(),
-            },
-            fragment: fragment_data.as_ref().map(
-                |(module, entry_point, targets, compilation_options)| RawFragmentState {
-                    entry_point: entry_point.as_deref(),
-                    module,
-                    targets,
-                    compilation_options: compilation_options.get_raw(),
-                },
-            ),
-            cache: None,
-        };
-
-        let pipeline = device.wgpu_device().create_render_pipeline(&descriptor);
-
-        Ok(CachedPipeline {
-            descriptor: PipelineDescriptor::RenderPipelineDescriptor(Box::new(desc.clone())),
-            pipeline: Pipeline::RenderPipeline(RenderPipeline::new(pipeline)),
-        })
-    }
-
-    pub fn new(
-        shader_cache: &mut ShaderCache,
-        pipeline_layout_cache: &mut PipelineLayoutCache,
-        device: &RenderDevice,
-        material: &MaterialDefinition,
-        layouts: &[VertexBufferLayout],
-    ) -> Result<Self, FrameworkError> {
-        let desc = material.0.specialize(layouts);
-        let pipeline = Self::get_render_pipeline_descriptor(
-            shader_cache,
-            pipeline_layout_cache,
-            device,
-            &desc,
-        )?;
-
-        let data = material.0.prepare(device, pipeline_layout_cache);
-
-        Ok(MaterialData {
-            pipeline,
-            pipeline_id: Default::default(),
-            data,
-        })
-    }
-}
-
+#[derive(Debug, Clone)]
 pub struct CachedPipeline {
     pub descriptor: PipelineDescriptor,
     pub pipeline: Pipeline,
@@ -241,18 +116,19 @@ impl MaterialStorage {
                 &material_state.cache_index,
                 Default::default(),
                 || {
-                    MaterialData::new(
+                    MaterialData::prepare(
+                        &material_state.definition,
+                        device,
+                        layouts,
                         &mut self.shader_cache,
                         &mut self.pipeline_layout_cache,
-                        device,
-                        &material_state.definition,
-                        layouts,
                     )
                 },
             ) {
                 Ok(data) => {
-                    data.pipeline_id = CachedPipelineId::new(material_state.cache_index.get());
-
+                    data.set_cached_pipeline_id(CachedPipelineId::new(
+                        material_state.cache_index.get(),
+                    ));
                     Some(data)
                 }
                 Err(error) => {
@@ -274,7 +150,7 @@ impl GetPipelineCache for MaterialStorage {
                 .material_cache
                 .buffer
                 .get_raw(index)
-                .map(|entry| entry.value.pipeline.pipeline.clone());
+                .map(|entry| entry.value.get_pipeline());
 
             target.push(pipeline);
         }

@@ -1,4 +1,4 @@
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct RenderPipeline(wgpu::RenderPipeline);
 
 impl RenderPipeline {
@@ -11,7 +11,7 @@ impl RenderPipeline {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ComputePipeline(wgpu::ComputePipeline);
 
 impl ComputePipeline {
@@ -24,7 +24,7 @@ impl ComputePipeline {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Pipeline {
     RenderPipeline(RenderPipeline),
     ComputePipeline(ComputePipeline),

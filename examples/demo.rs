@@ -1,13 +1,14 @@
 use std::{collections::HashMap, sync::Arc};
 
 use draft_render::{
-    FragmentState, Geometry, GeometryResource, Material, MaterialDefinition, MaterialResource,
-    RenderMaterial, RenderPipelineDescriptor, RenderServer, RenderWorld, Shader, ShaderResource,
+    FragmentState, FrameworkError, Geometry, GeometryResource, Material, MaterialDefinition,
+    MaterialResource, PipelineLayoutCache, RenderMaterial, RenderMaterialDataBase,
+    RenderPipelineDescriptor, RenderServer, RenderWorld, Shader, ShaderCache, ShaderResource,
     Texture, TextureResource, Vertex, VertexAttributeDescriptor,
     frame_graph::{ColorAttachmentOwned, FrameGraph},
     gfx_base::{
         BlendComponent, BlendState, ColorTargetState, ColorWrites, RawTextureFormat,
-        RawTextureView, TextureFormat, VertexBufferLayout, initialize_resources,
+        RawTextureView, RenderDevice, TextureFormat, VertexBufferLayout, initialize_resources,
     },
     wgpu::{
         self, Color, CompositeAlphaMode, Instance, InstanceDescriptor, LoadOp, Operations,
@@ -53,7 +54,7 @@ lazy_static! {
 pub struct CustomMaterial;
 
 impl RenderMaterial for CustomMaterial {
-    type Data = ();
+    type Data = RenderMaterialDataBase;
 
     fn specialize(&self, layouts: &[VertexBufferLayout]) -> RenderPipelineDescriptor {
         let mut desc = RenderPipelineDescriptor::default();
@@ -79,9 +80,19 @@ impl RenderMaterial for CustomMaterial {
 
     fn prepare(
         &self,
-        _device: &draft_render::gfx_base::RenderDevice,
-        _pipeline_layout_cache: &mut draft_render::PipelineLayoutCache,
-    ) -> Self::Data {
+        device: &RenderDevice,
+        layouts: &[VertexBufferLayout],
+        shader_cache: &mut ShaderCache,
+        pipeline_layout_cache: &mut PipelineLayoutCache,
+    ) -> Result<Self::Data, FrameworkError> {
+        let desc = self.specialize(layouts);
+
+        RenderMaterialDataBase::get_render_pipeline_descriptor(
+            device,
+            &desc,
+            shader_cache,
+            pipeline_layout_cache,
+        )
     }
 }
 
@@ -114,7 +125,7 @@ impl PipelineNode for TestNode {
             .get_or_insert_material_data(&context.batch.material, context.batch.layouts())
             .unwrap();
 
-        render_pass_builder.set_render_pipeline(material_data.pipeline_id);
+        render_pass_builder.set_render_pipeline(material_data.get_cached_pipeline_id());
 
         let geometry_data = world.get_geometry_data(&context.batch.geometry).unwrap();
 
@@ -138,7 +149,6 @@ impl PipelineNode for TestNode {
 
             render_pass_builder.draw_indexed(0..index_buffer.num_indices, 0, 0..1);
         } else {
-            println!("draw");
             render_pass_builder.draw(0..3, 0..1);
         }
     }
