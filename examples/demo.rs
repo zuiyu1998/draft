@@ -11,7 +11,7 @@ use draft_render::{
         BindGroupLayoutEntriesBuilder, BlendComponent, BlendState, CachedPipelineId,
         ColorTargetState, ColorWrites, Pipeline, RawBindGroupLayout, RawTextureFormat,
         RawTextureView, RenderDevice, SamplerBindingType, ShaderStages, TextureFormat,
-        TextureSampleType, VertexBufferLayout,
+        TextureSampleType, VertexBufferLayout, VertexFormat,
         binding_types::{sampler, texture_2d},
         initialize_resources,
     },
@@ -485,13 +485,13 @@ fn new_batch() -> Batch {
     );
 
     modifier.insert_attribute(
-        VertexAttributeDescriptor::ATTRIBUTE_COLOR,
+        VertexAttributeDescriptor::new(1, VertexFormat::Float32x2),
         vec![
-            [0.5, 0.0, 0.5],
-            [0.5, 0.0, 0.5],
-            [0.5, 0.0, 0.5],
-            [0.5, 0.0, 0.5],
-            [0.5, 0.0, 0.5],
+            [0.4131759, 0.00759614],
+            [0.0048659444, 0.43041354],
+            [0.28081453, 0.949397],
+            [0.85967, 0.84732914],
+            [0.9414737, 0.2652641],
         ],
     );
 
