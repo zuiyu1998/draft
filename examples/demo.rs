@@ -1,17 +1,16 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, ops::Deref, sync::Arc};
 
 use draft_render::{
     BindGroupLayoutDescriptor, FragmentState, FrameworkError, Geometry, GeometryResource, Material,
-    MaterialDataTrait, MaterialDefinition, MaterialResource, PipelineLayoutCache,
-    PipelineLayoutDescriptor, RenderMaterial, RenderMaterialDataBase, RenderPipelineDescriptor,
-    RenderServer, RenderWorld, Shader, ShaderCache, ShaderResource, Texture, TextureResource,
-    Vertex, VertexAttributeDescriptor,
+    MaterialDefinition, MaterialResource, PipelineData, PipelineLayoutCache,
+    PipelineLayoutDescriptor, RenderMaterial, RenderPipelineDescriptor, RenderServer, RenderWorld,
+    Shader, ShaderCache, ShaderResource, Texture, TextureResource, Vertex,
+    VertexAttributeDescriptor,
     frame_graph::{ColorAttachmentOwned, FrameGraph},
     gfx_base::{
-        BindGroupLayoutEntriesBuilder, BlendComponent, BlendState, CachedPipelineId,
-        ColorTargetState, ColorWrites, Pipeline, RawBindGroupLayout, RawTextureFormat,
-        RawTextureView, RenderDevice, SamplerBindingType, ShaderStages, TextureFormat,
-        TextureSampleType, VertexBufferLayout, VertexFormat,
+        BindGroupLayoutEntriesBuilder, BlendComponent, BlendState, ColorTargetState, ColorWrites,
+        RawBindGroupLayout, RawTextureFormat, RawTextureView, RenderDevice, SamplerBindingType,
+        ShaderStages, TextureFormat, TextureSampleType, VertexBufferLayout, VertexFormat,
         binding_types::{sampler, texture_2d},
         initialize_resources,
     },
@@ -56,44 +55,41 @@ lazy_static! {
 }
 
 pub struct CustomRenderMaterialData {
-    base: RenderMaterialDataBase,
     diffuse_bind_group_layout: RawBindGroupLayout,
 }
 
-impl MaterialDataTrait for CustomRenderMaterialData {
-    fn get_pipeline(&self) -> Pipeline {
-        self.base.get_pipeline()
-    }
+impl PipelineData for CustomRenderMaterialData {}
 
-    fn get_cached_pipeline_id(&self) -> CachedPipelineId {
-        self.base.get_cached_pipeline_id()
-    }
-
-    fn set_cached_pipeline_id(&mut self, id: CachedPipelineId) {
-        self.base.set_cached_pipeline_id(id);
-    }
-}
-
-#[derive(Debug, Clone, Visit, Reflect, Default)]
+#[derive(Debug, Clone, Visit, Reflect)]
 pub struct CustomMaterial {
     layouts: Vec<VertexBufferLayout>,
+    diffuse_bind_group_layout: BindGroupLayoutDescriptor,
 }
 
-impl RenderMaterial for CustomMaterial {
-    type Data = CustomRenderMaterialData;
-
-    fn specialize(&self) -> RenderPipelineDescriptor {
+impl Default for CustomMaterial {
+    fn default() -> Self {
         let mut builder = BindGroupLayoutEntriesBuilder::new(ShaderStages::FRAGMENT);
         builder.add_bind_group_layout(0, texture_2d(TextureSampleType::Float { filterable: true }));
         builder.add_bind_group_layout(1, sampler(SamplerBindingType::Filtering));
         let entries = builder.build();
 
+        Self {
+            layouts: vec![],
+            diffuse_bind_group_layout: BindGroupLayoutDescriptor { entries },
+        }
+    }
+}
+
+impl RenderMaterial for CustomMaterial {
+    type PipelineData = CustomRenderMaterialData;
+
+    fn specialize(&self) -> RenderPipelineDescriptor {
         let mut desc = RenderPipelineDescriptor {
             label: "test".into(),
             ..RenderPipelineDescriptor::default()
         };
         desc.layout = PipelineLayoutDescriptor {
-            bind_group_layouts: vec![BindGroupLayoutDescriptor { entries }],
+            bind_group_layouts: vec![self.diffuse_bind_group_layout.clone()],
         };
         desc.vertex.buffers = self.layouts.to_vec();
         desc.vertex.shader = BUILT_IN_SHADER.resource().clone();
@@ -118,27 +114,19 @@ impl RenderMaterial for CustomMaterial {
     fn prepare(
         &self,
         device: &RenderDevice,
-        shader_cache: &mut ShaderCache,
+        _shader_cache: &mut ShaderCache,
         pipeline_layout_cache: &mut PipelineLayoutCache,
-    ) -> Result<Self::Data, FrameworkError> {
-        let desc = self.specialize();
-
-        let base = RenderMaterialDataBase::get_render_pipeline_descriptor(
-            device,
-            &desc,
-            shader_cache,
-            pipeline_layout_cache,
-        )?;
-
-        let diffuse_bind_group_layout = pipeline_layout_cache
-            .get_bind_group_layout(&desc.layout.bind_group_layouts[0])
-            .unwrap()
-            .clone();
+    ) -> Result<Self::PipelineData, FrameworkError> {
+        let data = pipeline_layout_cache
+            .get_or_insert_bind_group_layout_data(device, &self.diffuse_bind_group_layout)?;
 
         Ok(CustomRenderMaterialData {
-            base,
-            diffuse_bind_group_layout,
+            diffuse_bind_group_layout: data.bind_group_layout.deref().clone(),
         })
+    }
+
+    fn update_vertex_buffer_layouts(&mut self, layouts: &[VertexBufferLayout]) {
+        self.layouts = layouts.to_vec();
     }
 }
 

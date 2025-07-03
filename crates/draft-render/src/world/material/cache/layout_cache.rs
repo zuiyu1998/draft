@@ -4,7 +4,7 @@ use crate::{
     BindGroupLayoutDescriptor, FrameworkError, PipelineLayoutDescriptor, TemporaryCache,
     gfx_base::{RawBindGroupLayout, RenderDevice},
 };
-use fyrox_core::{log::Log, sparse::AtomicIndex};
+use fyrox_core::sparse::AtomicIndex;
 
 #[derive(Default)]
 pub struct PipelineLayoutCache {
@@ -15,24 +15,18 @@ pub struct PipelineLayoutCache {
 }
 
 impl PipelineLayoutCache {
-    pub fn get_bind_group_layout_data(
+    pub fn get_or_insert_bind_group_layout_data(
         &mut self,
         device: &RenderDevice,
         desc: &BindGroupLayoutDescriptor,
-    ) -> Option<BindGroupLayoutData> {
+    ) -> Result<&BindGroupLayoutData, FrameworkError> {
         let layout = self.get_or_insert_bind_group_layout(desc).clone();
 
-        match self.bind_group_layout_cache.get_or_insert_with(
+        self.bind_group_layout_cache.get_or_insert_with(
             &layout.cache_index,
             Default::default(),
             || BindGroupLayoutData::new(device, &layout),
-        ) {
-            Ok(data) => Some(data.clone()),
-            Err(error) => {
-                Log::err(format!("{error}"));
-                None
-            }
-        }
+        )
     }
 
     pub fn get_bind_group_layout(
@@ -63,19 +57,21 @@ impl PipelineLayoutCache {
         &mut self,
         device: &RenderDevice,
         desc: &PipelineLayoutDescriptor,
-    ) -> &PipelineLayout {
+    ) -> Result<&PipelineLayout, FrameworkError> {
         if !self.pipeline_layout_map.contains_key(desc) {
-            let bind_group_layouts = desc
-                .bind_group_layouts
-                .iter()
-                .map(|desc| self.get_bind_group_layout_data(device, desc).unwrap())
-                .collect::<Vec<BindGroupLayoutData>>();
+            let mut bind_group_layouts = vec![];
+
+            for bind_group_layout in desc.bind_group_layouts.iter() {
+                let data = self.get_or_insert_bind_group_layout_data(device, bind_group_layout)?;
+
+                bind_group_layouts.push(data.clone());
+            }
 
             let layout = PipelineLayout::new(desc.clone(), bind_group_layouts);
             self.pipeline_layout_map.insert(desc.clone(), layout);
         }
 
-        self.pipeline_layout_map.get(desc).unwrap()
+        Ok(self.pipeline_layout_map.get(desc).unwrap())
     }
 
     pub fn get(
@@ -83,7 +79,7 @@ impl PipelineLayoutCache {
         device: &RenderDevice,
         desc: &PipelineLayoutDescriptor,
     ) -> Result<&wgpu::PipelineLayout, FrameworkError> {
-        let layout = self.get_pipeline_layout(device, desc).clone();
+        let layout = self.get_pipeline_layout(device, desc)?.clone();
 
         match self.pipeline_layout_cache.get_or_insert_with(
             &layout.cache_index,
