@@ -13,27 +13,10 @@ pub use texture::*;
 use crate::gfx_base::{RenderAdapter, RenderDevice, RenderInstance, RenderQueue};
 use fyrox_resource::{event::ResourceEvent, manager::ResourceManager};
 
-#[derive(Default)]
-pub struct RenderStorage {
-    pub material_storage: MaterialStorage,
-    pub geometry_storage: GeometryStorage,
-    pub texture_storage: TextureStorage,
-}
-
-impl RenderStorage {
-    pub fn update_texture(&mut self, dt: f32) {
-        self.texture_storage.update(dt);
-    }
-
-    pub fn material_storage(&self) -> &MaterialStorage {
-        &self.material_storage
-    }
-}
-
 pub struct RenderWorld {
     pub server: RenderServer,
     texture_event_receiver: Receiver<ResourceEvent>,
-    pub material_storage: MaterialStorage,
+    pub material_cache: MaterialCache,
     pub geometry_storage: GeometryStorage,
     pub texture_storage: TextureStorage,
 }
@@ -51,7 +34,7 @@ impl RenderWorld {
 
         Self {
             server,
-            material_storage: Default::default(),
+            material_cache: Default::default(),
             geometry_storage: Default::default(),
             texture_storage: Default::default(),
             texture_event_receiver,

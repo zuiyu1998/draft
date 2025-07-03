@@ -1,7 +1,7 @@
-pub mod storage;
+pub mod cache;
 
+pub use cache::*;
 use downcast_rs::{Downcast, impl_downcast};
-pub use storage::*;
 
 use std::{error::Error, fmt::Debug, path::Path, sync::Arc};
 
@@ -214,14 +214,14 @@ impl Default for MaterialDefinition {
     }
 }
 
-pub struct MaterialData(Box<dyn RenderMaterialData>);
+pub struct MaterialData(Box<dyn MaterialDataTrait>);
 
 impl MaterialData {
-    pub fn new<T: RenderMaterialData>(value: T) -> Self {
+    pub fn new<T: MaterialDataTrait>(value: T) -> Self {
         MaterialData(Box::new(value))
     }
 
-    pub fn downcast<T: RenderMaterialData>(&self) -> Option<&T> {
+    pub fn downcast<T: MaterialDataTrait>(&self) -> Option<&T> {
         self.0.downcast_ref()
     }
 
@@ -240,13 +240,12 @@ impl MaterialData {
     pub fn prepare(
         material: &MaterialDefinition,
         device: &RenderDevice,
-        layouts: &[VertexBufferLayout],
         shader_cache: &mut ShaderCache,
         pipeline_layout_cache: &mut PipelineLayoutCache,
     ) -> Result<Self, FrameworkError> {
         material
             .0
-            .prepare(device, layouts, shader_cache, pipeline_layout_cache)
+            .prepare(device, shader_cache, pipeline_layout_cache)
     }
 }
 
@@ -353,16 +352,16 @@ impl RenderMaterialDataBase {
     }
 }
 
-pub trait RenderMaterialData: 'static + Downcast {
+pub trait MaterialDataTrait: 'static + Downcast {
     fn get_pipeline(&self) -> Pipeline;
     fn get_cached_pipeline_id(&self) -> CachedPipelineId;
 
     fn set_cached_pipeline_id(&mut self, id: CachedPipelineId);
 }
 
-impl_downcast!(RenderMaterialData);
+impl_downcast!(MaterialDataTrait);
 
-impl RenderMaterialData for RenderMaterialDataBase {
+impl MaterialDataTrait for RenderMaterialDataBase {
     fn get_pipeline(&self) -> Pipeline {
         self.cached.pipeline.clone()
     }
@@ -379,21 +378,17 @@ impl RenderMaterialData for RenderMaterialDataBase {
 impl RenderMaterial for RenderPipelineDescriptor {
     type Data = RenderMaterialDataBase;
 
-    fn specialize(&self, layouts: &[VertexBufferLayout]) -> RenderPipelineDescriptor {
-        let mut desc = self.clone();
-        desc.vertex.buffers = layouts.to_vec();
-
-        desc
+    fn specialize(&self) -> RenderPipelineDescriptor {
+        self.clone()
     }
 
     fn prepare(
         &self,
         device: &RenderDevice,
-        layouts: &[VertexBufferLayout],
         shader_cache: &mut ShaderCache,
         pipeline_layout_cache: &mut PipelineLayoutCache,
     ) -> Result<Self::Data, FrameworkError> {
-        let desc = self.specialize(layouts);
+        let desc = self.specialize();
         RenderMaterialDataBase::get_render_pipeline_descriptor(
             device,
             &desc,
@@ -406,14 +401,13 @@ impl RenderMaterial for RenderPipelineDescriptor {
 pub trait RenderMaterial:
     'static + Debug + Clone + Reflect + Visit + Default + Send + Sync
 {
-    type Data: RenderMaterialData;
+    type Data: MaterialDataTrait;
 
-    fn specialize(&self, layouts: &[VertexBufferLayout]) -> RenderPipelineDescriptor;
+    fn specialize(&self) -> RenderPipelineDescriptor;
 
     fn prepare(
         &self,
         device: &RenderDevice,
-        layouts: &[VertexBufferLayout],
         shader_cache: &mut ShaderCache,
         pipeline_layout_cache: &mut PipelineLayoutCache,
     ) -> Result<Self::Data, FrameworkError>;
@@ -423,7 +417,6 @@ pub trait ErasedRenderMaterial: 'static + Debug + Reflect + Visit + Send + Sync 
     fn prepare(
         &self,
         device: &RenderDevice,
-        layouts: &[VertexBufferLayout],
         shader_cache: &mut ShaderCache,
         pipeline_layout_cache: &mut PipelineLayoutCache,
     ) -> Result<MaterialData, FrameworkError>;
@@ -435,11 +428,10 @@ impl<T: RenderMaterial> ErasedRenderMaterial for T {
     fn prepare(
         &self,
         device: &RenderDevice,
-        layouts: &[VertexBufferLayout],
         shader_cache: &mut ShaderCache,
         pipeline_layout_cache: &mut PipelineLayoutCache,
     ) -> Result<MaterialData, FrameworkError> {
-        let data = self.prepare(device, layouts, shader_cache, pipeline_layout_cache)?;
+        let data = self.prepare(device, shader_cache, pipeline_layout_cache)?;
         Ok(MaterialData::new(data))
     }
 

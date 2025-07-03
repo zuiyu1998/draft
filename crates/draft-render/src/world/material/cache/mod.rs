@@ -6,10 +6,7 @@ use std::{borrow::Cow, sync::Arc};
 
 use crate::{
     MaterialData,
-    gfx_base::{
-        CachedPipelineId, GetPipelineCache, Pipeline, PipelineCache, RenderDevice,
-        VertexBufferLayout,
-    },
+    gfx_base::{CachedPipelineId, GetPipelineCache, Pipeline, PipelineCache, RenderDevice},
 };
 
 use wgpu::{ShaderModuleDescriptor, ShaderSource};
@@ -96,30 +93,28 @@ pub struct CachedPipeline {
 }
 
 #[derive(Default)]
-pub struct MaterialStorage {
+pub struct MaterialCache {
     pub shader_cache: ShaderCache,
     pub pipeline_layout_cache: PipelineLayoutCache,
-    pub material_cache: TemporaryCache<MaterialData>,
+    pub cache: TemporaryCache<MaterialData>,
 }
 
-impl MaterialStorage {
+impl MaterialCache {
     pub fn get_or_insert(
         &mut self,
         device: &RenderDevice,
         material: &MaterialResource,
-        layouts: &[VertexBufferLayout],
     ) -> Option<&MaterialData> {
         let mut material_state = material.state();
 
         if let Some(material_state) = material_state.data() {
-            match self.material_cache.get_mut_or_insert_with(
+            match self.cache.get_mut_or_insert_with(
                 &material_state.cache_index,
                 Default::default(),
                 || {
                     MaterialData::prepare(
                         &material_state.definition,
                         device,
-                        layouts,
                         &mut self.shader_cache,
                         &mut self.pipeline_layout_cache,
                     )
@@ -142,12 +137,12 @@ impl MaterialStorage {
     }
 }
 
-impl GetPipelineCache for MaterialStorage {
+impl GetPipelineCache for MaterialCache {
     fn get_pipeline_cache(&self) -> PipelineCache {
         let mut target = vec![];
-        for index in 0..self.material_cache.buffer.len() {
+        for index in 0..self.cache.buffer.len() {
             let pipeline = self
-                .material_cache
+                .cache
                 .buffer
                 .get_raw(index)
                 .map(|entry| entry.value.get_pipeline());

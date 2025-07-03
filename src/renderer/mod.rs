@@ -38,7 +38,7 @@ impl WorldRenderer {
         let mut render_context = RenderContext::new(
             &self.world.server.device,
             &mut self.transient_resource_cache,
-            &self.world.material_storage,
+            &self.world.material_cache,
         );
 
         frame_graph.execute(&mut render_context);
