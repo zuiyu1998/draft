@@ -2,10 +2,9 @@ use std::{collections::HashMap, ops::Deref, sync::Arc};
 
 use draft_render::{
     BindGroupLayoutDescriptor, FragmentState, FrameworkError, Geometry, GeometryResource, Material,
-    MaterialDefinition, MaterialResource, PipelineData, PipelineLayoutCache,
-    PipelineLayoutDescriptor, RenderMaterial, RenderPipelineDescriptor, RenderServer, RenderWorld,
-    Shader, ShaderCache, ShaderResource, Texture, TextureResource, Vertex,
-    VertexAttributeDescriptor,
+    MaterialResource, PassDefinition, PipelineData, PipelineLayoutCache, PipelineLayoutDescriptor,
+    RenderMaterial, RenderPipelineDescriptor, RenderServer, RenderWorld, Shader, ShaderCache,
+    ShaderResource, Texture, TextureResource, Vertex, VertexAttributeDescriptor,
     frame_graph::{ColorAttachmentOwned, FrameGraph},
     gfx_base::{
         BindGroupLayoutEntriesBuilder, BlendComponent, BlendState, ColorTargetState, ColorWrites,
@@ -495,7 +494,7 @@ fn new_batch() -> Batch {
 
 fn new_material() -> Material {
     Material {
-        definition: MaterialDefinition::new(CustomMaterial::default()),
+        definition: PassDefinition::new(CustomMaterial::default()),
         cache_index: Default::default(),
     }
 }

@@ -1,6 +1,9 @@
-pub mod cache;
+mod cache;
+mod pipeline_layout;
 
 pub use cache::*;
+pub use pipeline_layout::*;
+
 use downcast_rs::{Downcast, impl_downcast};
 
 use std::{error::Error, fmt::Debug, path::Path, sync::Arc};
@@ -8,12 +11,12 @@ use std::{error::Error, fmt::Debug, path::Path, sync::Arc};
 use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, sparse::AtomicIndex, uuid, visitor::*};
 
 use crate::{
-    FrameworkError, ShaderResource,
+    FrameworkError, ShaderCache, ShaderResource,
     gfx_base::{
-        BindGroupLayoutEntry, CachedPipelineId, ColorTargetState, DepthStencilState,
-        MultisampleState, Pipeline, PipelineCompilationOptions, PrimitiveState, RawFragmentState,
-        RawRenderPipelineDescriptor, RawVertexAttribute, RawVertexBufferLayout, RawVertexState,
-        RenderDevice, RenderPipeline, VertexBufferLayout,
+        CachedPipelineId, ColorTargetState, DepthStencilState, MultisampleState, Pipeline,
+        PipelineCompilationOptions, PrimitiveState, RawFragmentState, RawRenderPipelineDescriptor,
+        RawVertexAttribute, RawVertexBufferLayout, RawVertexState, RenderDevice, RenderPipeline,
+        VertexBufferLayout,
     },
 };
 
@@ -35,16 +38,6 @@ pub struct FragmentState {
     pub entry_point: Option<String>,
     pub compilation_options: PipelineCompilationOptions,
     pub targets: Vec<Option<ColorTargetState>>,
-}
-
-#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
-pub struct BindGroupLayoutDescriptor {
-    pub entries: Vec<BindGroupLayoutEntry>,
-}
-
-#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
-pub struct PipelineLayoutDescriptor {
-    pub bind_group_layouts: Vec<BindGroupLayoutDescriptor>,
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
@@ -85,7 +78,7 @@ impl Default for PipelineDescriptor {
 #[derive(Debug, Clone, Reflect, Visit, Default, TypeUuidProvider)]
 #[type_uuid(id = "3485bce7-7b74-4970-9bf0-2b4a897b06dd")]
 pub struct Material {
-    pub definition: MaterialDefinition,
+    pub definition: PassDefinition,
     #[reflect(hidden)]
     #[visit(skip)]
     pub cache_index: Arc<AtomicIndex>,
@@ -113,11 +106,11 @@ impl ResourceData for Material {
 }
 
 #[derive(Debug)]
-pub struct MaterialDefinition(Box<dyn ErasedRenderMaterial>);
+pub struct PassDefinition(Box<dyn ErasedRenderMaterial>);
 
-impl MaterialDefinition {
+impl PassDefinition {
     pub fn new<T: RenderMaterial>(value: T) -> Self {
-        MaterialDefinition(Box::new(value))
+        PassDefinition(Box::new(value))
     }
 
     pub fn update_vertex_buffer_layouts(&mut self, layouts: &[VertexBufferLayout]) {
@@ -125,19 +118,19 @@ impl MaterialDefinition {
     }
 }
 
-impl Clone for MaterialDefinition {
+impl Clone for PassDefinition {
     fn clone(&self) -> Self {
-        MaterialDefinition(self.0.clone_box())
+        PassDefinition(self.0.clone_box())
     }
 }
 
-impl Visit for MaterialDefinition {
+impl Visit for PassDefinition {
     fn visit(&mut self, name: &str, visitor: &mut Visitor) -> VisitResult {
         self.0.visit(name, visitor)
     }
 }
 
-impl Reflect for MaterialDefinition {
+impl Reflect for PassDefinition {
     fn source_path() -> &'static str
     where
         Self: Sized,
@@ -212,9 +205,9 @@ impl Reflect for MaterialDefinition {
     }
 }
 
-impl Default for MaterialDefinition {
+impl Default for PassDefinition {
     fn default() -> Self {
-        MaterialDefinition(Box::new(RenderPipelineDescriptor::default()))
+        PassDefinition(Box::new(RenderPipelineDescriptor::default()))
     }
 }
 
@@ -254,7 +247,7 @@ impl MaterialData {
     }
 
     pub fn prepare(
-        material: &MaterialDefinition,
+        material: &PassDefinition,
         device: &RenderDevice,
         shader_cache: &mut ShaderCache,
         pipeline_layout_cache: &mut PipelineLayoutCache,

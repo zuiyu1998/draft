@@ -1,12 +1,12 @@
 mod geometry;
-mod material;
+mod pass;
 mod shader;
 mod texture;
 
 use std::sync::mpsc::Receiver;
 
 pub use geometry::*;
-pub use material::*;
+pub use pass::*;
 pub use shader::*;
 pub use texture::*;
 

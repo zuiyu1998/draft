@@ -1,10 +1,20 @@
+use fyrox_core::{reflect::*, sparse::AtomicIndex, visitor::*};
 use std::{collections::HashMap, ops::Deref, sync::Arc};
 
 use crate::{
-    BindGroupLayoutDescriptor, FrameworkError, PipelineLayoutDescriptor, TemporaryCache,
-    gfx_base::{RawBindGroupLayout, RenderDevice},
+    FrameworkError, TemporaryCache,
+    gfx_base::{BindGroupLayoutEntry, RawBindGroupLayout, RenderDevice},
 };
-use fyrox_core::sparse::AtomicIndex;
+
+#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
+pub struct BindGroupLayoutDescriptor {
+    pub entries: Vec<BindGroupLayoutEntry>,
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
+pub struct PipelineLayoutDescriptor {
+    pub bind_group_layouts: Vec<BindGroupLayoutDescriptor>,
+}
 
 #[derive(Default)]
 pub struct PipelineLayoutCache {

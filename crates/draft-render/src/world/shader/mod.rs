@@ -1,5 +1,7 @@
-pub mod loader;
+mod cache;
+mod loader;
 
+pub use cache::*;
 pub use loader::*;
 
 use fyrox_resource::{ResourceData, io::ResourceIo};
