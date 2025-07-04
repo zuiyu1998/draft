@@ -22,7 +22,7 @@ use crate::{
 
 use fyrox_resource::{Resource, ResourceData};
 
-pub type MaterialResource = Resource<Material>;
+pub type PassResource = Resource<Pass>;
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
 pub struct VertexState {
@@ -54,6 +54,12 @@ pub struct RenderPipelineDescriptor {
 #[derive(Debug, Clone, Reflect, Visit, Default)]
 pub struct ComputePipelineDescriptor {}
 
+#[derive(Debug, Clone)]
+pub struct CachedPipeline {
+    pub descriptor: PipelineDescriptor,
+    pub pipeline: Pipeline,
+}
+
 #[derive(Debug, Clone, Reflect, Visit)]
 pub enum PipelineDescriptor {
     RenderPipelineDescriptor(Box<RenderPipelineDescriptor>),
@@ -77,14 +83,14 @@ impl Default for PipelineDescriptor {
 
 #[derive(Debug, Clone, Reflect, Visit, Default, TypeUuidProvider)]
 #[type_uuid(id = "3485bce7-7b74-4970-9bf0-2b4a897b06dd")]
-pub struct Material {
+pub struct Pass {
     pub definition: PassDefinition,
     #[reflect(hidden)]
     #[visit(skip)]
     pub cache_index: Arc<AtomicIndex>,
 }
 
-impl ResourceData for Material {
+impl ResourceData for Pass {
     fn type_uuid(&self) -> Uuid {
         <Self as TypeUuidProvider>::type_uuid()
     }
@@ -211,19 +217,29 @@ impl Default for PassDefinition {
     }
 }
 
-pub struct MaterialData {
+pub struct PassData {
     id: CachedPipelineId,
     cached_pipeline: CachedPipeline,
-    data: Box<dyn PipelineData>,
+    data: Box<dyn ErasedPipelineData>,
 }
 
-impl MaterialData {
+impl Clone for PassData {
+    fn clone(&self) -> Self {
+        Self {
+            id: self.id,
+            cached_pipeline: self.cached_pipeline.clone(),
+            data: self.data.clone_box(),
+        }
+    }
+}
+
+impl PassData {
     pub fn new<T: PipelineData>(
         id: CachedPipelineId,
         cached_pipeline: CachedPipeline,
         value: T,
     ) -> Self {
-        MaterialData {
+        PassData {
             cached_pipeline,
             id,
             data: Box::new(value),
@@ -350,9 +366,19 @@ pub fn crate_pipeline_with_render_pipeline_descriptor(
     })
 }
 
-pub trait PipelineData: 'static + Downcast {}
+pub trait PipelineData: 'static + Downcast + Clone {}
 
-impl_downcast!(PipelineData);
+pub trait ErasedPipelineData: 'static + Downcast {
+    fn clone_box(&self) -> Box<dyn ErasedPipelineData>;
+}
+
+impl<T: PipelineData> ErasedPipelineData for T {
+    fn clone_box(&self) -> Box<dyn ErasedPipelineData> {
+        Box::new(self.clone())
+    }
+}
+
+impl_downcast!(ErasedPipelineData);
 
 impl PipelineData for () {}
 
@@ -396,7 +422,7 @@ pub trait ErasedRenderMaterial: 'static + Debug + Reflect + Visit + Send + Sync 
         device: &RenderDevice,
         shader_cache: &mut ShaderCache,
         pipeline_layout_cache: &mut PipelineLayoutCache,
-    ) -> Result<MaterialData, FrameworkError>;
+    ) -> Result<PassData, FrameworkError>;
 
     fn clone_box(&self) -> Box<dyn ErasedRenderMaterial>;
 
@@ -409,7 +435,7 @@ impl<T: RenderMaterial> ErasedRenderMaterial for T {
         device: &RenderDevice,
         shader_cache: &mut ShaderCache,
         pipeline_layout_cache: &mut PipelineLayoutCache,
-    ) -> Result<MaterialData, FrameworkError> {
+    ) -> Result<PassData, FrameworkError> {
         let desc = self.specialize();
 
         let cached_pipeline = crate_pipeline_with_render_pipeline_descriptor(
@@ -420,7 +446,7 @@ impl<T: RenderMaterial> ErasedRenderMaterial for T {
         )?;
 
         let data = self.prepare(device, shader_cache, pipeline_layout_cache)?;
-        Ok(MaterialData::new(
+        Ok(PassData::new(
             CachedPipelineId::default(),
             cached_pipeline,
             data,

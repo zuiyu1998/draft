@@ -2,9 +2,10 @@ use std::{collections::HashMap, ops::Deref, sync::Arc};
 
 use draft_render::{
     BindGroupLayoutDescriptor, FragmentState, FrameworkError, Geometry, GeometryResource, Material,
-    MaterialResource, PassDefinition, PipelineData, PipelineLayoutCache, PipelineLayoutDescriptor,
-    RenderMaterial, RenderPipelineDescriptor, RenderServer, RenderWorld, Shader, ShaderCache,
-    ShaderResource, Texture, TextureResource, Vertex, VertexAttributeDescriptor,
+    MaterialResource, Pass, PassDefinition, PassResource, PipelineData, PipelineLayoutCache,
+    PipelineLayoutDescriptor, RenderMaterial, RenderPipelineDescriptor, RenderServer, RenderWorld,
+    Shader, ShaderCache, ShaderResource, Texture, TextureResource, Vertex,
+    VertexAttributeDescriptor,
     frame_graph::{ColorAttachmentOwned, FrameGraph},
     gfx_base::{
         BindGroupLayoutEntriesBuilder, BlendComponent, BlendState, ColorTargetState, ColorWrites,
@@ -53,6 +54,7 @@ lazy_static! {
     );
 }
 
+#[derive(Clone)]
 pub struct CustomRenderMaterialData {
     diffuse_bind_group_layout: RawBindGroupLayout,
 }
@@ -138,10 +140,7 @@ impl PipelineNode for TestNode {
         world: &mut RenderWorld,
         context: &PipelineContext,
     ) {
-        let material_data = world
-            .material_cache
-            .get_or_insert(&world.server.device, &context.batch.material)
-            .unwrap();
+        let material_data = world.material_cache.get(&context.batch.material).unwrap();
 
         let Some(texture_data) = world.texture_storage.get_or_insert(
             &world.server.device,
@@ -150,7 +149,9 @@ impl PipelineNode for TestNode {
         ) else {
             return;
         };
-        let Some(custom_material_data) = material_data.downcast::<CustomRenderMaterialData>()
+        let Some(custom_material_data) = material_data
+            .pass_data
+            .downcast::<CustomRenderMaterialData>()
         else {
             return;
         };
@@ -176,7 +177,7 @@ impl PipelineNode for TestNode {
             },
         });
 
-        render_pass_builder.set_render_pipeline(material_data.get_cached_pipeline_id());
+        render_pass_builder.set_render_pipeline(material_data.pass_data.get_cached_pipeline_id());
 
         let geometry_data = world
             .geometry_storage
@@ -494,8 +495,10 @@ fn new_batch() -> Batch {
 
 fn new_material() -> Material {
     Material {
-        definition: PassDefinition::new(CustomMaterial::default()),
-        cache_index: Default::default(),
+        pass: PassResource::new_embedded(Pass {
+            definition: PassDefinition::new(CustomMaterial::default()),
+            cache_index: Default::default(),
+        }),
     }
 }
 

@@ -1,40 +1,34 @@
 use crate::{
-    MaterialData, PipelineLayoutCache, ShaderCache,
-    gfx_base::{CachedPipelineId, GetPipelineCache, Pipeline, PipelineCache, RenderDevice},
+    PassData, PipelineLayoutCache, ShaderCache,
+    gfx_base::{CachedPipelineId, GetPipelineCache, PipelineCache, RenderDevice},
 };
 
 use fyrox_core::log::Log;
 
-use crate::{MaterialResource, PipelineDescriptor, TemporaryCache};
-
-#[derive(Debug, Clone)]
-pub struct CachedPipeline {
-    pub descriptor: PipelineDescriptor,
-    pub pipeline: Pipeline,
-}
+use crate::{PassResource, TemporaryCache};
 
 #[derive(Default)]
-pub struct MaterialCache {
+pub struct PassCache {
     pub shader_cache: ShaderCache,
     pub pipeline_layout_cache: PipelineLayoutCache,
-    pub cache: TemporaryCache<MaterialData>,
+    pub cache: TemporaryCache<PassData>,
 }
 
-impl MaterialCache {
+impl PassCache {
     pub fn get_or_insert(
         &mut self,
         device: &RenderDevice,
-        material: &MaterialResource,
-    ) -> Option<&MaterialData> {
-        let mut material_state = material.state();
+        pass: &PassResource,
+    ) -> Option<&PassData> {
+        let mut pass_state = pass.state();
 
-        if let Some(material_state) = material_state.data() {
+        if let Some(pass_state) = pass_state.data() {
             match self.cache.get_mut_or_insert_with(
-                &material_state.cache_index,
+                &pass_state.cache_index,
                 Default::default(),
                 || {
-                    MaterialData::prepare(
-                        &material_state.definition,
+                    PassData::prepare(
+                        &pass_state.definition,
                         device,
                         &mut self.shader_cache,
                         &mut self.pipeline_layout_cache,
@@ -43,7 +37,7 @@ impl MaterialCache {
             ) {
                 Ok(data) => {
                     data.set_cached_pipeline_id(CachedPipelineId::new(
-                        material_state.cache_index.get(),
+                        pass_state.cache_index.get(),
                     ));
                     Some(data)
                 }
@@ -58,7 +52,7 @@ impl MaterialCache {
     }
 }
 
-impl GetPipelineCache for MaterialCache {
+impl GetPipelineCache for PassCache {
     fn get_pipeline_cache(&self) -> PipelineCache {
         let mut target = vec![];
         for index in 0..self.cache.buffer.len() {

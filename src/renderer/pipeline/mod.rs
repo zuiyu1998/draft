@@ -26,9 +26,11 @@ impl Batch {
         let mut material_state = material_clone.state();
 
         if let Some(material_state) = material_state.data() {
-            material_state
-                .definition
-                .update_vertex_buffer_layouts(&layouts)
+            let mut pass_state = material_state.pass.state();
+
+            if let Some(pass_state) = pass_state.data() {
+                pass_state.definition.update_vertex_buffer_layouts(&layouts)
+            }
         }
 
         Self {
