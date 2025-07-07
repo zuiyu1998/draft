@@ -11,7 +11,7 @@ use super::{
 };
 
 pub trait EncoderPassCommandBuilder {
-    fn add_encoder_pass_command(&mut self, value: EncoderPassCommand);
+    fn push_encoder_pass_command(&mut self, value: EncoderPassCommand);
 
     fn copy_texture_to_buffer(
         &mut self,
@@ -19,7 +19,7 @@ pub trait EncoderPassCommandBuilder {
         destination: TexelCopyBufferInfo<ResourceWrite>,
         copy_size: Extent3d,
     ) {
-        self.add_encoder_pass_command(EncoderPassCommand::new(CopyTextureToBufferParameter {
+        self.push_encoder_pass_command(EncoderPassCommand::new(CopyTextureToBufferParameter {
             source,
             destination,
             copy_size,
@@ -32,7 +32,7 @@ pub trait EncoderPassCommandBuilder {
         offset: u64,
         size: Option<u64>,
     ) {
-        self.add_encoder_pass_command(EncoderPassCommand::new(ClearBufferParameter {
+        self.push_encoder_pass_command(EncoderPassCommand::new(ClearBufferParameter {
             buffer_ref: buffer_ref.clone(),
             offset,
             size,
@@ -44,7 +44,7 @@ pub trait EncoderPassCommandBuilder {
         texture_ref: &Ref<TransientTexture, ResourceWrite>,
         subresource_range: ImageSubresourceRange,
     ) {
-        self.add_encoder_pass_command(EncoderPassCommand::new(ClearTextureParameter {
+        self.push_encoder_pass_command(EncoderPassCommand::new(ClearTextureParameter {
             texture_ref: texture_ref.clone(),
             subresource_range,
         }));
@@ -56,7 +56,7 @@ pub trait EncoderPassCommandBuilder {
         destination: TexelCopyTextureInfo<ResourceWrite>,
         copy_size: Extent3d,
     ) {
-        self.add_encoder_pass_command(EncoderPassCommand::new(CopyTextureToTextureParameter {
+        self.push_encoder_pass_command(EncoderPassCommand::new(CopyTextureToTextureParameter {
             source,
             destination,
             copy_size,
@@ -71,13 +71,13 @@ impl EncoderPassCommand {
         Self(Box::new(value))
     }
 
-    pub fn draw(&self, command_encoder_context: &mut EncoderPassContext) {
-        self.0.draw(command_encoder_context)
+    pub fn execute(&self, command_encoder_context: &mut EncoderPassContext) {
+        self.0.execute(command_encoder_context)
     }
 }
 
 pub trait ErasedEncoderPassCommand: Sync + Send + 'static {
-    fn draw(&self, command_encoder_context: &mut EncoderPassContext);
+    fn execute(&self, command_encoder_context: &mut EncoderPassContext);
 }
 
 pub struct EncoderPassContext<'a, 'b> {
@@ -159,9 +159,9 @@ impl<'a, 'b> EncoderPassContext<'a, 'b> {
         );
     }
 
-    pub fn execute(mut self, commands: &Vec<EncoderPassCommand>) {
+    pub fn execute(mut self, commands: &[EncoderPassCommand]) {
         for command in commands {
-            command.draw(&mut self);
+            command.execute(&mut self);
         }
     }
 

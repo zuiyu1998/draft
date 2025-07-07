@@ -1,17 +1,17 @@
 use super::{PopDebugGroupParameter, PushDebugGroupParameter};
 
 pub trait EncoderCommandBuilder: Sized {
-    fn add_begin_encoder_command(&mut self, value: EncoderCommand) -> &mut Self;
-    fn add_end_encoder_command(&mut self, value: EncoderCommand) -> &mut Self;
+    fn push_begin_encoder_command(&mut self, value: EncoderCommand) -> &mut Self;
+    fn push_end_encoder_command(&mut self, value: EncoderCommand) -> &mut Self;
 
     fn push_debug_group(&mut self, label: &str) -> &mut Self {
-        self.add_begin_encoder_command(EncoderCommand::new(PushDebugGroupParameter {
+        self.push_begin_encoder_command(EncoderCommand::new(PushDebugGroupParameter {
             label: label.to_string(),
         }))
     }
 
     fn pop_debug_group(&mut self) -> &mut Self {
-        self.add_end_encoder_command(EncoderCommand::new(PopDebugGroupParameter))
+        self.push_end_encoder_command(EncoderCommand::new(PopDebugGroupParameter))
     }
 }
 
@@ -22,11 +22,11 @@ impl EncoderCommand {
         Self(Box::new(value))
     }
 
-    pub fn apply(&self, command_encoder: &mut wgpu::CommandEncoder) {
-        self.0.apply(command_encoder)
+    pub fn execute(&self, command_encoder: &mut wgpu::CommandEncoder) {
+        self.0.execute(command_encoder)
     }
 }
 
 pub trait ErasedEncoderCommand: Sync + Send + 'static {
-    fn apply(&self, command_encoder: &mut wgpu::CommandEncoder);
+    fn execute(&self, command_encoder: &mut wgpu::CommandEncoder);
 }

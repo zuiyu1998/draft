@@ -17,7 +17,7 @@ use crate::{
 };
 
 pub trait ComputePassCommandBuilder {
-    fn add_compute_pass_command(&mut self, value: ComputePassCommand);
+    fn push_compute_pass_command(&mut self, value: ComputePassCommand);
 
     fn copy_texture_to_buffer(
         &mut self,
@@ -25,7 +25,7 @@ pub trait ComputePassCommandBuilder {
         destination: TexelCopyBufferInfo<ResourceWrite>,
         copy_size: Extent3d,
     ) {
-        self.add_compute_pass_command(ComputePassCommand::new(CopyTextureToBufferParameter {
+        self.push_compute_pass_command(ComputePassCommand::new(CopyTextureToBufferParameter {
             source,
             destination,
             copy_size,
@@ -38,7 +38,7 @@ pub trait ComputePassCommandBuilder {
         offset: u64,
         size: Option<u64>,
     ) {
-        self.add_compute_pass_command(ComputePassCommand::new(ClearBufferParameter {
+        self.push_compute_pass_command(ComputePassCommand::new(ClearBufferParameter {
             buffer_ref: buffer_ref.clone(),
             offset,
             size,
@@ -50,7 +50,7 @@ pub trait ComputePassCommandBuilder {
         indirect_buffer_ref: &Ref<TransientBuffer, ResourceRead>,
         indirect_offset: u64,
     ) {
-        self.add_compute_pass_command(ComputePassCommand::new(
+        self.push_compute_pass_command(ComputePassCommand::new(
             DispatchWorkgroupsIndirectParameter {
                 indirect_buffer_ref: indirect_buffer_ref.clone(),
                 indirect_offset,
@@ -59,7 +59,7 @@ pub trait ComputePassCommandBuilder {
     }
 
     fn set_push_constants(&mut self, offset: u32, data: &[u8]) {
-        self.add_compute_pass_command(ComputePassCommand::new(SetPushConstantsComputeParameter {
+        self.push_compute_pass_command(ComputePassCommand::new(SetPushConstantsComputeParameter {
             offset,
             data: data.to_vec(),
         }));
@@ -70,14 +70,14 @@ pub trait ComputePassCommandBuilder {
         texture_ref: &Ref<TransientTexture, ResourceWrite>,
         subresource_range: ImageSubresourceRange,
     ) {
-        self.add_compute_pass_command(ComputePassCommand::new(ClearTextureParameter {
+        self.push_compute_pass_command(ComputePassCommand::new(ClearTextureParameter {
             texture_ref: texture_ref.clone(),
             subresource_range,
         }));
     }
 
     fn dispatch_workgroups(&mut self, x: u32, y: u32, z: u32) {
-        self.add_compute_pass_command(ComputePassCommand::new(DispatchWorkgroupsParameter {
+        self.push_compute_pass_command(ComputePassCommand::new(DispatchWorkgroupsParameter {
             x,
             y,
             z,
@@ -85,7 +85,7 @@ pub trait ComputePassCommandBuilder {
     }
 
     fn set_compute_pipeline(&mut self, id: CachedPipelineId) {
-        self.add_compute_pass_command(ComputePassCommand::new(SetComputePipelineParameter { id }));
+        self.push_compute_pass_command(ComputePassCommand::new(SetComputePipelineParameter { id }));
     }
 
     fn copy_texture_to_texture(
@@ -94,7 +94,7 @@ pub trait ComputePassCommandBuilder {
         destination: TexelCopyTextureInfo<ResourceWrite>,
         copy_size: Extent3d,
     ) {
-        self.add_compute_pass_command(ComputePassCommand::new(CopyTextureToTextureParameter {
+        self.push_compute_pass_command(ComputePassCommand::new(CopyTextureToTextureParameter {
             source,
             destination,
             copy_size,
@@ -102,30 +102,30 @@ pub trait ComputePassCommandBuilder {
     }
 
     fn insert_debug_marker(&mut self, label: &str) {
-        self.add_compute_pass_command(ComputePassCommand::new(InsertDebugMarkerParameter {
+        self.push_compute_pass_command(ComputePassCommand::new(InsertDebugMarkerParameter {
             label: label.to_string(),
         }));
     }
 
     fn push_debug_group(&mut self, label: &str) {
-        self.add_compute_pass_command(ComputePassCommand::new(PushDebugGroupParameter {
+        self.push_compute_pass_command(ComputePassCommand::new(PushDebugGroupParameter {
             label: label.to_string(),
         }));
     }
 
     fn pop_debug_group(&mut self) {
-        self.add_compute_pass_command(ComputePassCommand::new(PopDebugGroupParameter));
+        self.push_compute_pass_command(ComputePassCommand::new(PopDebugGroupParameter));
     }
 
     fn write_timestamp(&mut self, query_set: &QuerySet, index: u32) {
-        self.add_compute_pass_command(ComputePassCommand::new(WriteTimestampParameter {
+        self.push_compute_pass_command(ComputePassCommand::new(WriteTimestampParameter {
             query_set: query_set.clone(),
             index,
         }));
     }
 
     fn begin_pipeline_statistics_query(&mut self, query_set: &QuerySet, index: u32) {
-        self.add_compute_pass_command(ComputePassCommand::new(
+        self.push_compute_pass_command(ComputePassCommand::new(
             BeginPipelineStatisticsQueryParameter {
                 query_set: query_set.clone(),
                 index,
@@ -134,11 +134,13 @@ pub trait ComputePassCommandBuilder {
     }
 
     fn end_pipeline_statistics_query(&mut self) {
-        self.add_compute_pass_command(ComputePassCommand::new(EndPipelineStatisticsQueryParameter));
+        self.push_compute_pass_command(ComputePassCommand::new(
+            EndPipelineStatisticsQueryParameter,
+        ));
     }
 
     fn set_bind_group(&mut self, index: u32, bind_group: &BindGroupBinding, offsets: &[u32]) {
-        self.add_compute_pass_command(ComputePassCommand::new(SetBindGroupParameter {
+        self.push_compute_pass_command(ComputePassCommand::new(SetBindGroupParameter {
             index,
             bind_group: bind_group.clone(),
             offsets: offsets.to_vec(),
@@ -153,13 +155,13 @@ impl ComputePassCommand {
         Self(Box::new(value))
     }
 
-    pub fn draw(&self, compute_pass_context: &mut ComputePassContext) {
-        self.0.draw(compute_pass_context)
+    pub fn execute(&self, compute_pass_context: &mut ComputePassContext) {
+        self.0.execute(compute_pass_context)
     }
 }
 
 pub trait ErasedComputePassCommand: Sync + Send + 'static {
-    fn draw(&self, compute_pass_context: &mut ComputePassContext);
+    fn execute(&self, compute_pass_context: &mut ComputePassContext);
 }
 
 pub struct ComputePassContext<'a, 'b> {
@@ -309,9 +311,9 @@ impl<'a, 'b> ComputePassContext<'a, 'b> {
             .set_bind_group(index, &bind_group, offsets);
     }
 
-    pub fn execute(mut self, commands: &Vec<ComputePassCommand>) {
+    pub fn execute(mut self, commands: &[ComputePassCommand]) {
         for command in commands {
-            command.draw(&mut self);
+            command.execute(&mut self);
         }
     }
 }

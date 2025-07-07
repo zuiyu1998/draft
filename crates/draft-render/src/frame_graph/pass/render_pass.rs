@@ -79,7 +79,7 @@ impl RenderPass {
 }
 
 impl RenderPassCommandBuilder for RenderPass {
-    fn add_render_pass_command(&mut self, value: RenderPassCommand) {
+    fn push_render_pass_command(&mut self, value: RenderPassCommand) {
         self.current_logic_render_pass.commands.push(value);
     }
 }

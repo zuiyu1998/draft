@@ -24,7 +24,7 @@ use super::{
 use core::ops::Range;
 
 pub trait RenderPassCommandBuilder {
-    fn add_render_pass_command(&mut self, value: RenderPassCommand);
+    fn push_render_pass_command(&mut self, value: RenderPassCommand);
 
     fn copy_texture_to_buffer(
         &mut self,
@@ -32,7 +32,7 @@ pub trait RenderPassCommandBuilder {
         destination: TexelCopyBufferInfo<ResourceWrite>,
         copy_size: Extent3d,
     ) {
-        self.add_render_pass_command(RenderPassCommand::new(CopyTextureToBufferParameter {
+        self.push_render_pass_command(RenderPassCommand::new(CopyTextureToBufferParameter {
             source,
             destination,
             copy_size,
@@ -45,7 +45,7 @@ pub trait RenderPassCommandBuilder {
         offset: u64,
         size: Option<u64>,
     ) {
-        self.add_render_pass_command(RenderPassCommand::new(ClearBufferParameter {
+        self.push_render_pass_command(RenderPassCommand::new(ClearBufferParameter {
             buffer_ref: buffer_ref.clone(),
             offset,
             size,
@@ -57,7 +57,7 @@ pub trait RenderPassCommandBuilder {
         texture_ref: &Ref<TransientTexture, ResourceWrite>,
         subresource_range: ImageSubresourceRange,
     ) {
-        self.add_render_pass_command(RenderPassCommand::new(ClearTextureParameter {
+        self.push_render_pass_command(RenderPassCommand::new(ClearTextureParameter {
             texture_ref: texture_ref.clone(),
             subresource_range,
         }));
@@ -69,7 +69,7 @@ pub trait RenderPassCommandBuilder {
         destination: TexelCopyTextureInfo<ResourceWrite>,
         copy_size: Extent3d,
     ) {
-        self.add_render_pass_command(RenderPassCommand::new(CopyTextureToTextureParameter {
+        self.push_render_pass_command(RenderPassCommand::new(CopyTextureToTextureParameter {
             source,
             destination,
             copy_size,
@@ -81,7 +81,7 @@ pub trait RenderPassCommandBuilder {
         indirect_buffer_ref: &Ref<TransientBuffer, ResourceRead>,
         indirect_offset: u64,
     ) {
-        self.add_render_pass_command(RenderPassCommand::new(DrawIndirectParameter {
+        self.push_render_pass_command(RenderPassCommand::new(DrawIndirectParameter {
             indirect_buffer_ref: indirect_buffer_ref.clone(),
             indirect_offset,
         }));
@@ -92,7 +92,7 @@ pub trait RenderPassCommandBuilder {
         indirect_buffer_ref: &Ref<TransientBuffer, ResourceRead>,
         indirect_offset: u64,
     ) {
-        self.add_render_pass_command(RenderPassCommand::new(DrawIndexedIndirectParameter {
+        self.push_render_pass_command(RenderPassCommand::new(DrawIndexedIndirectParameter {
             indirect_buffer_ref: indirect_buffer_ref.clone(),
             indirect_offset,
         }));
@@ -104,7 +104,7 @@ pub trait RenderPassCommandBuilder {
         indirect_offset: u64,
         count: u32,
     ) {
-        self.add_render_pass_command(RenderPassCommand::new(MultiDrawIndirectParameter {
+        self.push_render_pass_command(RenderPassCommand::new(MultiDrawIndirectParameter {
             indirect_buffer_ref: indirect_buffer_ref.clone(),
             indirect_offset,
             count,
@@ -119,7 +119,7 @@ pub trait RenderPassCommandBuilder {
         count_offset: u64,
         max_count: u32,
     ) {
-        self.add_render_pass_command(RenderPassCommand::new(
+        self.push_render_pass_command(RenderPassCommand::new(
             MultiDrawIndexedIndirectCountParameter {
                 indirect_buffer_ref: indirect_buffer_ref.clone(),
                 indirect_offset,
@@ -136,7 +136,7 @@ pub trait RenderPassCommandBuilder {
         indirect_offset: u64,
         count: u32,
     ) {
-        self.add_render_pass_command(RenderPassCommand::new(MultiDrawIndexedIndirectParameter {
+        self.push_render_pass_command(RenderPassCommand::new(MultiDrawIndexedIndirectParameter {
             indirect_buffer_ref: indirect_buffer_ref.clone(),
             indirect_offset,
             count,
@@ -151,7 +151,7 @@ pub trait RenderPassCommandBuilder {
         count_offset: u64,
         max_count: u32,
     ) {
-        self.add_render_pass_command(RenderPassCommand::new(
+        self.push_render_pass_command(RenderPassCommand::new(
             MultiDrawIndexedIndirectCountParameter {
                 indirect_buffer_ref: indirect_buffer_ref.clone(),
                 indirect_offset,
@@ -163,13 +163,13 @@ pub trait RenderPassCommandBuilder {
     }
 
     fn set_stencil_reference(&mut self, reference: u32) {
-        self.add_render_pass_command(RenderPassCommand::new(SetStencilReferenceParameter {
+        self.push_render_pass_command(RenderPassCommand::new(SetStencilReferenceParameter {
             reference,
         }));
     }
 
     fn set_push_constants(&mut self, stages: ShaderStages, offset: u32, data: &[u8]) {
-        self.add_render_pass_command(RenderPassCommand::new(SetPushConstantsParameter {
+        self.push_render_pass_command(RenderPassCommand::new(SetPushConstantsParameter {
             stages,
             offset,
             data: data.to_vec(),
@@ -185,7 +185,7 @@ pub trait RenderPassCommandBuilder {
         min_depth: f32,
         max_depth: f32,
     ) {
-        self.add_render_pass_command(RenderPassCommand::new(SetViewportParameter {
+        self.push_render_pass_command(RenderPassCommand::new(SetViewportParameter {
             x,
             y,
             width,
@@ -196,34 +196,34 @@ pub trait RenderPassCommandBuilder {
     }
 
     fn insert_debug_marker(&mut self, label: &str) {
-        self.add_render_pass_command(RenderPassCommand::new(InsertDebugMarkerParameter {
+        self.push_render_pass_command(RenderPassCommand::new(InsertDebugMarkerParameter {
             label: label.to_string(),
         }));
     }
 
     fn push_debug_group(&mut self, label: &str) {
-        self.add_render_pass_command(RenderPassCommand::new(PushDebugGroupParameter {
+        self.push_render_pass_command(RenderPassCommand::new(PushDebugGroupParameter {
             label: label.to_string(),
         }));
     }
 
     fn pop_debug_group(&mut self) {
-        self.add_render_pass_command(RenderPassCommand::new(PopDebugGroupParameter));
+        self.push_render_pass_command(RenderPassCommand::new(PopDebugGroupParameter));
     }
 
     fn set_blend_constant(&mut self, color: wgpu::Color) {
-        self.add_render_pass_command(RenderPassCommand::new(SetBlendConstantParameter { color }));
+        self.push_render_pass_command(RenderPassCommand::new(SetBlendConstantParameter { color }));
     }
 
     fn write_timestamp(&mut self, query_set: &QuerySet, index: u32) {
-        self.add_render_pass_command(RenderPassCommand::new(WriteTimestampParameter {
+        self.push_render_pass_command(RenderPassCommand::new(WriteTimestampParameter {
             query_set: query_set.clone(),
             index,
         }));
     }
 
     fn begin_pipeline_statistics_query(&mut self, query_set: &QuerySet, index: u32) {
-        self.add_render_pass_command(RenderPassCommand::new(
+        self.push_render_pass_command(RenderPassCommand::new(
             BeginPipelineStatisticsQueryParameter {
                 query_set: query_set.clone(),
                 index,
@@ -232,11 +232,11 @@ pub trait RenderPassCommandBuilder {
     }
 
     fn end_pipeline_statistics_query(&mut self) {
-        self.add_render_pass_command(RenderPassCommand::new(EndPipelineStatisticsQueryParameter));
+        self.push_render_pass_command(RenderPassCommand::new(EndPipelineStatisticsQueryParameter));
     }
 
     fn draw_indexed(&mut self, indices: Range<u32>, base_vertex: i32, instances: Range<u32>) {
-        self.add_render_pass_command(RenderPassCommand::new(DrawIndexedParameter {
+        self.push_render_pass_command(RenderPassCommand::new(DrawIndexedParameter {
             indices,
             base_vertex,
             instances,
@@ -244,7 +244,7 @@ pub trait RenderPassCommandBuilder {
     }
 
     fn set_scissor_rect(&mut self, x: u32, y: u32, width: u32, height: u32) {
-        self.add_render_pass_command(RenderPassCommand::new(SetScissorRectParameter {
+        self.push_render_pass_command(RenderPassCommand::new(SetScissorRectParameter {
             x,
             y,
             width,
@@ -253,7 +253,7 @@ pub trait RenderPassCommandBuilder {
     }
 
     fn draw(&mut self, vertices: Range<u32>, instances: Range<u32>) {
-        self.add_render_pass_command(RenderPassCommand::new(DrawParameter {
+        self.push_render_pass_command(RenderPassCommand::new(DrawParameter {
             vertices,
             instances,
         }));
@@ -266,7 +266,7 @@ pub trait RenderPassCommandBuilder {
         offset: u64,
         size: u64,
     ) {
-        self.add_render_pass_command(RenderPassCommand::new(SetIndexBufferParameter {
+        self.push_render_pass_command(RenderPassCommand::new(SetIndexBufferParameter {
             buffer_ref: buffer_ref.clone(),
             index_format,
             offset,
@@ -275,11 +275,11 @@ pub trait RenderPassCommandBuilder {
     }
 
     fn set_render_pipeline(&mut self, id: CachedPipelineId) {
-        self.add_render_pass_command(RenderPassCommand::new(SetRenderPipelineParameter { id }));
+        self.push_render_pass_command(RenderPassCommand::new(SetRenderPipelineParameter { id }));
     }
 
     fn set_bind_group(&mut self, index: u32, bind_group: &BindGroupBinding, offsets: &[u32]) {
-        self.add_render_pass_command(RenderPassCommand::new(SetBindGroupParameter {
+        self.push_render_pass_command(RenderPassCommand::new(SetBindGroupParameter {
             index,
             bind_group: bind_group.clone(),
             offsets: offsets.to_vec(),
@@ -293,7 +293,7 @@ pub trait RenderPassCommandBuilder {
         offset: u64,
         size: u64,
     ) {
-        self.add_render_pass_command(RenderPassCommand::new(SetVertexBufferParameter {
+        self.push_render_pass_command(RenderPassCommand::new(SetVertexBufferParameter {
             slot,
             buffer_ref: buffer_ref.clone(),
             offset,
@@ -309,13 +309,13 @@ impl RenderPassCommand {
         Self(Box::new(value))
     }
 
-    pub fn draw(&self, render_pass_context: &mut RenderPassContext) {
-        self.0.draw(render_pass_context)
+    pub fn execute(&self, render_pass_context: &mut RenderPassContext) {
+        self.0.execute(render_pass_context)
     }
 }
 
 pub trait ErasedRenderPassCommand: Sync + Send + 'static {
-    fn draw(&self, render_pass_context: &mut RenderPassContext);
+    fn execute(&self, render_pass_context: &mut RenderPassContext);
 }
 
 pub struct RenderPassContext<'a, 'b> {
@@ -597,9 +597,9 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
             .set_index_buffer(buffer.resource.slice(offset..(offset + size)), index_format);
     }
 
-    pub fn execute(mut self, commands: &Vec<RenderPassCommand>) {
+    pub fn execute(mut self, commands: &[RenderPassCommand]) {
         for command in commands {
-            command.draw(&mut self);
+            command.execute(&mut self);
         }
 
         drop(self.render_pass);

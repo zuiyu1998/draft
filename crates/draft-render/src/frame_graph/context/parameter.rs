@@ -22,7 +22,7 @@ pub struct DispatchWorkgroupsParameter {
 }
 
 impl ErasedComputePassCommand for DispatchWorkgroupsParameter {
-    fn draw(&self, compute_pass_context: &mut ComputePassContext) {
+    fn execute(&self, compute_pass_context: &mut ComputePassContext) {
         compute_pass_context.dispatch_workgroups(self.x, self.y, self.z);
     }
 }
@@ -34,19 +34,19 @@ pub struct ClearBufferParameter {
 }
 
 impl ErasedRenderPassCommand for ClearBufferParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.clear_buffer(&self.buffer_ref, self.offset, self.size);
     }
 }
 
 impl ErasedComputePassCommand for ClearBufferParameter {
-    fn draw(&self, compute_pass_context: &mut ComputePassContext) {
+    fn execute(&self, compute_pass_context: &mut ComputePassContext) {
         compute_pass_context.clear_buffer(&self.buffer_ref, self.offset, self.size);
     }
 }
 
 impl ErasedEncoderPassCommand for ClearBufferParameter {
-    fn draw(&self, command_encoder_context: &mut EncoderPassContext) {
+    fn execute(&self, command_encoder_context: &mut EncoderPassContext) {
         command_encoder_context.clear_buffer(&self.buffer_ref, self.offset, self.size);
     }
 }
@@ -57,19 +57,19 @@ pub struct ClearTextureParameter {
 }
 
 impl ErasedComputePassCommand for ClearTextureParameter {
-    fn draw(&self, compute_pass_context: &mut ComputePassContext) {
+    fn execute(&self, compute_pass_context: &mut ComputePassContext) {
         compute_pass_context.clear_texture(&self.texture_ref, &self.subresource_range);
     }
 }
 
 impl ErasedRenderPassCommand for ClearTextureParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.clear_texture(&self.texture_ref, &self.subresource_range);
     }
 }
 
 impl ErasedEncoderPassCommand for ClearTextureParameter {
-    fn draw(&self, command_encoder_context: &mut EncoderPassContext) {
+    fn execute(&self, command_encoder_context: &mut EncoderPassContext) {
         command_encoder_context.clear_texture(&self.texture_ref, &self.subresource_range);
     }
 }
@@ -81,7 +81,7 @@ pub struct CopyTextureToBufferParameter {
 }
 
 impl ErasedComputePassCommand for CopyTextureToBufferParameter {
-    fn draw(&self, compute_pass_context: &mut ComputePassContext) {
+    fn execute(&self, compute_pass_context: &mut ComputePassContext) {
         compute_pass_context.copy_texture_to_buffer(
             self.source.clone(),
             self.destination.clone(),
@@ -91,7 +91,7 @@ impl ErasedComputePassCommand for CopyTextureToBufferParameter {
 }
 
 impl ErasedRenderPassCommand for CopyTextureToBufferParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.copy_texture_to_buffer(
             self.source.clone(),
             self.destination.clone(),
@@ -101,7 +101,7 @@ impl ErasedRenderPassCommand for CopyTextureToBufferParameter {
 }
 
 impl ErasedEncoderPassCommand for CopyTextureToBufferParameter {
-    fn draw(&self, command_encoder_context: &mut EncoderPassContext) {
+    fn execute(&self, command_encoder_context: &mut EncoderPassContext) {
         command_encoder_context.copy_texture_to_buffer(
             self.source.clone(),
             self.destination.clone(),
@@ -117,7 +117,7 @@ pub struct CopyTextureToTextureParameter {
 }
 
 impl ErasedComputePassCommand for CopyTextureToTextureParameter {
-    fn draw(&self, compute_pass_context: &mut ComputePassContext) {
+    fn execute(&self, compute_pass_context: &mut ComputePassContext) {
         compute_pass_context.copy_texture_to_texture(
             self.source.clone(),
             self.destination.clone(),
@@ -127,7 +127,7 @@ impl ErasedComputePassCommand for CopyTextureToTextureParameter {
 }
 
 impl ErasedRenderPassCommand for CopyTextureToTextureParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.copy_texture_to_texture(
             self.source.clone(),
             self.destination.clone(),
@@ -137,7 +137,7 @@ impl ErasedRenderPassCommand for CopyTextureToTextureParameter {
 }
 
 impl ErasedEncoderPassCommand for CopyTextureToTextureParameter {
-    fn draw(&self, command_encoder_context: &mut EncoderPassContext) {
+    fn execute(&self, command_encoder_context: &mut EncoderPassContext) {
         command_encoder_context.copy_texture_to_texture(
             self.source.clone(),
             self.destination.clone(),
@@ -152,7 +152,7 @@ pub struct DispatchWorkgroupsIndirectParameter {
 }
 
 impl ErasedComputePassCommand for DispatchWorkgroupsIndirectParameter {
-    fn draw(&self, compute_pass_context: &mut ComputePassContext) {
+    fn execute(&self, compute_pass_context: &mut ComputePassContext) {
         compute_pass_context
             .dispatch_workgroups_indirect(&self.indirect_buffer_ref, self.indirect_offset);
     }
@@ -164,7 +164,7 @@ pub struct DrawIndexedIndirectParameter {
 }
 
 impl ErasedRenderPassCommand for DrawIndexedIndirectParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.draw_indexed_indirect(&self.indirect_buffer_ref, self.indirect_offset);
     }
 }
@@ -176,7 +176,7 @@ pub struct MultiDrawIndirectParameter {
 }
 
 impl ErasedRenderPassCommand for MultiDrawIndirectParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.multi_draw_indirect(
             &self.indirect_buffer_ref,
             self.indirect_offset,
@@ -194,7 +194,7 @@ pub struct MultiDrawIndirectCountParameter {
 }
 
 impl ErasedRenderPassCommand for MultiDrawIndirectCountParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.multi_draw_indexed_indirect_count(
             &self.indirect_buffer_ref,
             self.indirect_offset,
@@ -212,7 +212,7 @@ pub struct MultiDrawIndexedIndirectParameter {
 }
 
 impl ErasedRenderPassCommand for MultiDrawIndexedIndirectParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.multi_draw_indexed_indirect(
             &self.indirect_buffer_ref,
             self.indirect_offset,
@@ -230,7 +230,7 @@ pub struct MultiDrawIndexedIndirectCountParameter {
 }
 
 impl ErasedRenderPassCommand for MultiDrawIndexedIndirectCountParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.multi_draw_indexed_indirect_count(
             &self.indirect_buffer_ref,
             self.indirect_offset,
@@ -246,7 +246,7 @@ pub struct SetStencilReferenceParameter {
 }
 
 impl ErasedRenderPassCommand for SetStencilReferenceParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.set_stencil_reference(self.reference);
     }
 }
@@ -263,13 +263,13 @@ pub struct SetPushConstantsComputeParameter {
 }
 
 impl ErasedComputePassCommand for SetPushConstantsComputeParameter {
-    fn draw(&self, compute_pass_context: &mut ComputePassContext) {
+    fn execute(&self, compute_pass_context: &mut ComputePassContext) {
         compute_pass_context.set_push_constants(self.offset, &self.data);
     }
 }
 
 impl ErasedRenderPassCommand for SetPushConstantsParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.set_push_constants(self.stages, self.offset, &self.data);
     }
 }
@@ -284,7 +284,7 @@ pub struct SetViewportParameter {
 }
 
 impl ErasedRenderPassCommand for SetViewportParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.set_viewport(
             self.x,
             self.y,
@@ -301,13 +301,13 @@ pub struct InsertDebugMarkerParameter {
 }
 
 impl ErasedComputePassCommand for InsertDebugMarkerParameter {
-    fn draw(&self, compute_pass_context: &mut ComputePassContext) {
+    fn execute(&self, compute_pass_context: &mut ComputePassContext) {
         compute_pass_context.insert_debug_marker(&self.label);
     }
 }
 
 impl ErasedRenderPassCommand for InsertDebugMarkerParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.insert_debug_marker(&self.label);
     }
 }
@@ -316,19 +316,19 @@ pub struct PushDebugGroupParameter {
     pub label: String,
 }
 impl ErasedEncoderCommand for PushDebugGroupParameter {
-    fn apply(&self, command_encoder: &mut wgpu::CommandEncoder) {
+    fn execute(&self, command_encoder: &mut wgpu::CommandEncoder) {
         command_encoder.push_debug_group(&self.label);
     }
 }
 
 impl ErasedComputePassCommand for PushDebugGroupParameter {
-    fn draw(&self, compute_pass_context: &mut ComputePassContext) {
+    fn execute(&self, compute_pass_context: &mut ComputePassContext) {
         compute_pass_context.push_debug_group(&self.label);
     }
 }
 
 impl ErasedRenderPassCommand for PushDebugGroupParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.push_debug_group(&self.label);
     }
 }
@@ -336,19 +336,19 @@ impl ErasedRenderPassCommand for PushDebugGroupParameter {
 pub struct PopDebugGroupParameter;
 
 impl ErasedEncoderCommand for PopDebugGroupParameter {
-    fn apply(&self, command_encoder: &mut wgpu::CommandEncoder) {
+    fn execute(&self, command_encoder: &mut wgpu::CommandEncoder) {
         command_encoder.pop_debug_group();
     }
 }
 
 impl ErasedComputePassCommand for PopDebugGroupParameter {
-    fn draw(&self, compute_pass_context: &mut ComputePassContext) {
+    fn execute(&self, compute_pass_context: &mut ComputePassContext) {
         compute_pass_context.pop_debug_group();
     }
 }
 
 impl ErasedRenderPassCommand for PopDebugGroupParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.pop_debug_group();
     }
 }
@@ -358,7 +358,7 @@ pub struct SetBlendConstantParameter {
 }
 
 impl ErasedRenderPassCommand for SetBlendConstantParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.set_blend_constant(self.color);
     }
 }
@@ -369,13 +369,13 @@ pub struct WriteTimestampParameter {
 }
 
 impl ErasedComputePassCommand for WriteTimestampParameter {
-    fn draw(&self, compute_pass_context: &mut ComputePassContext) {
+    fn execute(&self, compute_pass_context: &mut ComputePassContext) {
         compute_pass_context.write_timestamp(&self.query_set, self.index);
     }
 }
 
 impl ErasedRenderPassCommand for WriteTimestampParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.write_timestamp(&self.query_set, self.index);
     }
 }
@@ -386,13 +386,13 @@ pub struct BeginPipelineStatisticsQueryParameter {
 }
 
 impl ErasedComputePassCommand for BeginPipelineStatisticsQueryParameter {
-    fn draw(&self, compute_pass_context: &mut ComputePassContext) {
+    fn execute(&self, compute_pass_context: &mut ComputePassContext) {
         compute_pass_context.write_timestamp(&self.query_set, self.index);
     }
 }
 
 impl ErasedRenderPassCommand for BeginPipelineStatisticsQueryParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.begin_pipeline_statistics_query(&self.query_set, self.index);
     }
 }
@@ -400,13 +400,13 @@ impl ErasedRenderPassCommand for BeginPipelineStatisticsQueryParameter {
 pub struct EndPipelineStatisticsQueryParameter;
 
 impl ErasedComputePassCommand for EndPipelineStatisticsQueryParameter {
-    fn draw(&self, compute_pass_context: &mut ComputePassContext) {
+    fn execute(&self, compute_pass_context: &mut ComputePassContext) {
         compute_pass_context.end_pipeline_statistics_query();
     }
 }
 
 impl ErasedRenderPassCommand for EndPipelineStatisticsQueryParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.end_pipeline_statistics_query();
     }
 }
@@ -417,7 +417,7 @@ pub struct DrawIndirectParameter {
 }
 
 impl ErasedRenderPassCommand for DrawIndirectParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.draw_indirect(&self.indirect_buffer_ref, self.indirect_offset);
     }
 }
@@ -429,7 +429,7 @@ pub struct DrawIndexedParameter {
 }
 
 impl ErasedRenderPassCommand for DrawIndexedParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.draw_indexed(
             self.indices.clone(),
             self.base_vertex,
@@ -446,7 +446,7 @@ pub struct SetScissorRectParameter {
 }
 
 impl ErasedRenderPassCommand for SetScissorRectParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.set_scissor_rect(self.x, self.y, self.width, self.height);
     }
 }
@@ -457,7 +457,7 @@ pub struct DrawParameter {
 }
 
 impl ErasedRenderPassCommand for DrawParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.draw(self.vertices.clone(), self.instances.clone());
     }
 }
@@ -470,7 +470,7 @@ pub struct SetIndexBufferParameter {
 }
 
 impl ErasedRenderPassCommand for SetIndexBufferParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.set_index_buffer(
             &self.buffer_ref,
             self.index_format,
@@ -488,7 +488,7 @@ pub struct SetVertexBufferParameter {
 }
 
 impl ErasedRenderPassCommand for SetVertexBufferParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.set_vertex_buffer(self.slot, &self.buffer_ref, self.offset, self.size);
     }
 }
@@ -498,7 +498,7 @@ pub struct SetComputePipelineParameter {
 }
 
 impl ErasedComputePassCommand for SetComputePipelineParameter {
-    fn draw(&self, compute_pass_context: &mut ComputePassContext) {
+    fn execute(&self, compute_pass_context: &mut ComputePassContext) {
         compute_pass_context.set_compute_pipeline(self.id);
     }
 }
@@ -508,7 +508,7 @@ pub struct SetRenderPipelineParameter {
 }
 
 impl ErasedRenderPassCommand for SetRenderPipelineParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.set_render_pipeline(self.id);
     }
 }
@@ -520,13 +520,13 @@ pub struct SetBindGroupParameter {
 }
 
 impl ErasedComputePassCommand for SetBindGroupParameter {
-    fn draw(&self, compute_pass_context: &mut ComputePassContext) {
+    fn execute(&self, compute_pass_context: &mut ComputePassContext) {
         compute_pass_context.set_bind_group(self.index, &self.bind_group, &self.offsets);
     }
 }
 
 impl ErasedRenderPassCommand for SetBindGroupParameter {
-    fn draw(&self, render_pass_context: &mut RenderPassContext) {
+    fn execute(&self, render_pass_context: &mut RenderPassContext) {
         render_pass_context.set_bind_group(self.index, &self.bind_group, &self.offsets);
     }
 }

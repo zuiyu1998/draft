@@ -24,13 +24,13 @@ impl Drop for PassBuilder<'_> {
 }
 
 impl EncoderCommandBuilder for PassBuilder<'_> {
-    fn add_begin_encoder_command(&mut self, value: EncoderCommand) -> &mut Self {
+    fn push_begin_encoder_command(&mut self, value: EncoderCommand) -> &mut Self {
         self.pass.begin_encoder_commands.push(value);
 
         self
     }
 
-    fn add_end_encoder_command(&mut self, value: EncoderCommand) -> &mut Self {
+    fn push_end_encoder_command(&mut self, value: EncoderCommand) -> &mut Self {
         self.pass.end_encoder_commands.push(value);
 
         self
@@ -72,7 +72,7 @@ impl Pass {
             });
 
         for begin_encoder_command in self.begin_encoder_commands.iter() {
-            begin_encoder_command.apply(&mut command_encoder);
+            begin_encoder_command.execute(&mut command_encoder);
         }
 
         for executor in self.executors.iter() {
@@ -80,7 +80,7 @@ impl Pass {
         }
 
         for end_encoder_command in self.end_encoder_commands.iter() {
-            end_encoder_command.apply(&mut command_encoder);
+            end_encoder_command.execute(&mut command_encoder);
         }
 
         let command_buffer = command_encoder.finish();
