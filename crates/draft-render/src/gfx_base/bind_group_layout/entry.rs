@@ -188,6 +188,19 @@ impl From<TextureViewDimension> for RawTextureViewDimension {
     }
 }
 
+impl From<RawTextureViewDimension> for TextureViewDimension {
+    fn from(value: RawTextureViewDimension) -> Self {
+        match value {
+            RawTextureViewDimension::Cube => TextureViewDimension::Cube,
+            RawTextureViewDimension::D1 => TextureViewDimension::D1,
+            RawTextureViewDimension::CubeArray => TextureViewDimension::CubeArray,
+            RawTextureViewDimension::D2 => TextureViewDimension::D2,
+            RawTextureViewDimension::D2Array => TextureViewDimension::D2Array,
+            RawTextureViewDimension::D3 => TextureViewDimension::D3,
+        }
+    }
+}
+
 /// Specific type of a sample in a texture binding.
 ///
 /// Corresponds to [WebGPU `GPUTextureSampleType`](

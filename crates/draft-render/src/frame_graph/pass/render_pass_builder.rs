@@ -4,9 +4,9 @@ use wgpu::{QuerySet, ShaderStages};
 
 use crate::{
     frame_graph::{
-        BindGroupBinding, BindGroupHandle, ColorAttachment, ColorAttachmentOwned,
-        DepthStencilAttachment, Ref, RenderPass, RenderPassCommandBuilder, ResourceMaterial,
-        ResourceRead, ResourceWrite, TransientBuffer,
+        BindGroupBinding, BindGroupHandle, ColorAttachment, ColorAttachmentRecord,
+        DepthStencilAttachment, Ref, RenderPassCommandBuilder, RenderPassCommandContainer,
+        ResourceMaterial, ResourceRead, ResourceWrite, TransientBuffer,
     },
     gfx_base::CachedPipelineId,
 };
@@ -14,7 +14,7 @@ use crate::{
 use super::PassBuilder;
 
 pub struct RenderPassBuilder<'a, 'b> {
-    render_pass: RenderPass,
+    render_pass: RenderPassCommandContainer,
     pass_builder: &'b mut PassBuilder<'a>,
 }
 
@@ -26,7 +26,7 @@ impl Drop for RenderPassBuilder<'_, '_> {
 
 impl<'a, 'b> RenderPassBuilder<'a, 'b> {
     pub fn new(pass_builder: &'b mut PassBuilder<'a>, name: &str) -> Self {
-        let mut render_pass = RenderPass::default();
+        let mut render_pass = RenderPassCommandContainer::default();
         render_pass.set_pass_name(name);
 
         Self {
@@ -298,25 +298,22 @@ impl<'a, 'b> RenderPassBuilder<'a, 'b> {
         self
     }
 
-    pub fn add_raw_color_attachment(
-        &mut self,
-        color_attachment: ColorAttachmentOwned,
-    ) -> &mut Self {
+    pub fn add_out_color_attachment(&mut self, color_attachment: ColorAttachment) -> &mut Self {
         self.render_pass
-            .add_raw_color_attachment(Some(color_attachment));
+            .add_out_color_attachment(Some(color_attachment));
         self
     }
 
     pub fn add_color_attachments(
         &mut self,
-        color_attachments: Vec<Option<ColorAttachment>>,
+        color_attachments: Vec<Option<ColorAttachmentRecord>>,
     ) -> &mut Self {
         self.render_pass.add_color_attachments(color_attachments);
 
         self
     }
 
-    pub fn add_color_attachment(&mut self, color_attachment: ColorAttachment) -> &mut Self {
+    pub fn add_color_attachment(&mut self, color_attachment: ColorAttachmentRecord) -> &mut Self {
         self.render_pass
             .add_color_attachment(Some(color_attachment));
 

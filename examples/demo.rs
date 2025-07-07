@@ -6,7 +6,7 @@ use draft_render::{
     PipelineLayoutDescriptor, RenderMaterial, RenderPipelineDescriptor, RenderServer, RenderWorld,
     Shader, ShaderCache, ShaderResource, Texture, TextureResource, Vertex,
     VertexAttributeDescriptor,
-    frame_graph::{ColorAttachmentOwned, FrameGraph},
+    frame_graph::{ColorAttachment, FrameGraph},
     gfx_base::{
         BindGroupLayoutEntriesBuilder, BlendComponent, BlendState, ColorTargetState, ColorWrites,
         RawBindGroupLayout, RawTextureFormat, RawTextureView, RenderDevice, SamplerBindingType,
@@ -168,7 +168,7 @@ impl PipelineNode for TestNode {
         let mut pass_builder = frame_graph.create_pass_builder("test_node");
         let mut render_pass_builder = pass_builder.create_render_pass_builder("test_pass");
 
-        render_pass_builder.add_raw_color_attachment(ColorAttachmentOwned {
+        render_pass_builder.add_out_color_attachment(ColorAttachment {
             view: context.texture_view.clone(),
             resolve_target: None,
             ops: Operations {

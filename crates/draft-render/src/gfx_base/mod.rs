@@ -42,7 +42,7 @@ pub use wgpu::{
     ShaderSource as RawShaderSource, ShaderStages as RawShaderStages,
     StencilFaceState as RawStencilFaceState, StencilOperation as RawStencilOperation,
     StencilState as RawStencilState, StorageTextureAccess as RawStorageTextureAccess, StoreOp,
-    Texture as RawTexture, TextureDescriptor as RawTextureDescriptor,
+    Texture as RawTexture, TextureAspect, TextureDescriptor as RawTextureDescriptor,
     TextureDimension as RawTextureDimension, TextureFormat as RawTextureFormat,
     TextureSampleType as RawTextureSampleType, TextureUsages as RawTextureUsages,
     TextureView as RawTextureView, TextureViewDimension as RawTextureViewDimension,

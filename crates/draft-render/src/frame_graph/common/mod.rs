@@ -1,15 +1,15 @@
-pub mod bind_group;
-pub mod color_attachment;
-pub mod depth_stencil_attachment;
+mod bind_group;
+mod color_attachment;
+mod depth_stencil_attachment;
 
-pub mod render_pass_info;
-pub mod texel_copy_texture_info;
-pub mod texture_view;
+mod render_pass;
+mod texel_copy_texture_info;
+mod texture_view;
 
 pub use bind_group::*;
 pub use color_attachment::*;
 pub use depth_stencil_attachment::*;
-pub use render_pass_info::*;
+pub use render_pass::*;
 pub use texel_copy_texture_info::*;
 pub use texture_view::*;
 

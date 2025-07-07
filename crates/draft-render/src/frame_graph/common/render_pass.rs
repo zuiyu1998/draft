@@ -3,29 +3,29 @@ use std::borrow::Cow;
 use crate::frame_graph::FrameGraphContext;
 
 use super::{
-    ColorAttachment, ColorAttachmentOwned, DepthStencilAttachment, DepthStencilAttachmentOwned,
+    ColorAttachment, ColorAttachmentRecord, DepthStencilAttachment, DepthStencilAttachmentOwned,
     TransientResourceBinding,
 };
 
 #[derive(Default)]
-pub struct RenderPassInfo {
+pub struct RenderPassRecord {
     pub label: Option<Cow<'static, str>>,
-    pub color_attachments: Vec<Option<ColorAttachment>>,
+    pub color_attachments: Vec<Option<ColorAttachmentRecord>>,
     pub depth_stencil_attachment: Option<DepthStencilAttachment>,
-    pub raw_color_attachments: Vec<Option<ColorAttachmentOwned>>,
+    pub out_color_attachments: Vec<Option<ColorAttachment>>,
 }
 
-pub struct RenderPassOwned {
+pub struct RenderPass {
     pub label: Option<Cow<'static, str>>,
-    pub color_attachments: Vec<Option<ColorAttachmentOwned>>,
+    pub color_attachments: Vec<Option<ColorAttachment>>,
     pub depth_stencil_attachment: Option<DepthStencilAttachmentOwned>,
 }
 
-impl TransientResourceBinding for RenderPassInfo {
-    type Resource = RenderPassOwned;
+impl TransientResourceBinding for RenderPassRecord {
+    type Resource = RenderPass;
 
     fn make_resource(&self, frame_graph_context: &FrameGraphContext<'_>) -> Self::Resource {
-        let mut color_attachments = self.raw_color_attachments.clone();
+        let mut color_attachments = self.out_color_attachments.clone();
 
         for color_attachment in self.color_attachments.iter() {
             if color_attachment.is_none() {
@@ -47,7 +47,7 @@ impl TransientResourceBinding for RenderPassInfo {
                 Some(depth_stencil_attachment.make_resource(frame_graph_context));
         }
 
-        RenderPassOwned {
+        RenderPass {
             label: self.label.clone(),
             color_attachments,
             depth_stencil_attachment: depth_stencil_attachment_owned,
@@ -55,7 +55,7 @@ impl TransientResourceBinding for RenderPassInfo {
     }
 }
 
-impl RenderPassOwned {
+impl RenderPass {
     pub fn create_render_pass(
         &self,
         command_encoder: &mut wgpu::CommandEncoder,

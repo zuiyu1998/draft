@@ -14,8 +14,7 @@ use wgpu::CommandEncoder;
 
 use crate::{
     frame_graph::{
-        Ref, RenderPassOwned, ResourceTable, ResourceView, TransientResource,
-        TransientResourceCache,
+        Ref, RenderPass, ResourceTable, ResourceView, TransientResource, TransientResourceCache,
     },
     gfx_base::{
         CachedPipelineId, ComputePipeline, GetPipelineCache, PipelineCache, RenderDevice,
@@ -49,9 +48,9 @@ impl<'a> FrameGraphContext<'a> {
     pub fn begin_render_pass<'b>(
         &'b mut self,
         command_encoder: &'b mut CommandEncoder,
-        render_pass_owned: &RenderPassOwned,
+        render_pass: &RenderPass,
     ) -> RenderPassContext<'a, 'b> {
-        let render_pass = render_pass_owned.create_render_pass(command_encoder);
+        let render_pass = render_pass.create_render_pass(command_encoder);
 
         RenderPassContext::new(command_encoder, render_pass, self)
     }

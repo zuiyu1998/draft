@@ -1,7 +1,10 @@
 use std::borrow::Cow;
 
-use crate::frame_graph::{
-    FrameGraphContext, Ref, ResourceRead, ResourceView, ResourceWrite, TransientTexture,
+use crate::{
+    frame_graph::{
+        FrameGraphContext, Ref, ResourceRead, ResourceView, ResourceWrite, TransientTexture,
+    },
+    gfx_base::{RawTextureView, TextureAspect, TextureFormat, TextureUsages, TextureViewDimension},
 };
 
 use super::TransientResourceBinding;
@@ -13,10 +16,10 @@ pub type TextureViewWrite = TextureView<ResourceWrite>;
 #[derive(Default, Clone, Debug)]
 pub struct TextureViewInfo {
     pub label: Option<Cow<'static, str>>,
-    pub format: Option<wgpu::TextureFormat>,
-    pub dimension: Option<wgpu::TextureViewDimension>,
-    pub usage: Option<wgpu::TextureUsages>,
-    pub aspect: wgpu::TextureAspect,
+    pub format: Option<TextureFormat>,
+    pub dimension: Option<TextureViewDimension>,
+    pub usage: Option<TextureUsages>,
+    pub aspect: TextureAspect,
     pub base_mip_level: u32,
     pub mip_level_count: Option<u32>,
     pub base_array_layer: u32,
@@ -30,9 +33,9 @@ impl From<wgpu::TextureViewDescriptor<'_>> for TextureViewInfo {
                 .label
                 .map(|label| label.to_string())
                 .map(|label| label.into()),
-            format: value.format,
-            dimension: value.dimension,
-            usage: value.usage,
+            format: value.format.map(|format| format.into()),
+            dimension: value.dimension.map(|dimension| dimension.into()),
+            usage: value.usage.map(|usage| usage.into()),
             aspect: value.aspect,
             base_mip_level: value.base_mip_level,
             mip_level_count: value.mip_level_count,
@@ -46,9 +49,9 @@ impl TextureViewInfo {
     pub fn get_texture_view_desc(&self) -> wgpu::TextureViewDescriptor {
         wgpu::TextureViewDescriptor {
             label: self.label.as_deref(),
-            format: self.format,
-            dimension: self.dimension,
-            usage: self.usage,
+            format: self.format.map(|format| format.into()),
+            dimension: self.dimension.map(|dimension| dimension.into()),
+            usage: self.usage.map(|usage| usage.into()),
             aspect: self.aspect,
             base_mip_level: self.base_mip_level,
             mip_level_count: self.mip_level_count,
@@ -73,7 +76,7 @@ impl<ViewType: ResourceView> Clone for TextureView<ViewType> {
 }
 
 impl<ViewType: ResourceView> TransientResourceBinding for TextureView<ViewType> {
-    type Resource = wgpu::TextureView;
+    type Resource = RawTextureView;
 
     fn make_resource(&self, frame_graph_context: &FrameGraphContext<'_>) -> Self::Resource {
         frame_graph_context

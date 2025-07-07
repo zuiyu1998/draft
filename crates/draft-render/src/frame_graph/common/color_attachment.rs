@@ -1,22 +1,25 @@
-use crate::frame_graph::FrameGraphContext;
+use crate::{
+    frame_graph::FrameGraphContext,
+    gfx_base::{Color, Operations, RawTextureView},
+};
 
 use super::{TextureViewRead, TextureViewWrite, TransientResourceBinding};
 
 #[derive(Clone)]
-pub struct ColorAttachment {
+pub struct ColorAttachmentRecord {
     pub view: TextureViewWrite,
     pub resolve_target: Option<TextureViewRead>,
-    pub ops: wgpu::Operations<wgpu::Color>,
+    pub ops: Operations<Color>,
 }
 
 #[derive(Clone)]
-pub struct ColorAttachmentOwned {
-    pub view: wgpu::TextureView,
-    pub resolve_target: Option<wgpu::TextureView>,
-    pub ops: wgpu::Operations<wgpu::Color>,
+pub struct ColorAttachment {
+    pub view: RawTextureView,
+    pub resolve_target: Option<RawTextureView>,
+    pub ops: Operations<Color>,
 }
 
-impl ColorAttachmentOwned {
+impl ColorAttachment {
     pub fn get_render_pass_color_attachment(&self) -> wgpu::RenderPassColorAttachment {
         wgpu::RenderPassColorAttachment {
             view: &self.view,
@@ -26,8 +29,8 @@ impl ColorAttachmentOwned {
     }
 }
 
-impl TransientResourceBinding for ColorAttachment {
-    type Resource = ColorAttachmentOwned;
+impl TransientResourceBinding for ColorAttachmentRecord {
+    type Resource = ColorAttachment;
 
     fn make_resource(&self, frame_graph_context: &FrameGraphContext<'_>) -> Self::Resource {
         let view = self.view.make_resource(frame_graph_context);
@@ -35,13 +38,13 @@ impl TransientResourceBinding for ColorAttachment {
         if let Some(resolve_target) = &self.resolve_target {
             let resolve_target = resolve_target.make_resource(frame_graph_context);
 
-            ColorAttachmentOwned {
+            ColorAttachment {
                 view,
                 resolve_target: Some(resolve_target),
                 ops: self.ops,
             }
         } else {
-            ColorAttachmentOwned {
+            ColorAttachment {
                 view,
                 resolve_target: None,
                 ops: self.ops,
