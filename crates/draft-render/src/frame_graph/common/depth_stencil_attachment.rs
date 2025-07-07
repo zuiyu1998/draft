@@ -1,6 +1,6 @@
-use crate::frame_graph::RenderContext;
+use crate::frame_graph::FrameGraphContext;
 
-use super::{ResourceBinding, TextureViewWrite};
+use super::{TextureViewWrite, TransientResourceBinding};
 
 #[derive(Clone)]
 pub struct DepthStencilAttachment {
@@ -9,11 +9,11 @@ pub struct DepthStencilAttachment {
     pub stencil_ops: Option<wgpu::Operations<u32>>,
 }
 
-impl ResourceBinding for DepthStencilAttachment {
+impl TransientResourceBinding for DepthStencilAttachment {
     type Resource = DepthStencilAttachmentOwned;
 
-    fn make_resource(&self, render_context: &RenderContext<'_>) -> Self::Resource {
-        let view = self.view.make_resource(render_context);
+    fn make_resource(&self, frame_graph_context: &FrameGraphContext<'_>) -> Self::Resource {
+        let view = self.view.make_resource(frame_graph_context);
 
         DepthStencilAttachmentOwned {
             view,

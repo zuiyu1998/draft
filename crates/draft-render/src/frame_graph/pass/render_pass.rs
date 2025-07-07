@@ -3,8 +3,8 @@ use std::mem::take;
 use wgpu::CommandEncoder;
 
 use crate::frame_graph::{
-    ColorAttachment, ColorAttachmentOwned, DepthStencilAttachment, RenderContext,
-    RenderPassCommand, RenderPassCommandBuilder, RenderPassInfo, ResourceBinding,
+    ColorAttachment, ColorAttachmentOwned, DepthStencilAttachment, FrameGraphContext,
+    RenderPassCommand, RenderPassCommandBuilder, RenderPassInfo, TransientResourceBinding,
 };
 
 use super::EncoderExecutor;
@@ -85,13 +85,17 @@ impl RenderPassCommandBuilder for RenderPass {
 }
 
 impl EncoderExecutor for RenderPass {
-    fn execute(&self, command_encoder: &mut CommandEncoder, render_context: &mut RenderContext) {
+    fn execute(
+        &self,
+        command_encoder: &mut CommandEncoder,
+        frame_graph_context: &mut FrameGraphContext,
+    ) {
         for logic_render_pass in self.logic_render_passes.iter() {
             let render_pass_owned = logic_render_pass
                 .render_pass_info
-                .make_resource(render_context);
+                .make_resource(frame_graph_context);
             let render_pass_context =
-                render_context.begin_render_pass(command_encoder, &render_pass_owned);
+                frame_graph_context.begin_render_pass(command_encoder, &render_pass_owned);
 
             render_pass_context.execute(&logic_render_pass.commands);
         }

@@ -23,7 +23,7 @@ use crate::{
     },
 };
 
-pub struct RenderContext<'a> {
+pub struct FrameGraphContext<'a> {
     pub render_device: &'a RenderDevice,
     pub transient_resource_cache: &'a mut TransientResourceCache,
     pub(crate) resource_table: ResourceTable,
@@ -31,7 +31,7 @@ pub struct RenderContext<'a> {
     pipeline_cache: PipelineCache,
 }
 
-impl<'a> RenderContext<'a> {
+impl<'a> FrameGraphContext<'a> {
     pub fn new<T: GetPipelineCache>(
         render_device: &'a RenderDevice,
         transient_resource_cache: &'a mut TransientResourceCache,

@@ -1,6 +1,6 @@
-use crate::frame_graph::RenderContext;
+use crate::frame_graph::FrameGraphContext;
 
-use super::{ResourceBinding, TextureViewRead, TextureViewWrite};
+use super::{TextureViewRead, TextureViewWrite, TransientResourceBinding};
 
 #[derive(Clone)]
 pub struct ColorAttachment {
@@ -26,14 +26,14 @@ impl ColorAttachmentOwned {
     }
 }
 
-impl ResourceBinding for ColorAttachment {
+impl TransientResourceBinding for ColorAttachment {
     type Resource = ColorAttachmentOwned;
 
-    fn make_resource(&self, render_context: &RenderContext<'_>) -> Self::Resource {
-        let view = self.view.make_resource(render_context);
+    fn make_resource(&self, frame_graph_context: &FrameGraphContext<'_>) -> Self::Resource {
+        let view = self.view.make_resource(frame_graph_context);
 
         if let Some(resolve_target) = &self.resolve_target {
-            let resolve_target = resolve_target.make_resource(render_context);
+            let resolve_target = resolve_target.make_resource(frame_graph_context);
 
             ColorAttachmentOwned {
                 view,

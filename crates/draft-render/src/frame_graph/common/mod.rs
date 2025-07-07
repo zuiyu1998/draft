@@ -13,10 +13,10 @@ pub use render_pass_info::*;
 pub use texel_copy_texture_info::*;
 pub use texture_view::*;
 
-use crate::frame_graph::RenderContext;
+use crate::frame_graph::FrameGraphContext;
 
-pub trait ResourceBinding {
+pub trait TransientResourceBinding {
     type Resource;
 
-    fn make_resource(&self, render_context: &RenderContext<'_>) -> Self::Resource;
+    fn make_resource(&self, frame_graph_context: &FrameGraphContext<'_>) -> Self::Resource;
 }

@@ -2,8 +2,8 @@ use wgpu::{Extent3d, ImageSubresourceRange, QuerySet, ShaderStages};
 
 use crate::{
     frame_graph::{
-        BindGroupBinding, ResourceBinding, ResourceRead, ResourceWrite, TexelCopyBufferInfo,
-        TexelCopyTextureInfo, TransientBuffer, TransientTexture,
+        BindGroupBinding, ResourceRead, ResourceWrite, TexelCopyBufferInfo, TexelCopyTextureInfo,
+        TransientBuffer, TransientResourceBinding, TransientTexture,
     },
     gfx_base::CachedPipelineId,
 };
@@ -12,10 +12,10 @@ use super::{
     BeginPipelineStatisticsQueryParameter, ClearBufferParameter, ClearTextureParameter,
     CopyTextureToBufferParameter, CopyTextureToTextureParameter, DrawIndexedIndirectParameter,
     DrawIndexedParameter, DrawIndirectParameter, DrawParameter,
-    EndPipelineStatisticsQueryParameter, InsertDebugMarkerParameter,
+    EndPipelineStatisticsQueryParameter, FrameGraphContext, InsertDebugMarkerParameter,
     MultiDrawIndexedIndirectCountParameter, MultiDrawIndexedIndirectParameter,
     MultiDrawIndirectParameter, PopDebugGroupParameter, PushDebugGroupParameter, Ref,
-    RenderContext, SetBindGroupParameter, SetBlendConstantParameter, SetIndexBufferParameter,
+    SetBindGroupParameter, SetBlendConstantParameter, SetIndexBufferParameter,
     SetPushConstantsParameter, SetRenderPipelineParameter, SetScissorRectParameter,
     SetStencilReferenceParameter, SetVertexBufferParameter, SetViewportParameter,
     WriteTimestampParameter,
@@ -321,19 +321,19 @@ pub trait ErasedRenderPassCommand: Sync + Send + 'static {
 pub struct RenderPassContext<'a, 'b> {
     command_encoder: &'b mut wgpu::CommandEncoder,
     render_pass: wgpu::RenderPass<'static>,
-    render_context: &'b mut RenderContext<'a>,
+    frame_graph_context: &'b mut FrameGraphContext<'a>,
 }
 
 impl<'a, 'b> RenderPassContext<'a, 'b> {
     pub fn new(
         command_encoder: &'b mut wgpu::CommandEncoder,
         render_pass: wgpu::RenderPass<'static>,
-        render_context: &'b mut RenderContext<'a>,
+        frame_graph_context: &'b mut FrameGraphContext<'a>,
     ) -> Self {
         RenderPassContext {
             command_encoder,
             render_pass,
-            render_context,
+            frame_graph_context,
         }
     }
 
@@ -343,8 +343,8 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
         destination: TexelCopyBufferInfo<ResourceWrite>,
         copy_size: Extent3d,
     ) {
-        let source_texture = self.render_context.get_resource(&source.texture);
-        let destination_buffer = self.render_context.get_resource(&destination.buffer);
+        let source_texture = self.frame_graph_context.get_resource(&source.texture);
+        let destination_buffer = self.frame_graph_context.get_resource(&destination.buffer);
 
         self.command_encoder.copy_texture_to_buffer(
             wgpu::TexelCopyTextureInfoBase {
@@ -367,7 +367,7 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
         offset: u64,
         size: Option<u64>,
     ) {
-        let buffer = self.render_context.get_resource(buffer_ref);
+        let buffer = self.frame_graph_context.get_resource(buffer_ref);
 
         self.command_encoder
             .clear_buffer(&buffer.resource, offset, size);
@@ -378,7 +378,7 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
         texture_ref: &Ref<TransientTexture, ResourceWrite>,
         subresource_range: &ImageSubresourceRange,
     ) {
-        let texture = self.render_context.get_resource(texture_ref);
+        let texture = self.frame_graph_context.get_resource(texture_ref);
 
         self.command_encoder
             .clear_texture(&texture.resource, subresource_range);
@@ -390,8 +390,8 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
         destination: TexelCopyTextureInfo<ResourceWrite>,
         copy_size: Extent3d,
     ) {
-        let source_texture = self.render_context.get_resource(&source.texture);
-        let destination_texture = self.render_context.get_resource(&destination.texture);
+        let source_texture = self.frame_graph_context.get_resource(&source.texture);
+        let destination_texture = self.frame_graph_context.get_resource(&destination.texture);
 
         self.command_encoder.copy_texture_to_texture(
             wgpu::TexelCopyTextureInfoBase {
@@ -468,8 +468,8 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
         count_offset: u64,
         max_count: u32,
     ) {
-        let indirect_buffer = self.render_context.get_resource(indirect_buffer_ref);
-        let count_buffer = self.render_context.get_resource(count_buffer_ref);
+        let indirect_buffer = self.frame_graph_context.get_resource(indirect_buffer_ref);
+        let count_buffer = self.frame_graph_context.get_resource(count_buffer_ref);
 
         self.render_pass.multi_draw_indexed_indirect_count(
             &indirect_buffer.resource,
@@ -486,7 +486,7 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
         indirect_offset: u64,
         count: u32,
     ) {
-        let indirect_buffer = self.render_context.get_resource(indirect_buffer_ref);
+        let indirect_buffer = self.frame_graph_context.get_resource(indirect_buffer_ref);
 
         self.render_pass.multi_draw_indexed_indirect(
             &indirect_buffer.resource,
@@ -503,8 +503,8 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
         count_offset: u64,
         max_count: u32,
     ) {
-        let indirect_buffer = self.render_context.get_resource(indirect_buffer_ref);
-        let count_buffer = self.render_context.get_resource(count_buffer_ref);
+        let indirect_buffer = self.frame_graph_context.get_resource(indirect_buffer_ref);
+        let count_buffer = self.frame_graph_context.get_resource(count_buffer_ref);
 
         self.render_pass.multi_draw_indirect_count(
             &indirect_buffer.resource,
@@ -521,7 +521,7 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
         indirect_offset: u64,
         count: u32,
     ) {
-        let indirect_buffer = self.render_context.get_resource(indirect_buffer_ref);
+        let indirect_buffer = self.frame_graph_context.get_resource(indirect_buffer_ref);
 
         self.render_pass
             .multi_draw_indirect(&indirect_buffer.resource, indirect_offset, count);
@@ -532,7 +532,7 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
         indirect_buffer_ref: &Ref<TransientBuffer, ResourceRead>,
         indirect_offset: u64,
     ) {
-        let indirect_buffer = self.render_context.get_resource(indirect_buffer_ref);
+        let indirect_buffer = self.frame_graph_context.get_resource(indirect_buffer_ref);
 
         self.render_pass
             .draw_indexed_indirect(&indirect_buffer.resource, indirect_offset);
@@ -543,7 +543,7 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
         indirect_buffer_ref: &Ref<TransientBuffer, ResourceRead>,
         indirect_offset: u64,
     ) {
-        let indirect_buffer = self.render_context.get_resource(indirect_buffer_ref);
+        let indirect_buffer = self.frame_graph_context.get_resource(indirect_buffer_ref);
 
         self.render_pass
             .draw_indirect(&indirect_buffer.resource, indirect_offset);
@@ -554,12 +554,12 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
     }
 
     pub fn set_bind_group(&mut self, index: u32, bind_group: &BindGroupBinding, offsets: &[u32]) {
-        let bind_group = bind_group.make_resource(self.render_context);
+        let bind_group = bind_group.make_resource(self.frame_graph_context);
         self.render_pass.set_bind_group(index, &bind_group, offsets);
     }
 
     pub fn set_render_pipeline(&mut self, id: CachedPipelineId) {
-        let pipeline = self.render_context.get_render_pipeline(id);
+        let pipeline = self.frame_graph_context.get_render_pipeline(id);
         self.render_pass.set_pipeline(pipeline.wgpu());
     }
 
@@ -579,7 +579,7 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
         offset: u64,
         size: u64,
     ) {
-        let buffer = self.render_context.get_resource(buffer_ref);
+        let buffer = self.frame_graph_context.get_resource(buffer_ref);
         self.render_pass
             .set_vertex_buffer(slot, buffer.resource.slice(offset..(offset + size)));
     }
@@ -591,7 +591,7 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
         offset: u64,
         size: u64,
     ) {
-        let buffer = self.render_context.get_resource(buffer_ref);
+        let buffer = self.frame_graph_context.get_resource(buffer_ref);
 
         self.render_pass
             .set_index_buffer(buffer.resource.slice(offset..(offset + size)), index_format);

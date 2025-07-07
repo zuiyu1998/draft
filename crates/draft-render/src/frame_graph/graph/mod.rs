@@ -5,7 +5,7 @@ use wgpu::BindGroupLayout;
 use crate::frame_graph::{BindGroupHandleBuilder, PassBuilder, PassNodeBuilder};
 
 use super::{
-    DevicePass, Handle, IndexHandle, IntoArcTransientResource, PassNode, RenderContext,
+    DevicePass, FrameGraphContext, Handle, IndexHandle, IntoArcTransientResource, PassNode,
     ResourceBoard, ResourceNode, TransientResource, TransientResourceDescriptor, TypeEquals,
     VirtualResource,
 };
@@ -21,9 +21,9 @@ pub struct CompiledFrameGraph {
 }
 
 impl CompiledFrameGraph {
-    pub fn execute(&self, render_context: &mut RenderContext) {
+    pub fn execute(&self, frame_graph_context: &mut FrameGraphContext) {
         for device_pass in self.device_passes.iter() {
-            device_pass.execute(render_context);
+            device_pass.execute(frame_graph_context);
         }
     }
 }
@@ -44,13 +44,13 @@ impl FrameGraph {
         self.resource_board = ResourceBoard::default();
     }
 
-    pub fn execute(&mut self, render_context: &mut RenderContext) {
+    pub fn execute(&mut self, frame_graph_context: &mut FrameGraphContext) {
         if self.compiled_frame_graph.is_none() {
             return;
         }
 
         if let Some(compiled_frame_graph) = &mut self.compiled_frame_graph {
-            compiled_frame_graph.execute(render_context);
+            compiled_frame_graph.execute(frame_graph_context);
         }
 
         self.reset();

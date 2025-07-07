@@ -6,9 +6,10 @@ pub use render_pass_builder::*;
 
 use std::{borrow::Cow, mem::take};
 
-use wgpu::CommandEncoder;
-
-use crate::frame_graph::{EncoderCommand, EncoderCommandBuilder, PassNodeBuilder, RenderContext};
+use crate::{
+    frame_graph::{EncoderCommand, EncoderCommandBuilder, FrameGraphContext, PassNodeBuilder},
+    gfx_base::CommandEncoder,
+};
 
 pub struct PassBuilder<'a> {
     pass_node_builder: PassNodeBuilder<'a>,
@@ -62,8 +63,8 @@ pub struct Pass {
 }
 
 impl Pass {
-    pub fn render(&self, render_context: &mut RenderContext) {
-        let mut command_encoder = render_context
+    pub fn render(&self, frame_graph_context: &mut FrameGraphContext) {
+        let mut command_encoder = frame_graph_context
             .render_device
             .wgpu_device()
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -75,7 +76,7 @@ impl Pass {
         }
 
         for executor in self.executors.iter() {
-            executor.execute(&mut command_encoder, render_context);
+            executor.execute(&mut command_encoder, frame_graph_context);
         }
 
         for end_encoder_command in self.end_encoder_commands.iter() {
@@ -84,10 +85,14 @@ impl Pass {
 
         let command_buffer = command_encoder.finish();
 
-        render_context.add_command_buffer(command_buffer);
+        frame_graph_context.add_command_buffer(command_buffer);
     }
 }
 
 pub trait EncoderExecutor: 'static + Send + Sync {
-    fn execute(&self, command_encoder: &mut CommandEncoder, render_context: &mut RenderContext);
+    fn execute(
+        &self,
+        command_encoder: &mut CommandEncoder,
+        frame_graph_context: &mut FrameGraphContext,
+    );
 }

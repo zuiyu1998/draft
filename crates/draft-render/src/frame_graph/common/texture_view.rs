@@ -1,10 +1,10 @@
 use std::borrow::Cow;
 
 use crate::frame_graph::{
-    Ref, RenderContext, ResourceRead, ResourceView, ResourceWrite, TransientTexture,
+    FrameGraphContext, Ref, ResourceRead, ResourceView, ResourceWrite, TransientTexture,
 };
 
-use super::ResourceBinding;
+use super::TransientResourceBinding;
 
 pub type TextureViewRead = TextureView<ResourceRead>;
 
@@ -72,11 +72,11 @@ impl<ViewType: ResourceView> Clone for TextureView<ViewType> {
     }
 }
 
-impl<ViewType: ResourceView> ResourceBinding for TextureView<ViewType> {
+impl<ViewType: ResourceView> TransientResourceBinding for TextureView<ViewType> {
     type Resource = wgpu::TextureView;
 
-    fn make_resource(&self, render_context: &RenderContext<'_>) -> Self::Resource {
-        render_context
+    fn make_resource(&self, frame_graph_context: &FrameGraphContext<'_>) -> Self::Resource {
+        frame_graph_context
             .get_resource(&self.texture)
             .resource
             .create_view(&self.desc.get_texture_view_desc())

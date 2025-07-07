@@ -1,5 +1,5 @@
 use super::{
-    FrameGraph, IndexHandle, Pass, PassNode, RenderContext, ResourceRelease, ResourceRequese,
+    FrameGraph, FrameGraphContext, IndexHandle, Pass, PassNode, ResourceRelease, ResourceRequese,
 };
 
 #[derive(Default)]
@@ -11,31 +11,31 @@ pub struct DevicePass {
 }
 
 impl DevicePass {
-    pub fn request_resources(&self, render_context: &mut RenderContext) {
+    pub fn request_resources(&self, frame_graph_context: &mut FrameGraphContext) {
         for resource in self.resource_request_array.iter() {
-            render_context.resource_table.request_resource(
+            frame_graph_context.resource_table.request_resource(
                 resource,
-                render_context.render_device,
-                render_context.transient_resource_cache,
+                frame_graph_context.render_device,
+                frame_graph_context.transient_resource_cache,
             );
         }
     }
 
-    pub fn release_resources(&self, render_context: &mut RenderContext) {
+    pub fn release_resources(&self, frame_graph_context: &mut FrameGraphContext) {
         for handle in self.resource_release_array.iter() {
-            render_context
+            frame_graph_context
                 .resource_table
-                .release_resource(handle, render_context.transient_resource_cache);
+                .release_resource(handle, frame_graph_context.transient_resource_cache);
         }
     }
 
-    pub fn execute(&self, render_context: &mut RenderContext) {
-        self.request_resources(render_context);
+    pub fn execute(&self, frame_graph_context: &mut FrameGraphContext) {
+        self.request_resources(frame_graph_context);
 
         if let Some(pass) = &self.pass {
-            pass.render(render_context);
+            pass.render(frame_graph_context);
         }
-        self.release_resources(render_context);
+        self.release_resources(frame_graph_context);
     }
 
     pub fn extra(&mut self, graph: &mut FrameGraph, index: IndexHandle<PassNode>) {

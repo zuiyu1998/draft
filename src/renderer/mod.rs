@@ -4,7 +4,7 @@ pub use pipeline::*;
 
 use draft_render::{
     RenderServer, RenderWorld,
-    frame_graph::{FrameGraph, RenderContext, TransientResourceCache},
+    frame_graph::{FrameGraph, FrameGraphContext, TransientResourceCache},
 };
 use fyrox_resource::manager::ResourceManager;
 
@@ -35,7 +35,7 @@ impl WorldRenderer {
 
         frame_graph.compile();
 
-        let mut render_context = RenderContext::new(
+        let mut render_context = FrameGraphContext::new(
             &self.world.server.device,
             &mut self.transient_resource_cache,
             &self.world.pass_cache,

@@ -1,10 +1,10 @@
 use std::borrow::Cow;
 
-use crate::frame_graph::RenderContext;
+use crate::frame_graph::FrameGraphContext;
 
 use super::{
     ColorAttachment, ColorAttachmentOwned, DepthStencilAttachment, DepthStencilAttachmentOwned,
-    ResourceBinding,
+    TransientResourceBinding,
 };
 
 #[derive(Default)]
@@ -21,10 +21,10 @@ pub struct RenderPassOwned {
     pub depth_stencil_attachment: Option<DepthStencilAttachmentOwned>,
 }
 
-impl ResourceBinding for RenderPassInfo {
+impl TransientResourceBinding for RenderPassInfo {
     type Resource = RenderPassOwned;
 
-    fn make_resource(&self, render_context: &RenderContext<'_>) -> Self::Resource {
+    fn make_resource(&self, frame_graph_context: &FrameGraphContext<'_>) -> Self::Resource {
         let mut color_attachments = self.raw_color_attachments.clone();
 
         for color_attachment in self.color_attachments.iter() {
@@ -35,7 +35,7 @@ impl ResourceBinding for RenderPassInfo {
                     color_attachment
                         .as_ref()
                         .unwrap()
-                        .make_resource(render_context),
+                        .make_resource(frame_graph_context),
                 ));
             }
         }
@@ -44,7 +44,7 @@ impl ResourceBinding for RenderPassInfo {
 
         if let Some(depth_stencil_attachment) = &self.depth_stencil_attachment {
             depth_stencil_attachment_owned =
-                Some(depth_stencil_attachment.make_resource(render_context));
+                Some(depth_stencil_attachment.make_resource(frame_graph_context));
         }
 
         RenderPassOwned {

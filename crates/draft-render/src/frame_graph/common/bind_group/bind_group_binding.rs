@@ -1,15 +1,16 @@
 use std::{borrow::Cow, collections::HashMap, num::NonZero};
 
-use wgpu::{BindGroupLayout, BufferBinding};
-
-use crate::frame_graph::{RenderContext, ResourceBinding, TransientBuffer};
+use crate::{
+    frame_graph::{FrameGraphContext, TransientBuffer, TransientResourceBinding},
+    gfx_base::{RawBindGroupLayout, RawBufferBinding},
+};
 
 use super::{BindGroupEntryBinding, BindGroupResourceBinding};
 
 #[derive(Clone)]
 pub struct BindGroupBinding {
     pub label: Option<Cow<'static, str>>,
-    pub layout: BindGroupLayout,
+    pub layout: RawBindGroupLayout,
     pub entries: Vec<BindGroupEntryBinding>,
 }
 
@@ -46,7 +47,7 @@ impl BindingResourceTemp<'_> {
                 buffer,
                 size,
                 offset,
-            } => wgpu::BindingResource::Buffer(BufferBinding {
+            } => wgpu::BindingResource::Buffer(RawBufferBinding {
                 buffer: &buffer.resource,
                 offset: *offset,
                 size: *size,
@@ -58,10 +59,10 @@ impl BindingResourceTemp<'_> {
     }
 }
 
-impl ResourceBinding for BindGroupBinding {
+impl TransientResourceBinding for BindGroupBinding {
     type Resource = wgpu::BindGroup;
 
-    fn make_resource(&self, render_context: &RenderContext<'_>) -> Self::Resource {
+    fn make_resource(&self, render_context: &FrameGraphContext<'_>) -> Self::Resource {
         let mut resources = HashMap::new();
 
         for entry in self.entries.iter() {

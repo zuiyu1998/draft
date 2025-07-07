@@ -7,7 +7,7 @@ use crate::frame_graph::{
 
 use super::{
     ClearBufferParameter, ClearTextureParameter, CopyTextureToBufferParameter,
-    CopyTextureToTextureParameter, RenderContext,
+    CopyTextureToTextureParameter, FrameGraphContext,
 };
 
 pub trait EncoderPassCommandBuilder {
@@ -82,7 +82,7 @@ pub trait ErasedEncoderPassCommand: Sync + Send + 'static {
 
 pub struct EncoderPassContext<'a, 'b> {
     command_encoder: &'b mut wgpu::CommandEncoder,
-    render_context: &'b mut RenderContext<'a>,
+    frame_graph_context: &'b mut FrameGraphContext<'a>,
 }
 
 impl<'a, 'b> EncoderPassContext<'a, 'b> {
@@ -92,8 +92,8 @@ impl<'a, 'b> EncoderPassContext<'a, 'b> {
         destination: TexelCopyBufferInfo<ResourceWrite>,
         copy_size: Extent3d,
     ) {
-        let source_texture = self.render_context.get_resource(&source.texture);
-        let destination_buffer = self.render_context.get_resource(&destination.buffer);
+        let source_texture = self.frame_graph_context.get_resource(&source.texture);
+        let destination_buffer = self.frame_graph_context.get_resource(&destination.buffer);
 
         self.command_encoder.copy_texture_to_buffer(
             wgpu::TexelCopyTextureInfoBase {
@@ -116,7 +116,7 @@ impl<'a, 'b> EncoderPassContext<'a, 'b> {
         offset: u64,
         size: Option<u64>,
     ) {
-        let buffer = self.render_context.get_resource(buffer_ref);
+        let buffer = self.frame_graph_context.get_resource(buffer_ref);
 
         self.command_encoder
             .clear_buffer(&buffer.resource, offset, size);
@@ -127,7 +127,7 @@ impl<'a, 'b> EncoderPassContext<'a, 'b> {
         texture_ref: &Ref<TransientTexture, ResourceWrite>,
         subresource_range: &ImageSubresourceRange,
     ) {
-        let texture = self.render_context.get_resource(texture_ref);
+        let texture = self.frame_graph_context.get_resource(texture_ref);
 
         self.command_encoder
             .clear_texture(&texture.resource, subresource_range);
@@ -139,8 +139,8 @@ impl<'a, 'b> EncoderPassContext<'a, 'b> {
         destination: TexelCopyTextureInfo<ResourceWrite>,
         copy_size: Extent3d,
     ) {
-        let source_texture = self.render_context.get_resource(&source.texture);
-        let destination_texture = self.render_context.get_resource(&destination.texture);
+        let source_texture = self.frame_graph_context.get_resource(&source.texture);
+        let destination_texture = self.frame_graph_context.get_resource(&destination.texture);
 
         self.command_encoder.copy_texture_to_texture(
             wgpu::TexelCopyTextureInfoBase {
@@ -167,11 +167,11 @@ impl<'a, 'b> EncoderPassContext<'a, 'b> {
 
     pub fn new(
         command_encoder: &'b mut wgpu::CommandEncoder,
-        render_context: &'b mut RenderContext<'a>,
+        frame_graph_context: &'b mut FrameGraphContext<'a>,
     ) -> Self {
         EncoderPassContext {
             command_encoder,
-            render_context,
+            frame_graph_context,
         }
     }
 }
