@@ -21,13 +21,13 @@ impl CachedPipelineId {
     }
 }
 
-pub trait GetPipelineCache {
-    fn get_pipeline_cache(&self) -> PipelineCache;
+pub trait GetPipelineContainer {
+    fn get_pipeline_container(&self) -> PipelineContainer;
 }
 
-pub struct PipelineCache(Vec<Option<Pipeline>>);
+pub struct PipelineContainer(Vec<Option<Pipeline>>);
 
-impl PipelineCache {
+impl PipelineContainer {
     pub fn new(value: Vec<Option<Pipeline>>) -> Self {
         Self(value)
     }

@@ -1,6 +1,6 @@
 use crate::{
     PassData, PipelineLayoutCache, ShaderCache,
-    gfx_base::{CachedPipelineId, GetPipelineCache, PipelineCache, RenderDevice},
+    gfx_base::{CachedPipelineId, GetPipelineContainer, PipelineContainer, RenderDevice},
 };
 
 use fyrox_core::log::Log;
@@ -52,8 +52,8 @@ impl PassCache {
     }
 }
 
-impl GetPipelineCache for PassCache {
-    fn get_pipeline_cache(&self) -> PipelineCache {
+impl GetPipelineContainer for PassCache {
+    fn get_pipeline_container(&self) -> PipelineContainer {
         let mut target = vec![];
         for index in 0..self.cache.buffer.len() {
             let pipeline = self
@@ -65,6 +65,6 @@ impl GetPipelineCache for PassCache {
             target.push(pipeline);
         }
 
-        PipelineCache::new(target)
+        PipelineContainer::new(target)
     }
 }

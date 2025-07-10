@@ -17,8 +17,8 @@ use crate::{
         Ref, RenderPass, ResourceTable, ResourceView, TransientResource, TransientResourceCache,
     },
     gfx_base::{
-        CachedPipelineId, ComputePipeline, GetPipelineCache, PipelineCache, RenderDevice,
-        RenderPipeline,
+        CachedPipelineId, ComputePipeline, GetPipelineContainer, PipelineContainer,
+        RawCommandBuffer, RenderDevice, RenderPipeline,
     },
 };
 
@@ -26,21 +26,21 @@ pub struct FrameGraphContext<'a> {
     pub render_device: &'a RenderDevice,
     pub transient_resource_cache: &'a mut TransientResourceCache,
     pub(crate) resource_table: ResourceTable,
-    command_buffer_queue: Vec<wgpu::CommandBuffer>,
-    pipeline_cache: PipelineCache,
+    command_buffer_queue: Vec<RawCommandBuffer>,
+    pipeline_container: PipelineContainer,
 }
 
 impl<'a> FrameGraphContext<'a> {
-    pub fn new<T: GetPipelineCache>(
+    pub fn new<T: GetPipelineContainer>(
         render_device: &'a RenderDevice,
         transient_resource_cache: &'a mut TransientResourceCache,
-        pipeline_storage: &'a T,
+        pipeline_cache: &'a T,
     ) -> Self {
         Self {
             render_device,
             transient_resource_cache,
             command_buffer_queue: vec![],
-            pipeline_cache: pipeline_storage.get_pipeline_cache(),
+            pipeline_container: pipeline_cache.get_pipeline_container(),
             resource_table: ResourceTable::default(),
         }
     }
@@ -65,22 +65,22 @@ impl<'a> FrameGraphContext<'a> {
     }
 
     pub fn get_compute_pipeline(&self, id: CachedPipelineId) -> &ComputePipeline {
-        self.pipeline_cache
+        self.pipeline_container
             .get_compute_pipeline(id)
             .expect("compute pipeline mut have")
     }
 
     pub fn get_render_pipeline(&self, id: CachedPipelineId) -> &RenderPipeline {
-        self.pipeline_cache
+        self.pipeline_container
             .get_render_pipeline(id)
             .expect("render pipeline mut have")
     }
 
-    pub fn add_command_buffer(&mut self, command_buffer: wgpu::CommandBuffer) {
+    pub fn add_command_buffer(&mut self, command_buffer: RawCommandBuffer) {
         self.command_buffer_queue.push(command_buffer);
     }
 
-    pub fn finish(self) -> Vec<wgpu::CommandBuffer> {
+    pub fn finish(self) -> Vec<RawCommandBuffer> {
         self.command_buffer_queue
     }
 }
