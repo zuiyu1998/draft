@@ -22,17 +22,6 @@ impl Batch {
                 .get_vertex_layout(),
         ];
 
-        let material_clone = material.clone();
-        let mut material_state = material_clone.state();
-
-        if let Some(material_state) = material_state.data() {
-            let mut pass_state = material_state.pass.state();
-
-            if let Some(pass_state) = pass_state.data() {
-                pass_state.definition.update_vertex_buffer_layouts(&layouts)
-            }
-        }
-
         Self {
             geometry,
             material,

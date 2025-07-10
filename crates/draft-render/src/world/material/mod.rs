@@ -3,7 +3,7 @@ use std::{collections::HashMap, error::Error, path::Path};
 use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
 use fyrox_resource::{Resource, ResourceData};
 
-use crate::{PassData, PassResource};
+use crate::PassData;
 
 pub type MaterialResource = Resource<Material>;
 
@@ -22,9 +22,7 @@ impl MaterialCache {
 
 #[derive(Debug, Clone, Reflect, Visit, Default, TypeUuidProvider)]
 #[type_uuid(id = "3cee68e7-ef0a-463b-a2f5-68f90586b654")]
-pub struct Material {
-    pub pass: PassResource,
-}
+pub struct Material {}
 
 impl ResourceData for Material {
     fn type_uuid(&self) -> Uuid {

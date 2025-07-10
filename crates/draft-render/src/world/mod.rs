@@ -1,6 +1,6 @@
 mod geometry;
 mod material;
-mod pass;
+mod pipeline;
 mod shader;
 mod texture;
 
@@ -8,7 +8,7 @@ use std::sync::mpsc::Receiver;
 
 pub use geometry::*;
 pub use material::*;
-pub use pass::*;
+pub use pipeline::*;
 pub use shader::*;
 pub use texture::*;
 
@@ -18,7 +18,7 @@ use fyrox_resource::{event::ResourceEvent, manager::ResourceManager};
 pub struct RenderWorld {
     pub server: RenderServer,
     texture_event_receiver: Receiver<ResourceEvent>,
-    pub pass_cache: PassCache,
+    pub pipeline_cache: PipelineCache,
     pub geometry_storage: GeometryStorage,
     pub texture_storage: TextureStorage,
     pub material_cache: MaterialCache,
@@ -37,7 +37,7 @@ impl RenderWorld {
 
         Self {
             server,
-            pass_cache: Default::default(),
+            pipeline_cache: Default::default(),
             geometry_storage: Default::default(),
             texture_storage: Default::default(),
             texture_event_receiver,

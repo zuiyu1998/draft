@@ -1,28 +1,22 @@
-mod cache;
 mod pipeline_layout;
 
-pub use cache::*;
 pub use pipeline_layout::*;
 
 use downcast_rs::{Downcast, impl_downcast};
 
-use std::{error::Error, fmt::Debug, path::Path, sync::Arc};
+use std::{collections::HashMap, fmt::Debug};
 
-use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, sparse::AtomicIndex, uuid, visitor::*};
+use fyrox_core::{reflect::*, visitor::*};
 
 use crate::{
     FrameworkError, ShaderCache, ShaderResource,
     gfx_base::{
-        CachedPipelineId, ColorTargetState, DepthStencilState, MultisampleState, Pipeline,
-        PipelineCompilationOptions, PrimitiveState, RawFragmentState, RawRenderPipelineDescriptor,
-        RawVertexAttribute, RawVertexBufferLayout, RawVertexState, RenderDevice, RenderPipeline,
-        VertexBufferLayout,
+        CachedPipelineId, ColorTargetState, DepthStencilState, GetPipelineContainer,
+        MultisampleState, Pipeline, PipelineCompilationOptions, PipelineContainer, PrimitiveState,
+        RawFragmentState, RawRenderPipelineDescriptor, RawVertexAttribute, RawVertexBufferLayout,
+        RawVertexState, RenderDevice, RenderPipeline, VertexBufferLayout,
     },
 };
-
-use fyrox_resource::{Resource, ResourceData};
-
-pub type PassResource = Resource<Pass>;
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
 pub struct VertexState {
@@ -57,7 +51,13 @@ pub struct ComputePipelineDescriptor {}
 #[derive(Debug, Clone)]
 pub struct CachedPipeline {
     pub descriptor: PipelineDescriptor,
-    pub pipeline: Pipeline,
+    pub state: PipelineState,
+}
+
+#[derive(Debug, Clone)]
+pub enum PipelineState {
+    Queue,
+    Ok(Pipeline),
 }
 
 #[derive(Debug, Clone, Reflect, Visit)]
@@ -81,33 +81,23 @@ impl Default for PipelineDescriptor {
     }
 }
 
-#[derive(Debug, Clone, Reflect, Visit, Default, TypeUuidProvider)]
-#[type_uuid(id = "3485bce7-7b74-4970-9bf0-2b4a897b06dd")]
-pub struct Pass {
-    pub definition: PassDefinition,
-    #[reflect(hidden)]
-    #[visit(skip)]
-    pub cache_index: Arc<AtomicIndex>,
+#[derive(Default)]
+pub struct PipelineCache {
+    pub shader_cache: ShaderCache,
+    pub pipeline_layout_cache: PipelineLayoutCache,
+    pub pipelines: Vec<CachedPipeline>,
+    pub pipeline_map: HashMap<PipelineDescriptor, CachedPipelineId>,
 }
 
-impl ResourceData for Pass {
-    fn type_uuid(&self) -> Uuid {
-        <Self as TypeUuidProvider>::type_uuid()
+impl PipelineCache {
+    pub fn get_or_create(&mut self, _desc: PipelineDescriptor) -> Option<&CachedPipelineId> {
+        todo!()
     }
+}
 
-    fn save(&mut self, path: &Path) -> Result<(), Box<dyn Error>> {
-        let mut visitor = Visitor::new();
-        self.visit("Material", &mut visitor)?;
-        visitor.save_binary_to_file(path)?;
-        Ok(())
-    }
-
-    fn can_be_saved(&self) -> bool {
-        true
-    }
-
-    fn try_clone_box(&self) -> Option<Box<dyn ResourceData>> {
-        Some(Box::new(self.clone()))
+impl GetPipelineContainer for PipelineCache {
+    fn get_pipeline_container(&self) -> PipelineContainer {
+        todo!()
     }
 }
 
@@ -250,10 +240,6 @@ impl PassData {
         self.data.downcast_ref()
     }
 
-    fn get_pipeline(&self) -> Pipeline {
-        self.cached_pipeline.pipeline.clone()
-    }
-
     pub fn get_cached_pipeline_id(&self) -> CachedPipelineId {
         self.id
     }
@@ -362,7 +348,7 @@ pub fn crate_pipeline_with_render_pipeline_descriptor(
 
     Ok(CachedPipeline {
         descriptor: PipelineDescriptor::RenderPipelineDescriptor(Box::new(desc.clone())),
-        pipeline: Pipeline::RenderPipeline(RenderPipeline::new(pipeline)),
+        state: PipelineState::Ok(Pipeline::RenderPipeline(RenderPipeline::new(pipeline))),
     })
 }
 
