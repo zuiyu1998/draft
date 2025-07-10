@@ -71,7 +71,7 @@ impl ShaderCache {
                 Err(error) => Err(error),
             }
         } else {
-            Err(FrameworkError::ShaderNotLoaded(shader.clone()))
+            Err(shader.clone().into())
         }
     }
 }

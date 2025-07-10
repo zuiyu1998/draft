@@ -27,11 +27,11 @@ pub struct IndexRenderBuffer {
 }
 
 fn get_vertex_buffer_key(index: usize) -> String {
-    format!("vertex_buffer_{}", index)
+    format!("vertex_buffer_{index}")
 }
 
 fn get_index_buffer_key(index: usize) -> String {
-    format!("index_buffer_{}", index)
+    format!("index_buffer_{index}")
 }
 
 fn create_index_render_buffer(

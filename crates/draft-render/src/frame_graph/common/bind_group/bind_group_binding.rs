@@ -118,7 +118,7 @@ impl TransientResourceBinding for BindGroupBinding {
             temp.push((entry.binding, resource));
         }
 
-        let bind_graoup = render_context
+        render_context
             .render_device
             .wgpu_device()
             .create_bind_group(&wgpu::BindGroupDescriptor {
@@ -131,8 +131,6 @@ impl TransientResourceBinding for BindGroupBinding {
                         resource: resource.get_resource_binding(),
                     })
                     .collect::<Vec<_>>(),
-            });
-
-        bind_graoup
+            })
     }
 }
