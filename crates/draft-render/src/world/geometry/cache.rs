@@ -126,11 +126,11 @@ impl GeometryData {
 }
 
 #[derive(Default)]
-pub struct GeometryStorage {
+pub struct GeometryCache {
     pub geometry_cache: TemporaryCache<GeometryData>,
 }
 
-impl GeometryStorage {
+impl GeometryCache {
     pub fn get_or_insert(
         &mut self,
         device: &RenderDevice,

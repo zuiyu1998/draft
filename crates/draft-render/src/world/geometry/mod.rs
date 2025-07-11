@@ -1,12 +1,12 @@
 mod buffer;
+mod cache;
 mod index;
-mod storage;
 mod vertex;
 
 pub use buffer::*;
+pub use cache::*;
 use fyrox_resource::{Resource, ResourceData};
 pub use index::*;
-pub use storage::*;
 pub use vertex::*;
 
 use std::{error::Error, path::Path, sync::Arc};

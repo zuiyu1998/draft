@@ -19,7 +19,7 @@ pub struct RenderWorld {
     pub server: RenderServer,
     texture_event_receiver: Receiver<ResourceEvent>,
     pub pipeline_cache: PipelineCache,
-    pub geometry_storage: GeometryStorage,
+    pub geometry_cache: GeometryCache,
     pub texture_storage: TextureStorage,
     pub material_cache: MaterialCache,
 }
@@ -38,7 +38,7 @@ impl RenderWorld {
         Self {
             pipeline_cache: PipelineCache::new(server.device.clone()),
             server,
-            geometry_storage: Default::default(),
+            geometry_cache: Default::default(),
             texture_storage: Default::default(),
             texture_event_receiver,
             material_cache: Default::default(),

@@ -176,7 +176,7 @@ impl PipelineNode for TestNode {
         render_pass_builder.set_render_pipeline(custom_material_data.pipeline_id);
 
         let geometry_data = world
-            .geometry_storage
+            .geometry_cache
             .get_or_insert(&world.server.device, &context.batch.geometry)
             .unwrap();
 
