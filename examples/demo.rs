@@ -1,15 +1,16 @@
-use std::{collections::HashMap, ops::Deref, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 
 use draft_render::{
     BindGroupLayoutDescriptor, FragmentState, FrameworkError, Geometry, GeometryResource, Material,
-    MaterialResource, PipelineData, PipelineLayoutCache, PipelineLayoutDescriptor, RenderMaterial,
-    RenderPipelineDescriptor, RenderServer, RenderWorld, Shader, ShaderCache, ShaderResource,
-    Texture, TextureResource, Vertex, VertexAttributeDescriptor,
+    MaterialDefinition, MaterialResource, PipelineCache, PipelineData, PipelineDescriptor,
+    PipelineLayoutDescriptor, RenderMaterial, RenderPipelineDescriptor, RenderServer, RenderWorld,
+    Shader, ShaderResource, Texture, TextureResource, Vertex, VertexAttributeDescriptor,
     frame_graph::{ColorAttachment, FrameGraph},
     gfx_base::{
-        BindGroupLayoutEntriesBuilder, BlendComponent, BlendState, ColorTargetState, ColorWrites,
-        RawBindGroupLayout, RawTextureFormat, RawTextureView, RenderDevice, SamplerBindingType,
-        ShaderStages, TextureFormat, TextureSampleType, VertexBufferLayout, VertexFormat,
+        BindGroupLayoutEntriesBuilder, BlendComponent, BlendState, CachedPipelineId,
+        ColorTargetState, ColorWrites, RawBindGroupLayout, RawTextureFormat, RawTextureView,
+        SamplerBindingType, ShaderStages, TextureFormat, TextureSampleType, VertexBufferLayout,
+        VertexFormat,
         binding_types::{sampler, texture_2d},
         initialize_resources,
     },
@@ -56,6 +57,7 @@ lazy_static! {
 #[derive(Clone)]
 pub struct CustomRenderMaterialData {
     diffuse_bind_group_layout: RawBindGroupLayout,
+    pipeline_id: CachedPipelineId,
 }
 
 impl PipelineData for CustomRenderMaterialData {}
@@ -105,7 +107,6 @@ impl RenderMaterial for CustomMaterial {
                 }),
                 write_mask: ColorWrites::ALL,
             })],
-            ..Default::default()
         });
 
         desc
@@ -113,20 +114,19 @@ impl RenderMaterial for CustomMaterial {
 
     fn prepare(
         &self,
-        device: &RenderDevice,
-        _shader_cache: &mut ShaderCache,
-        pipeline_layout_cache: &mut PipelineLayoutCache,
+        pipeline_cache: &mut PipelineCache,
     ) -> Result<Self::PipelineData, FrameworkError> {
-        let data = pipeline_layout_cache
-            .get_or_insert_bind_group_layout_data(device, &self.diffuse_bind_group_layout)?;
+        let diffuse_bind_group_layout =
+            pipeline_cache.get_or_create_bind_group_layout(&self.diffuse_bind_group_layout)?;
+
+        let desc = PipelineDescriptor::RenderPipelineDescriptor(Box::new(self.specialize()));
+
+        let pipeline_id = pipeline_cache.get_or_create(&desc);
 
         Ok(CustomRenderMaterialData {
-            diffuse_bind_group_layout: data.bind_group_layout.deref().clone(),
+            diffuse_bind_group_layout,
+            pipeline_id,
         })
-    }
-
-    fn update_vertex_buffer_layouts(&mut self, layouts: &[VertexBufferLayout]) {
-        self.layouts = layouts.to_vec();
     }
 }
 
@@ -139,19 +139,16 @@ impl PipelineNode for TestNode {
         world: &mut RenderWorld,
         context: &PipelineContext,
     ) {
-        let material_data = world.material_cache.get(&context.batch.material).unwrap();
+        let custom_material_data = world
+            .material_cache
+            .get::<CustomRenderMaterialData>(&context.batch.material)
+            .unwrap();
 
         let Some(texture_data) = world.texture_storage.get_or_insert(
             &world.server.device,
             &world.server.queue,
             context.image,
         ) else {
-            return;
-        };
-        let Some(custom_material_data) = material_data
-            .pass_data
-            .downcast::<CustomRenderMaterialData>()
-        else {
             return;
         };
 
@@ -176,7 +173,7 @@ impl PipelineNode for TestNode {
             },
         });
 
-        render_pass_builder.set_render_pipeline(material_data.pass_data.get_cached_pipeline_id());
+        render_pass_builder.set_render_pipeline(custom_material_data.pipeline_id);
 
         let geometry_data = world
             .geometry_storage
@@ -493,7 +490,7 @@ fn new_batch() -> Batch {
 }
 
 fn new_material() -> Material {
-    Material {}
+    Material::new(MaterialDefinition::new(CustomMaterial::default()))
 }
 
 #[derive(Default)]

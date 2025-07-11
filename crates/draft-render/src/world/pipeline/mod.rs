@@ -2,9 +2,12 @@ mod pipeline_layout;
 
 pub use pipeline_layout::*;
 
-use downcast_rs::{Downcast, impl_downcast};
-
-use std::{collections::HashMap, fmt::Debug};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::Debug,
+    mem,
+    ops::Deref,
+};
 
 use fyrox_core::{reflect::*, visitor::*};
 
@@ -12,29 +15,28 @@ use crate::{
     FrameworkError, ShaderCache, ShaderResource,
     gfx_base::{
         CachedPipelineId, ColorTargetState, DepthStencilState, GetPipelineContainer,
-        MultisampleState, Pipeline, PipelineCompilationOptions, PipelineContainer, PrimitiveState,
-        RawFragmentState, RawRenderPipelineDescriptor, RawVertexAttribute, RawVertexBufferLayout,
-        RawVertexState, RenderDevice, RenderPipeline, VertexBufferLayout,
+        MultisampleState, Pipeline, PipelineContainer, PrimitiveState, RawBindGroupLayout,
+        RawFragmentState, RawPipelineCompilationOptions, RawRenderPipelineDescriptor,
+        RawVertexAttribute, RawVertexBufferLayout, RawVertexState, RenderDevice, RenderPipeline,
+        VertexBufferLayout,
     },
 };
 
-#[derive(Debug, Clone, Reflect, Visit, Default)]
+#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Hash, Eq)]
 pub struct VertexState {
     pub shader: ShaderResource,
     pub entry_point: Option<String>,
-    pub compilation_options: PipelineCompilationOptions,
     pub buffers: Vec<VertexBufferLayout>,
 }
 
-#[derive(Clone, Debug, Reflect, Visit, Default)]
+#[derive(Clone, Debug, Reflect, Visit, Default, PartialEq, Hash, Eq)]
 pub struct FragmentState {
     pub shader: ShaderResource,
     pub entry_point: Option<String>,
-    pub compilation_options: PipelineCompilationOptions,
     pub targets: Vec<Option<ColorTargetState>>,
 }
 
-#[derive(Debug, Clone, Reflect, Visit, Default)]
+#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Hash, Eq)]
 pub struct RenderPipelineDescriptor {
     pub label: String,
     pub layout: PipelineLayoutDescriptor,
@@ -45,22 +47,32 @@ pub struct RenderPipelineDescriptor {
     pub fragment: Option<FragmentState>,
 }
 
-#[derive(Debug, Clone, Reflect, Visit, Default)]
+#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Hash, Eq)]
 pub struct ComputePipelineDescriptor {}
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct CachedPipeline {
     pub descriptor: PipelineDescriptor,
     pub state: PipelineState,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum PipelineState {
     Queue,
     Ok(Pipeline),
+    Error(FrameworkError),
 }
 
-#[derive(Debug, Clone, Reflect, Visit)]
+impl PipelineState {
+    pub fn as_pipeline_ref(&self) -> Option<&Pipeline> {
+        match self {
+            PipelineState::Ok(pipeline) => Some(pipeline),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Reflect, Visit, PartialEq, Hash, Eq)]
 pub enum PipelineDescriptor {
     RenderPipelineDescriptor(Box<RenderPipelineDescriptor>),
     ComputePipelineDescriptor(Box<ComputePipelineDescriptor>),
@@ -81,191 +93,132 @@ impl Default for PipelineDescriptor {
     }
 }
 
-#[derive(Default)]
 pub struct PipelineCache {
-    pub shader_cache: ShaderCache,
-    pub pipeline_layout_cache: PipelineLayoutCache,
-    pub pipelines: Vec<CachedPipeline>,
-    pub pipeline_map: HashMap<PipelineDescriptor, CachedPipelineId>,
+    shader_cache: ShaderCache,
+    pipeline_layout_cache: PipelineLayoutCache,
+    pipelines: Vec<CachedPipeline>,
+    new_pipelines: Vec<CachedPipeline>,
+    pipeline_map: HashMap<PipelineDescriptor, CachedPipelineId>,
+    waiting_pipelines: HashSet<CachedPipelineId>,
+    device: RenderDevice,
 }
 
 impl PipelineCache {
-    pub fn get_or_create(&mut self, _desc: PipelineDescriptor) -> Option<&CachedPipelineId> {
-        todo!()
+    pub fn new(device: RenderDevice) -> Self {
+        Self {
+            shader_cache: Default::default(),
+            pipeline_layout_cache: Default::default(),
+            pipelines: Default::default(),
+            new_pipelines: Default::default(),
+            pipeline_map: Default::default(),
+            waiting_pipelines: Default::default(),
+            device,
+        }
+    }
+
+    pub fn get_or_create_bind_group_layout(
+        &mut self,
+        desc: &BindGroupLayoutDescriptor,
+    ) -> Result<RawBindGroupLayout, FrameworkError> {
+        let data = self
+            .pipeline_layout_cache
+            .get_or_insert_bind_group_layout_data(&self.device, desc)?;
+
+        Ok(data.bind_group_layout.deref().clone())
+    }
+
+    pub fn get_or_create(&mut self, desc: &PipelineDescriptor) -> CachedPipelineId {
+        if self.pipeline_map.contains_key(desc) {
+            *self.pipeline_map.get(desc).unwrap()
+        } else {
+            let id = self.pipelines.len() + self.new_pipelines.len();
+            let pipeline = CachedPipeline {
+                descriptor: desc.clone(),
+                state: PipelineState::Queue,
+            };
+
+            self.new_pipelines.push(pipeline);
+            self.pipeline_map.insert(desc.clone(), id);
+
+            id
+        }
+    }
+
+    fn create_render_pipeline(
+        &mut self,
+        _id: CachedPipelineId,
+        desc: RenderPipelineDescriptor,
+    ) -> PipelineState {
+        match create_pipeline_with_render_pipeline_descriptor(
+            &self.device,
+            &desc,
+            &mut self.shader_cache,
+            &mut self.pipeline_layout_cache,
+        ) {
+            Ok(pipeline) => PipelineState::Ok(pipeline),
+            Err(e) => PipelineState::Error(e),
+        }
+    }
+
+    fn process_pipeline(&mut self, cached_pipeline: &mut CachedPipeline, id: usize) {
+        if let PipelineState::Queue = &mut cached_pipeline.state {
+            cached_pipeline.state = match &cached_pipeline.descriptor {
+                PipelineDescriptor::RenderPipelineDescriptor(descriptor) => {
+                    self.create_render_pipeline(id, *descriptor.clone())
+                }
+                PipelineDescriptor::ComputePipelineDescriptor(_descriptor) => {
+                    unimplemented!()
+                }
+            };
+        }
+    }
+
+    pub fn process(&mut self) {
+        let mut waiting_pipelines = mem::take(&mut self.waiting_pipelines);
+        let mut pipelines = mem::take(&mut self.pipelines);
+
+        let mut new_pipelines = mem::take(&mut self.new_pipelines);
+
+        for new_pipeline in new_pipelines.drain(..) {
+            let id = pipelines.len();
+            pipelines.push(new_pipeline);
+            waiting_pipelines.insert(id);
+        }
+
+        for id in waiting_pipelines {
+            self.process_pipeline(&mut pipelines[id], id);
+        }
+
+        self.pipelines = pipelines;
     }
 }
 
 impl GetPipelineContainer for PipelineCache {
     fn get_pipeline_container(&self) -> PipelineContainer {
-        todo!()
-    }
-}
+        let pipelines_len = self.pipelines.len();
+        let new_pipelines_len = self.new_pipelines.len();
+        let len = pipelines_len + new_pipelines_len;
 
-#[derive(Debug)]
-pub struct PassDefinition(Box<dyn ErasedRenderMaterial>);
+        let mut pipelines = vec![];
 
-impl PassDefinition {
-    pub fn new<T: RenderMaterial>(value: T) -> Self {
-        PassDefinition(Box::new(value))
-    }
-
-    pub fn update_vertex_buffer_layouts(&mut self, layouts: &[VertexBufferLayout]) {
-        self.0.update_vertex_buffer_layouts(layouts);
-    }
-}
-
-impl Clone for PassDefinition {
-    fn clone(&self) -> Self {
-        PassDefinition(self.0.clone_box())
-    }
-}
-
-impl Visit for PassDefinition {
-    fn visit(&mut self, name: &str, visitor: &mut Visitor) -> VisitResult {
-        self.0.visit(name, visitor)
-    }
-}
-
-impl Reflect for PassDefinition {
-    fn source_path() -> &'static str
-    where
-        Self: Sized,
-    {
-        file!()
-    }
-
-    fn derived_types() -> &'static [std::any::TypeId]
-    where
-        Self: Sized,
-    {
-        &[]
-    }
-
-    fn try_clone_box(&self) -> Option<Box<dyn Reflect>> {
-        Some(Box::new(self.clone()))
-    }
-
-    fn query_derived_types(&self) -> &'static [std::any::TypeId] {
-        Self::derived_types()
-    }
-
-    fn type_name(&self) -> &'static str {
-        self.0.type_name()
-    }
-
-    fn doc(&self) -> &'static str {
-        self.0.doc()
-    }
-
-    fn fields_ref(&self, func: &mut dyn FnMut(&[FieldRef])) {
-        self.0.fields_ref(func)
-    }
-
-    fn fields_mut(&mut self, func: &mut dyn FnMut(&mut [FieldMut])) {
-        self.0.fields_mut(func)
-    }
-
-    fn into_any(self: Box<Self>) -> Box<dyn std::any::Any> {
-        Reflect::into_any(self.0)
-    }
-
-    fn as_any(&self, func: &mut dyn FnMut(&dyn std::any::Any)) {
-        Reflect::as_any(&(*self.0), func)
-    }
-
-    fn as_any_mut(&mut self, func: &mut dyn FnMut(&mut dyn std::any::Any)) {
-        Reflect::as_any_mut(&mut (*self.0), func)
-    }
-
-    fn as_reflect(&self, func: &mut dyn FnMut(&dyn Reflect)) {
-        self.0.as_reflect(func)
-    }
-
-    fn as_reflect_mut(&mut self, func: &mut dyn FnMut(&mut dyn Reflect)) {
-        self.0.as_reflect_mut(func)
-    }
-
-    fn set(&mut self, value: Box<dyn Reflect>) -> Result<Box<dyn Reflect>, Box<dyn Reflect>> {
-        self.0.set(value)
-    }
-
-    fn assembly_name(&self) -> &'static str {
-        self.0.assembly_name()
-    }
-
-    fn type_assembly_name() -> &'static str
-    where
-        Self: Sized,
-    {
-        env!("CARGO_PKG_NAME")
-    }
-}
-
-impl Default for PassDefinition {
-    fn default() -> Self {
-        PassDefinition(Box::new(RenderPipelineDescriptor::default()))
-    }
-}
-
-pub struct PassData {
-    id: CachedPipelineId,
-    cached_pipeline: CachedPipeline,
-    data: Box<dyn ErasedPipelineData>,
-}
-
-impl Clone for PassData {
-    fn clone(&self) -> Self {
-        Self {
-            id: self.id,
-            cached_pipeline: self.cached_pipeline.clone(),
-            data: self.data.clone_box(),
+        for i in 0..len {
+            if i <= pipelines_len {
+                pipelines.push(self.pipelines[i].state.as_pipeline_ref().cloned());
+            } else {
+                pipelines.push(None);
+            }
         }
+
+        PipelineContainer::new(pipelines)
     }
 }
 
-impl PassData {
-    pub fn new<T: PipelineData>(
-        id: CachedPipelineId,
-        cached_pipeline: CachedPipeline,
-        value: T,
-    ) -> Self {
-        PassData {
-            cached_pipeline,
-            id,
-            data: Box::new(value),
-        }
-    }
-
-    pub fn downcast<T: PipelineData>(&self) -> Option<&T> {
-        self.data.downcast_ref()
-    }
-
-    pub fn get_cached_pipeline_id(&self) -> CachedPipelineId {
-        self.id
-    }
-
-    pub fn set_cached_pipeline_id(&mut self, id: CachedPipelineId) {
-        self.id = id;
-    }
-
-    pub fn prepare(
-        material: &PassDefinition,
-        device: &RenderDevice,
-        shader_cache: &mut ShaderCache,
-        pipeline_layout_cache: &mut PipelineLayoutCache,
-    ) -> Result<Self, FrameworkError> {
-        material
-            .0
-            .prepare(device, shader_cache, pipeline_layout_cache)
-    }
-}
-
-pub fn crate_pipeline_with_render_pipeline_descriptor(
+fn create_pipeline_with_render_pipeline_descriptor(
     device: &RenderDevice,
     desc: &RenderPipelineDescriptor,
     shader_cache: &mut ShaderCache,
     pipeline_layout_cache: &mut PipelineLayoutCache,
-) -> Result<CachedPipeline, FrameworkError> {
+) -> Result<Pipeline, FrameworkError> {
     let vertex_module = shader_cache.get(device, &desc.vertex.shader)?.clone();
     let fragment_module = match &desc.fragment {
         Some(fragment) => match shader_cache.get(device, &fragment.shader) {
@@ -313,7 +266,6 @@ pub fn crate_pipeline_with_render_pipeline_descriptor(
                 .iter()
                 .map(|target| target.as_ref().map(|target| target.into()))
                 .collect::<Vec<_>>(),
-            fragment.compilation_options,
         )
     });
 
@@ -331,119 +283,20 @@ pub fn crate_pipeline_with_render_pipeline_descriptor(
             buffers: &vertex_buffer_layouts,
             entry_point: desc.vertex.entry_point.as_deref(),
             module: &vertex_module,
-            compilation_options: desc.vertex.compilation_options.get_raw(),
+            compilation_options: RawPipelineCompilationOptions::default(),
         },
-        fragment: fragment_data.as_ref().map(
-            |(module, entry_point, targets, compilation_options)| RawFragmentState {
+        fragment: fragment_data
+            .as_ref()
+            .map(|(module, entry_point, targets)| RawFragmentState {
                 entry_point: entry_point.as_deref(),
                 module,
                 targets,
-                compilation_options: compilation_options.get_raw(),
-            },
-        ),
+                compilation_options: RawPipelineCompilationOptions::default(),
+            }),
         cache: None,
     };
 
     let pipeline = device.wgpu_device().create_render_pipeline(&descriptor);
 
-    Ok(CachedPipeline {
-        descriptor: PipelineDescriptor::RenderPipelineDescriptor(Box::new(desc.clone())),
-        state: PipelineState::Ok(Pipeline::RenderPipeline(RenderPipeline::new(pipeline))),
-    })
-}
-
-pub trait PipelineData: 'static + Downcast + Clone {}
-
-pub trait ErasedPipelineData: 'static + Downcast {
-    fn clone_box(&self) -> Box<dyn ErasedPipelineData>;
-}
-
-impl<T: PipelineData> ErasedPipelineData for T {
-    fn clone_box(&self) -> Box<dyn ErasedPipelineData> {
-        Box::new(self.clone())
-    }
-}
-
-impl_downcast!(ErasedPipelineData);
-
-impl PipelineData for () {}
-
-impl RenderMaterial for RenderPipelineDescriptor {
-    type PipelineData = ();
-
-    fn specialize(&self) -> RenderPipelineDescriptor {
-        self.clone()
-    }
-
-    fn prepare(
-        &self,
-        _device: &RenderDevice,
-        _shader_cache: &mut ShaderCache,
-        _pipeline_layout_cache: &mut PipelineLayoutCache,
-    ) -> Result<Self::PipelineData, FrameworkError> {
-        Ok(())
-    }
-}
-
-pub trait RenderMaterial:
-    'static + Debug + Clone + Reflect + Visit + Default + Send + Sync
-{
-    type PipelineData: PipelineData;
-
-    fn specialize(&self) -> RenderPipelineDescriptor;
-
-    fn prepare(
-        &self,
-        device: &RenderDevice,
-        shader_cache: &mut ShaderCache,
-        pipeline_layout_cache: &mut PipelineLayoutCache,
-    ) -> Result<Self::PipelineData, FrameworkError>;
-
-    fn update_vertex_buffer_layouts(&mut self, _layouts: &[VertexBufferLayout]) {}
-}
-
-pub trait ErasedRenderMaterial: 'static + Debug + Reflect + Visit + Send + Sync {
-    fn prepare(
-        &self,
-        device: &RenderDevice,
-        shader_cache: &mut ShaderCache,
-        pipeline_layout_cache: &mut PipelineLayoutCache,
-    ) -> Result<PassData, FrameworkError>;
-
-    fn clone_box(&self) -> Box<dyn ErasedRenderMaterial>;
-
-    fn update_vertex_buffer_layouts(&mut self, layouts: &[VertexBufferLayout]);
-}
-
-impl<T: RenderMaterial> ErasedRenderMaterial for T {
-    fn prepare(
-        &self,
-        device: &RenderDevice,
-        shader_cache: &mut ShaderCache,
-        pipeline_layout_cache: &mut PipelineLayoutCache,
-    ) -> Result<PassData, FrameworkError> {
-        let desc = self.specialize();
-
-        let cached_pipeline = crate_pipeline_with_render_pipeline_descriptor(
-            device,
-            &desc,
-            shader_cache,
-            pipeline_layout_cache,
-        )?;
-
-        let data = self.prepare(device, shader_cache, pipeline_layout_cache)?;
-        Ok(PassData::new(
-            CachedPipelineId::default(),
-            cached_pipeline,
-            data,
-        ))
-    }
-
-    fn clone_box(&self) -> Box<dyn ErasedRenderMaterial> {
-        Box::new(self.clone())
-    }
-
-    fn update_vertex_buffer_layouts(&mut self, layouts: &[VertexBufferLayout]) {
-        <T as RenderMaterial>::update_vertex_buffer_layouts(self, layouts);
-    }
+    Ok(Pipeline::RenderPipeline(RenderPipeline::new(pipeline)))
 }

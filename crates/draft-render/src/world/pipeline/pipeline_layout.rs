@@ -119,7 +119,7 @@ impl BindGroupLayout {
 
 #[derive(Clone)]
 pub struct BindGroupLayoutData {
-    pub bind_group_layout: Arc<wgpu::BindGroupLayout>,
+    pub bind_group_layout: Arc<RawBindGroupLayout>,
 }
 
 impl BindGroupLayoutData {

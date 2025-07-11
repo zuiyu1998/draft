@@ -36,8 +36,8 @@ impl RenderWorld {
         resource_manager.add_loader(TextureLoader::default());
 
         Self {
+            pipeline_cache: PipelineCache::new(server.device.clone()),
             server,
-            pipeline_cache: Default::default(),
             geometry_storage: Default::default(),
             texture_storage: Default::default(),
             texture_event_receiver,
