@@ -581,6 +581,7 @@ dependencies = [
  "bytemuck",
  "downcast-rs 2.0.1",
  "encase",
+ "fxhash",
  "fyrox-core",
  "fyrox-resource",
  "image",

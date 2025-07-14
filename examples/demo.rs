@@ -9,8 +9,7 @@ use draft_render::{
     gfx_base::{
         BindGroupLayoutEntriesBuilder, BlendComponent, BlendState, CachedPipelineId,
         ColorTargetState, ColorWrites, RawBindGroupLayout, RawTextureFormat, RawTextureView,
-        SamplerBindingType, ShaderStages, TextureFormat, TextureSampleType, VertexBufferLayout,
-        VertexFormat,
+        SamplerBindingType, ShaderStages, TextureFormat, TextureSampleType, VertexFormat,
         binding_types::{sampler, texture_2d},
         initialize_resources,
     },
@@ -64,7 +63,6 @@ impl PipelineData for CustomRenderMaterialData {}
 
 #[derive(Debug, Clone, Visit, Reflect)]
 pub struct CustomMaterial {
-    layouts: Vec<VertexBufferLayout>,
     diffuse_bind_group_layout: BindGroupLayoutDescriptor,
 }
 
@@ -76,7 +74,6 @@ impl Default for CustomMaterial {
         let entries = builder.build();
 
         Self {
-            layouts: vec![],
             diffuse_bind_group_layout: BindGroupLayoutDescriptor { entries },
         }
     }
@@ -85,15 +82,12 @@ impl Default for CustomMaterial {
 impl RenderMaterial for CustomMaterial {
     type PipelineData = CustomRenderMaterialData;
 
-    fn specialize(&self) -> RenderPipelineDescriptor {
-        let mut desc = RenderPipelineDescriptor {
-            label: "test".into(),
-            ..RenderPipelineDescriptor::default()
-        };
+    fn specialize(&self, desc: &mut RenderPipelineDescriptor) {
+        desc.label = "test".into();
+
         desc.layout = PipelineLayoutDescriptor {
             bind_group_layouts: vec![self.diffuse_bind_group_layout.clone()],
         };
-        desc.vertex.buffers = self.layouts.to_vec();
         desc.vertex.shader = BUILT_IN_SHADER.resource().clone();
         desc.vertex.entry_point = Some("vs_main".into());
         desc.fragment = Some(FragmentState {
@@ -108,18 +102,17 @@ impl RenderMaterial for CustomMaterial {
                 write_mask: ColorWrites::ALL,
             })],
         });
-
-        desc
     }
 
     fn prepare(
         &self,
         pipeline_cache: &mut PipelineCache,
+        desc: &RenderPipelineDescriptor,
     ) -> Result<Self::PipelineData, FrameworkError> {
         let diffuse_bind_group_layout =
             pipeline_cache.get_or_create_bind_group_layout(&self.diffuse_bind_group_layout)?;
 
-        let desc = PipelineDescriptor::RenderPipelineDescriptor(Box::new(self.specialize()));
+        let desc = PipelineDescriptor::RenderPipelineDescriptor(Box::new(desc.clone()));
 
         let pipeline_id = pipeline_cache.get_or_create(&desc);
 

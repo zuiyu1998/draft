@@ -202,7 +202,7 @@ impl GetPipelineContainer for PipelineCache {
         let mut pipelines = vec![];
 
         for i in 0..len {
-            if i <= pipelines_len {
+            if i < pipelines_len {
                 pipelines.push(self.pipelines[i].state.as_pipeline_ref().cloned());
             } else {
                 pipelines.push(None);

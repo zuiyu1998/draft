@@ -27,7 +27,11 @@ impl WorldRenderer {
         self.world.update(dt);
     }
 
-    pub fn render(&mut self, pipeline_context: &PipelineContext) {
+    pub fn prepare(&mut self, pipeline_context: &PipelineContext) {
+        pipeline_context.batch.prepare(&mut self.world);
+    }
+
+    pub fn render_frame(&mut self, pipeline_context: &PipelineContext) {
         let mut frame_graph = FrameGraph::default();
 
         self.pipeline
@@ -46,5 +50,11 @@ impl WorldRenderer {
         let command_buffers = render_context.finish();
 
         self.world.server.queue.wgpu_queue().submit(command_buffers);
+    }
+
+    pub fn render(&mut self, pipeline_context: &PipelineContext) {
+        self.prepare(pipeline_context);
+
+        self.render_frame(pipeline_context);
     }
 }

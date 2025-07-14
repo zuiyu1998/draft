@@ -1,36 +1,41 @@
 use draft_render::{
-    GeometryResource, MaterialResource, RenderWorld, TextureResource,
-    frame_graph::FrameGraph,
-    gfx_base::{RawTextureView, VertexBufferLayout},
+    GeometryResource, MaterialResource, RenderWorld, TextureResource, frame_graph::FrameGraph,
+    gfx_base::RawTextureView,
 };
+
+pub trait MeshPhase {
+    fn prepare(&self, world: &mut RenderWorld);
+}
 
 pub struct Batch {
     pub geometry: GeometryResource,
     pub material: MaterialResource,
-    layouts: Vec<VertexBufferLayout>,
 }
 
 impl Batch {
     pub fn new(geometry: GeometryResource, material: MaterialResource) -> Self {
-        let geometry_clone = geometry.clone();
-        let geometry_state = geometry_clone.state();
-        let layouts = vec![
-            geometry_state
-                .data_ref()
-                .unwrap()
-                .vertex
-                .get_vertex_layout(),
-        ];
-
-        Self {
-            geometry,
-            material,
-            layouts,
-        }
+        Self { geometry, material }
     }
+}
 
-    pub fn layouts(&self) -> &[VertexBufferLayout] {
-        &self.layouts
+impl MeshPhase for Batch {
+    fn prepare(&self, world: &mut RenderWorld) {
+        let geometry_state = self.geometry.state();
+
+        if let Some(geometry_state) = geometry_state.data_ref() {
+            let vertex_layout = geometry_state.vertex.get_vertex_layout();
+
+            if let Some(desc) = world
+                .pipeline_descriptor_cache
+                .get_or_create(&[vertex_layout], &self.material)
+            {
+                let _ = world.material_cache.get_or_create(
+                    &self.material,
+                    desc,
+                    &mut world.pipeline_cache,
+                );
+            }
+        }
     }
 }
 

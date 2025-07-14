@@ -1,6 +1,7 @@
 mod geometry;
 mod material;
 mod pipeline;
+mod pipeline_descriptor_cache;
 mod shader;
 mod texture;
 
@@ -9,6 +10,7 @@ use std::sync::mpsc::Receiver;
 pub use geometry::*;
 pub use material::*;
 pub use pipeline::*;
+pub use pipeline_descriptor_cache::*;
 pub use shader::*;
 pub use texture::*;
 
@@ -22,6 +24,7 @@ pub struct RenderWorld {
     pub geometry_cache: GeometryCache,
     pub texture_storage: TextureStorage,
     pub material_cache: MaterialCache,
+    pub pipeline_descriptor_cache: PipelineDescriptorCache,
 }
 
 impl RenderWorld {
@@ -42,10 +45,12 @@ impl RenderWorld {
             texture_storage: Default::default(),
             texture_event_receiver,
             material_cache: Default::default(),
+            pipeline_descriptor_cache: Default::default(),
         }
     }
 
     pub fn update(&mut self, dt: f32) {
+        self.pipeline_cache.process();
         self.update_texture(dt);
     }
 

@@ -1,10 +1,9 @@
-use std::{error::Error, fmt::Debug, path::Path, sync::Arc};
-
 use downcast_rs::{Downcast, impl_downcast};
 use fyrox_core::{
     TypeUuidProvider, Uuid, log::Log, reflect::*, sparse::AtomicIndex, uuid, visitor::*,
 };
 use fyrox_resource::{Resource, ResourceData};
+use std::{error::Error, fmt::Debug, path::Path, sync::Arc};
 
 use crate::{
     FrameworkError, PipelineCache, PipelineDescriptor, RenderPipelineDescriptor, TemporaryCache,
@@ -27,8 +26,9 @@ impl MaterialData {
     pub fn from_material(
         material: &Material,
         pipeline_cache: &mut PipelineCache,
+        desc: &PipelineDescriptor,
     ) -> Result<Self, FrameworkError> {
-        let value = material.definition.0.prepare(pipeline_cache)?;
+        let value = material.definition.0.prepare(pipeline_cache, desc)?;
 
         Ok(MaterialData::new(value))
     }
@@ -55,6 +55,7 @@ impl MaterialCache {
     pub fn get_or_create(
         &mut self,
         material: &MaterialResource,
+        desc: &PipelineDescriptor,
         pipeline_cache: &mut PipelineCache,
     ) -> Option<&MaterialData> {
         let material_state = material.state();
@@ -62,7 +63,7 @@ impl MaterialCache {
             match self.cache.get_or_insert_with(
                 &material_state.cache_index,
                 Default::default(),
-                || MaterialData::from_material(material_state, pipeline_cache),
+                || MaterialData::from_material(material_state, pipeline_cache, desc),
             ) {
                 Ok(data) => Some(data),
                 Err(error) => {
@@ -80,10 +81,12 @@ impl MaterialCache {
 #[derive(Debug, Clone, Reflect, Visit, Default, TypeUuidProvider)]
 #[type_uuid(id = "3cee68e7-ef0a-463b-a2f5-68f90586b654")]
 pub struct Material {
-    definition: MaterialDefinition,
+    pub definition: MaterialDefinition,
     #[reflect(hidden)]
     #[visit(skip)]
     pub cache_index: Arc<AtomicIndex>,
+    #[visit(optional)]
+    pub modifications_counter: u64,
 }
 
 impl Material {
@@ -91,12 +94,19 @@ impl Material {
         Material {
             definition,
             cache_index: Default::default(),
+            modifications_counter: 0,
         }
     }
 }
 
 #[derive(Debug)]
-pub struct MaterialDefinition(Box<dyn ErasedRenderMaterial>);
+pub struct MaterialDefinition(Box<dyn ErasedMaterial>);
+
+impl MaterialDefinition {
+    pub fn specialize(&self, desc: &mut PipelineDescriptor) {
+        self.0.specialize(desc);
+    }
+}
 
 impl MaterialDefinition {
     pub fn new<T: RenderMaterial>(value: T) -> Self {
@@ -239,11 +249,12 @@ pub trait RenderMaterial:
 {
     type PipelineData: PipelineData;
 
-    fn specialize(&self) -> RenderPipelineDescriptor;
+    fn specialize(&self, desc: &mut RenderPipelineDescriptor);
 
     fn prepare(
         &self,
         pipeline_cache: &mut PipelineCache,
+        desc: &RenderPipelineDescriptor,
     ) -> Result<Self::PipelineData, FrameworkError>;
 }
 
@@ -259,27 +270,49 @@ impl PipelineDataContainer {
     }
 }
 
-pub trait ErasedRenderMaterial: 'static + Debug + Reflect + Visit + Send + Sync {
-    fn clone_box(&self) -> Box<dyn ErasedRenderMaterial>;
+pub trait ErasedMaterial: 'static + Debug + Reflect + Visit + Send + Sync {
+    fn clone_box(&self) -> Box<dyn ErasedMaterial>;
+
+    fn specialize(&self, desc: &mut PipelineDescriptor);
 
     fn prepare(
         &self,
         pipeline_cache: &mut PipelineCache,
+        desc: &PipelineDescriptor,
     ) -> Result<PipelineDataContainer, FrameworkError>;
 }
 
-impl<T: RenderMaterial> ErasedRenderMaterial for T {
-    fn clone_box(&self) -> Box<dyn ErasedRenderMaterial> {
+impl<T: RenderMaterial> ErasedMaterial for T {
+    fn clone_box(&self) -> Box<dyn ErasedMaterial> {
         Box::new(self.clone())
     }
 
     fn prepare(
         &self,
         pipeline_cache: &mut PipelineCache,
+        desc: &PipelineDescriptor,
     ) -> Result<PipelineDataContainer, FrameworkError> {
-        let pipeline_data = <T as RenderMaterial>::prepare(self, pipeline_cache)?;
+        match desc {
+            PipelineDescriptor::RenderPipelineDescriptor(desc) => {
+                let pipeline_data = <T as RenderMaterial>::prepare(self, pipeline_cache, desc)?;
 
-        Ok(PipelineDataContainer::new(pipeline_data))
+                Ok(PipelineDataContainer::new(pipeline_data))
+            }
+            _ => {
+                unimplemented!()
+            }
+        }
+    }
+
+    fn specialize(&self, desc: &mut PipelineDescriptor) {
+        match desc {
+            PipelineDescriptor::RenderPipelineDescriptor(desc) => {
+                <T as RenderMaterial>::specialize(self, desc);
+            }
+            _ => {
+                unimplemented!()
+            }
+        }
     }
 }
 
@@ -289,16 +322,14 @@ pub struct MaterialBase;
 impl RenderMaterial for MaterialBase {
     type PipelineData = CachedPipelineId;
 
-    fn specialize(&self) -> RenderPipelineDescriptor {
-        RenderPipelineDescriptor::default()
-    }
-
     fn prepare(
         &self,
         pipeline_cache: &mut PipelineCache,
+        desc: &RenderPipelineDescriptor,
     ) -> Result<Self::PipelineData, FrameworkError> {
-        let desc = PipelineDescriptor::RenderPipelineDescriptor(Box::new(self.specialize()));
-
+        let desc = PipelineDescriptor::RenderPipelineDescriptor(Box::new(desc.clone()));
         Ok(pipeline_cache.get_or_create(&desc))
     }
+
+    fn specialize(&self, _desc: &mut RenderPipelineDescriptor) {}
 }
