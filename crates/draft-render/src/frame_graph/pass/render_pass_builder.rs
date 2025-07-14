@@ -1,12 +1,15 @@
-use std::{mem::take, ops::Range};
+use std::{
+    mem::take,
+    ops::{Deref, DerefMut, Range},
+};
 
 use wgpu::{QuerySet, ShaderStages};
 
 use crate::{
     frame_graph::{
         BindGroupBinding, BindGroupHandle, ColorAttachment, ColorAttachmentRecord,
-        DepthStencilAttachment, Ref, RenderPassCommandBuilder, RenderPassCommandContainer,
-        ResourceMaterial, ResourceRead, ResourceWrite, TransientBuffer,
+        DepthStencilAttachment, FrameGraph, Ref, RenderPassCommandBuilder,
+        RenderPassCommandContainer, ResourceMaterial, ResourceRead, ResourceWrite, TransientBuffer,
     },
     gfx_base::CachedPipelineId,
 };
@@ -16,6 +19,20 @@ use super::PassBuilder;
 pub struct RenderPassBuilder<'a, 'b> {
     render_pass: RenderPassCommandContainer,
     pass_builder: &'b mut PassBuilder<'a>,
+}
+
+impl Deref for RenderPassBuilder<'_, '_> {
+    type Target = FrameGraph;
+
+    fn deref(&self) -> &Self::Target {
+        self.pass_builder.pass_node_builder.graph
+    }
+}
+
+impl DerefMut for RenderPassBuilder<'_, '_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.pass_builder.pass_node_builder.graph
+    }
 }
 
 impl Drop for RenderPassBuilder<'_, '_> {

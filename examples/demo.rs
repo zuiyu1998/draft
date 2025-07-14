@@ -94,7 +94,7 @@ impl RenderMaterial for CustomMaterial {
             shader: BUILT_IN_SHADER.resource().clone(),
             entry_point: Some("fs_main".into()),
             targets: vec![Some(ColorTargetState {
-                format: TextureFormat::Bgra8UnormSrgb,
+                format: TextureFormat::Rgba8UnormSrgb,
                 blend: Some(BlendState {
                     color: BlendComponent::REPLACE,
                     alpha: BlendComponent::REPLACE,
@@ -132,11 +132,6 @@ impl PipelineNode for TestNode {
         world: &mut RenderWorld,
         context: &PipelineContext,
     ) {
-        let custom_material_data = world
-            .material_cache
-            .get::<CustomRenderMaterialData>(&context.batch.material)
-            .unwrap();
-
         let Some(texture_data) = world.texture_storage.get_or_insert(
             &world.server.device,
             &world.server.queue,
@@ -144,15 +139,6 @@ impl PipelineNode for TestNode {
         ) else {
             return;
         };
-
-        let bind_group_handle = frame_graph
-            .create_bind_group_handle_builder(
-                None,
-                custom_material_data.diffuse_bind_group_layout.clone(),
-            )
-            .add_texture_view(0, &texture_data.texture)
-            .add_handle(1, texture_data.sampler.sampler())
-            .build();
 
         let mut pass_builder = frame_graph.create_pass_builder("test_node");
         let mut render_pass_builder = pass_builder.create_render_pass_builder("test_pass");
@@ -165,6 +151,11 @@ impl PipelineNode for TestNode {
                 store: StoreOp::Store,
             },
         });
+
+        let custom_material_data = world
+            .material_cache
+            .get::<CustomRenderMaterialData>(&context.batch.material)
+            .unwrap();
 
         render_pass_builder.set_render_pipeline(custom_material_data.pipeline_id);
 
@@ -181,6 +172,15 @@ impl PipelineNode for TestNode {
             buffer_slice.offset,
             buffer_slice.size,
         );
+
+        let bind_group_handle = render_pass_builder
+            .create_bind_group_handle_builder(
+                None,
+                custom_material_data.diffuse_bind_group_layout.clone(),
+            )
+            .add_texture_view(0, &texture_data.texture)
+            .add_handle(1, texture_data.sampler.sampler())
+            .build();
 
         render_pass_builder.set_bind_group_handle(0, &bind_group_handle, &[]);
 
