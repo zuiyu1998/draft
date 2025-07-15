@@ -3,28 +3,51 @@ mod pipeline;
 pub use pipeline::*;
 
 use draft_render::{
-    RenderServer, RenderWorld,
+    RenderServer, RenderWorld, Texture, TextureLoader,
     frame_graph::{FrameGraph, FrameGraphContext, TransientResourceCache},
 };
-use fyrox_resource::manager::ResourceManager;
+use fyrox_resource::{event::ResourceEvent, manager::ResourceManager};
+use std::sync::mpsc::Receiver;
 
 pub struct WorldRenderer {
     pub world: RenderWorld,
     pub pipeline: Pipeline,
     pub transient_resource_cache: TransientResourceCache,
+    texture_event_receiver: Receiver<ResourceEvent>,
 }
 
 impl WorldRenderer {
     pub fn new(server: RenderServer, resource_manager: &ResourceManager) -> Self {
+        let (texture_event_sender, texture_event_receiver) = std::sync::mpsc::channel();
+
+        resource_manager
+            .state()
+            .event_broadcaster
+            .add(texture_event_sender);
+
+        resource_manager.add_loader(TextureLoader::default());
+
         WorldRenderer {
-            world: RenderWorld::new(server, resource_manager),
+            world: RenderWorld::new(server),
             pipeline: Pipeline::empty(),
             transient_resource_cache: Default::default(),
+            texture_event_receiver,
         }
     }
 
     pub fn update(&mut self, dt: f32) {
+        self.update_texture();
         self.world.update(dt);
+    }
+
+    fn update_texture(&mut self) {
+        while let Ok(event) = self.texture_event_receiver.try_recv() {
+            if let ResourceEvent::Loaded(resource) | ResourceEvent::Reloaded(resource) = event {
+                if let Some(texture) = resource.try_cast::<Texture>() {
+                    self.world.update_texture(&texture);
+                }
+            }
+        }
     }
 
     pub fn prepare(&mut self, pipeline_context: &PipelineContext) {

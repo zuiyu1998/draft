@@ -8,20 +8,20 @@ use crate::{
 };
 
 #[derive(Default)]
-pub struct TextureStorage {
-    pub texture_cache: TemporaryCache<TextureData>,
+pub struct TextureCache {
+    pub cache: TemporaryCache<TextureData>,
 }
 
-impl TextureStorage {
+impl TextureCache {
     pub fn remove(&mut self, texture: &TextureResource) {
         let mut state = texture.state();
         if let Some(texture_state) = state.data() {
-            self.texture_cache.remove(&texture_state.cache_index);
+            self.cache.remove(&texture_state.cache_index);
         }
     }
 
     pub fn update(&mut self, dt: f32) {
-        self.texture_cache.update(dt)
+        self.cache.update(dt)
     }
 
     pub fn get_or_insert(
@@ -33,7 +33,7 @@ impl TextureStorage {
         let mut texture_state = texture.state();
 
         if let Some(texture_state) = texture_state.data() {
-            match self.texture_cache.get_mut_or_insert_with(
+            match self.cache.get_mut_or_insert_with(
                 &texture_state.cache_index,
                 Default::default(),
                 || TextureData::new(device, queue, texture_state),

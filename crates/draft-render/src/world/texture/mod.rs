@@ -1,9 +1,9 @@
+mod cache;
 mod loader;
-mod storage;
 
+pub use cache::*;
 use image::{DynamicImage, ImageFormat};
 pub use loader::*;
-pub use storage::*;
 
 use fyrox_core::{
     TypeUuidProvider, Uuid, io::FileError, reflect::*, sparse::AtomicIndex, uuid, visitor::*,

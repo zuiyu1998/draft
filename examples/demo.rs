@@ -132,7 +132,7 @@ impl PipelineNode for TestNode {
         world: &mut RenderWorld,
         context: &PipelineContext,
     ) {
-        let Some(texture_data) = world.texture_storage.get_or_insert(
+        let Some(texture_data) = world.texture_cache.get_or_insert(
             &world.server.device,
             &world.server.queue,
             context.image,
