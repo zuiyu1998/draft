@@ -4,6 +4,7 @@ mod pipeline;
 mod pipeline_descriptor_cache;
 mod shader;
 mod texture;
+mod uniform;
 
 pub use geometry::*;
 pub use material::*;
@@ -11,6 +12,7 @@ pub use pipeline::*;
 pub use pipeline_descriptor_cache::*;
 pub use shader::*;
 pub use texture::*;
+pub use uniform::*;
 
 use crate::gfx_base::{RenderAdapter, RenderDevice, RenderInstance, RenderQueue};
 
@@ -21,12 +23,14 @@ pub struct RenderWorld {
     pub texture_cache: TextureCache,
     pub material_cache: MaterialCache,
     pub pipeline_descriptor_cache: PipelineDescriptorCache,
+    pub uniform_cache: UniformBufferCache,
 }
 
 impl RenderWorld {
     pub fn new(server: RenderServer) -> Self {
         Self {
             pipeline_cache: PipelineCache::new(server.device.clone()),
+            uniform_cache: UniformBufferCache::new(server.device.clone()),
             server,
             geometry_cache: Default::default(),
             texture_cache: Default::default(),

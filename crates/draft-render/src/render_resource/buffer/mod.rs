@@ -7,6 +7,7 @@ use crate::gfx_base::{BufferAddress, RawBuffer};
 
 use crate::frame_graph::{BufferInfo, FrameGraph, Handle, ResourceMaterial, TransientBuffer};
 
+#[derive(Clone)]
 pub struct RenderBuffer {
     pub key: String,
     pub value: RawBuffer,
