@@ -1,8 +1,15 @@
 use fxhash::FxHashMap;
 
 use crate::{
-    FrameworkError, frame_graph::BufferInfo, gfx_base::RenderDevice, render_resource::RenderBuffer,
+    frame_graph::BufferInfo,
+    gfx_base::{RenderDevice, RenderQueue},
+    render_resource::RenderBuffer,
 };
+
+pub struct UniformBufferHandle {
+    desc: BufferInfo,
+    index: usize,
+}
 
 pub struct UniformBufferSet {
     desc: BufferInfo,
@@ -23,43 +30,61 @@ impl UniformBufferSet {
         self.free = 0;
     }
 
-    fn get_or_create(&mut self, device: &RenderDevice) -> Result<RenderBuffer, FrameworkError> {
-        if self.free < self.buffers.len() {
-            let buffer = &self.buffers[self.free];
+    fn get_or_create(&mut self, device: &RenderDevice) -> UniformBufferHandle {
+        let index = if self.free < self.buffers.len() {
+            let index = self.free;
             self.free += 1;
-            Ok(buffer.clone())
+            index
         } else {
             let buffer = device
                 .wgpu_device()
                 .create_buffer(&self.desc.get_buffer_desc());
 
             let key = format!("UniformBuffer_{}_{}", self.desc.size, self.buffers.len());
-
+            let index = self.buffers.len();
             self.buffers.push(RenderBuffer {
                 key,
                 value: buffer,
                 desc: self.desc.clone(),
             });
+
             self.free = self.buffers.len();
-            Ok(self.buffers.last().unwrap().clone())
+            index
+        };
+
+        UniformBufferHandle {
+            desc: self.desc.clone(),
+            index,
         }
     }
 }
 
 pub struct UniformBufferCache {
     device: RenderDevice,
+    queue: RenderQueue,
     cache: FxHashMap<BufferInfo, UniformBufferSet>,
 }
 
 impl UniformBufferCache {
-    pub fn new(device: RenderDevice) -> Self {
+    pub fn new(device: RenderDevice, queue: RenderQueue) -> Self {
         Self {
             device,
             cache: Default::default(),
+            queue,
         }
     }
 
-    pub fn get_or_create(&mut self, desc: BufferInfo) -> Result<RenderBuffer, FrameworkError> {
+    pub fn upload_bytes(&mut self, handle: &UniformBufferHandle, bytes: &[u8]) {
+        if let Some(set) = self.cache.get_mut(&handle.desc) {
+            if let Some(render_buffer) = set.buffers.get_mut(handle.index) {
+                self.queue
+                    .wgpu_queue()
+                    .write_buffer(&render_buffer.value, 0, bytes);
+            }
+        }
+    }
+
+    pub fn get_or_create(&mut self, desc: BufferInfo) -> UniformBufferHandle {
         let set = self
             .cache
             .entry(desc.clone())
