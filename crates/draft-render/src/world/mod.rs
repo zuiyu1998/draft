@@ -1,7 +1,7 @@
 mod geometry;
 mod material;
 mod pipeline;
-mod pipeline_descriptor_cache;
+
 mod shader;
 mod texture;
 mod uniform;
@@ -9,7 +9,6 @@ mod uniform;
 pub use geometry::*;
 pub use material::*;
 pub use pipeline::*;
-pub use pipeline_descriptor_cache::*;
 pub use shader::*;
 pub use texture::*;
 pub use uniform::*;
@@ -21,8 +20,7 @@ pub struct RenderWorld {
     pub pipeline_cache: PipelineCache,
     pub geometry_cache: GeometryCache,
     pub texture_cache: TextureCache,
-    pub material_cache: MaterialCache,
-    pub pipeline_descriptor_cache: PipelineDescriptorCache,
+    pub pipeline_specializer_cache: PipelineSpecializerCache,
     pub uniform_buffer_cache: UniformBufferCache,
 }
 
@@ -37,8 +35,7 @@ impl RenderWorld {
             server,
             geometry_cache: Default::default(),
             texture_cache: Default::default(),
-            material_cache: Default::default(),
-            pipeline_descriptor_cache: Default::default(),
+            pipeline_specializer_cache: Default::default(),
         }
     }
 

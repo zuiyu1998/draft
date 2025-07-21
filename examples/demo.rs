@@ -1,15 +1,15 @@
 use std::{collections::HashMap, sync::Arc};
 
 use draft_render::{
-    BindGroupLayoutDescriptor, FragmentState, FrameworkError, Geometry, GeometryResource, Material,
-    MaterialDefinition, MaterialResource, PipelineCache, PipelineData, PipelineDescriptor,
-    PipelineLayoutDescriptor, RenderMaterial, RenderPipelineDescriptor, RenderServer, RenderWorld,
-    Shader, ShaderResource, Texture, TextureResource, Vertex, VertexAttributeDescriptor,
+    BindGroupLayoutDescriptor, FrameworkError, Geometry, GeometryResource, Material,
+    MaterialResource, PipelineCache, PipelineData, PipelineDataContainer, PipelineDescriptor,
+    PipelineSpecializer, PipelineSpecializerResource, RenderPipelineDescriptor,
+    RenderPipelineSpecializer, RenderServer, RenderWorld, Shader, ShaderResource, Texture,
+    TextureResource, Vertex, VertexAttributeDescriptor,
     frame_graph::{ColorAttachment, FrameGraph},
     gfx_base::{
-        BindGroupLayoutEntriesBuilder, BlendComponent, BlendState, CachedPipelineId,
-        ColorTargetState, ColorWrites, RawBindGroupLayout, RawTextureFormat, RawTextureView,
-        SamplerBindingType, ShaderStages, TextureFormat, TextureSampleType, VertexFormat,
+        BindGroupLayoutEntriesBuilder, CachedPipelineId, RawBindGroupLayout, RawTextureFormat,
+        RawTextureView, SamplerBindingType, ShaderStages, TextureSampleType, VertexFormat,
         binding_types::{sampler, texture_2d},
         initialize_resources,
     },
@@ -54,19 +54,48 @@ lazy_static! {
 }
 
 #[derive(Clone)]
-pub struct CustomRenderMaterialData {
-    diffuse_bind_group_layout: RawBindGroupLayout,
-    pipeline_id: CachedPipelineId,
+pub struct CustomPipeline {
+    pub diffuse_bind_group_layout: RawBindGroupLayout,
+    pub pipeline_id: CachedPipelineId,
 }
 
-impl PipelineData for CustomRenderMaterialData {}
+impl PipelineData for CustomPipeline {}
 
 #[derive(Debug, Clone, Visit, Reflect)]
-pub struct CustomMaterial {
+pub struct CustomPipelineSpecializer {
     diffuse_bind_group_layout: BindGroupLayoutDescriptor,
 }
 
-impl Default for CustomMaterial {
+impl RenderPipelineSpecializer for CustomPipelineSpecializer {
+    type Data = CustomPipeline;
+
+    fn specialize(&self, desc: &mut RenderPipelineDescriptor) {
+        desc.layout
+            .bind_group_layouts
+            .push(self.diffuse_bind_group_layout.clone());
+    }
+
+    fn create_pipeline_data(
+        &self,
+        pipeline_cache: &mut PipelineCache,
+        desc: &mut PipelineDescriptor,
+    ) -> Result<draft_render::PipelineDataContainer, FrameworkError> {
+        if let Some(desc) = desc.render_pipeline_descriptor() {
+            self.specialize(desc);
+        }
+
+        let diffuse_bind_group_layout =
+            pipeline_cache.get_or_create_bind_group_layout(&self.diffuse_bind_group_layout)?;
+        let id = pipeline_cache.get_or_create(desc);
+
+        Ok(PipelineDataContainer::new(CustomPipeline {
+            diffuse_bind_group_layout,
+            pipeline_id: id,
+        }))
+    }
+}
+
+impl Default for CustomPipelineSpecializer {
     fn default() -> Self {
         let mut builder = BindGroupLayoutEntriesBuilder::new(ShaderStages::FRAGMENT);
         builder.add_bind_group_layout(0, texture_2d(TextureSampleType::Float { filterable: true }));
@@ -79,50 +108,6 @@ impl Default for CustomMaterial {
     }
 }
 
-impl RenderMaterial for CustomMaterial {
-    type PipelineData = CustomRenderMaterialData;
-
-    fn specialize(&self, desc: &mut RenderPipelineDescriptor) {
-        desc.label = "test".into();
-
-        desc.layout = PipelineLayoutDescriptor {
-            bind_group_layouts: vec![self.diffuse_bind_group_layout.clone()],
-        };
-        desc.vertex.shader = BUILT_IN_SHADER.resource().clone();
-        desc.vertex.entry_point = Some("vs_main".into());
-        desc.fragment = Some(FragmentState {
-            shader: BUILT_IN_SHADER.resource().clone(),
-            entry_point: Some("fs_main".into()),
-            targets: vec![Some(ColorTargetState {
-                format: TextureFormat::Rgba8UnormSrgb,
-                blend: Some(BlendState {
-                    color: BlendComponent::REPLACE,
-                    alpha: BlendComponent::REPLACE,
-                }),
-                write_mask: ColorWrites::ALL,
-            })],
-        });
-    }
-
-    fn prepare(
-        &self,
-        pipeline_cache: &mut PipelineCache,
-        desc: &RenderPipelineDescriptor,
-    ) -> Result<Self::PipelineData, FrameworkError> {
-        let diffuse_bind_group_layout =
-            pipeline_cache.get_or_create_bind_group_layout(&self.diffuse_bind_group_layout)?;
-
-        let desc = PipelineDescriptor::RenderPipelineDescriptor(Box::new(desc.clone()));
-
-        let pipeline_id = pipeline_cache.get_or_create(&desc);
-
-        Ok(CustomRenderMaterialData {
-            diffuse_bind_group_layout,
-            pipeline_id,
-        })
-    }
-}
-
 pub struct TestNode;
 
 impl PipelineNode for TestNode {
@@ -132,7 +117,7 @@ impl PipelineNode for TestNode {
         world: &mut RenderWorld,
         context: &PipelineContext,
     ) {
-        let Some(texture_data) = world.texture_cache.get_or_insert(
+        let Some(_texture_data) = world.texture_cache.get_or_insert(
             &world.server.device,
             &world.server.queue,
             context.image,
@@ -152,52 +137,47 @@ impl PipelineNode for TestNode {
             },
         });
 
-        let custom_material_data = world
-            .material_cache
-            .get::<CustomRenderMaterialData>(&context.batch.material)
-            .unwrap();
+        // render_pass_builder.set_render_pipeline(custom_material_data.pipeline_id);
 
-        render_pass_builder.set_render_pipeline(custom_material_data.pipeline_id);
+        // let geometry_data = world
+        //     .geometry_cache
+        //     .get_or_insert(&world.server.device, &context.batch.geometry)
+        //     .unwrap();
 
-        let geometry_data = world
-            .geometry_cache
-            .get_or_insert(&world.server.device, &context.batch.geometry)
-            .unwrap();
+        // let buffer_ref = render_pass_builder.read_material(&geometry_data.vertex_buffer);
+        // let buffer_slice = geometry_data.vertex_buffer.slice(0..);
+        // render_pass_builder.set_vertex_buffer(
+        //     0,
+        //     &buffer_ref,
+        //     buffer_slice.offset,
+        //     buffer_slice.size,
+        // );
 
-        let buffer_ref = render_pass_builder.read_material(&geometry_data.vertex_buffer);
-        let buffer_slice = geometry_data.vertex_buffer.slice(0..);
-        render_pass_builder.set_vertex_buffer(
-            0,
-            &buffer_ref,
-            buffer_slice.offset,
-            buffer_slice.size,
-        );
+        // let bind_group_handle = render_pass_builder
+        //     .create_bind_group_handle_builder(
+        //         None,
+        //         custom_material_data.diffuse_bind_group_layout.clone(),
+        //     )
+        //     .add_texture_view(0, &texture_data.texture)
+        //     .add_handle(1, texture_data.sampler.sampler())
+        //     .build();
 
-        let bind_group_handle = render_pass_builder
-            .create_bind_group_handle_builder(
-                None,
-                custom_material_data.diffuse_bind_group_layout.clone(),
-            )
-            .add_texture_view(0, &texture_data.texture)
-            .add_handle(1, texture_data.sampler.sampler())
-            .build();
+        // render_pass_builder.set_bind_group_handle(0, &bind_group_handle, &[]);
 
-        render_pass_builder.set_bind_group_handle(0, &bind_group_handle, &[]);
+        // if let Some(index_buffer) = &geometry_data.index_buffer {
+        //     let buffer_ref = render_pass_builder.read_material(&index_buffer.buffer);
+        //     let buffer_slice = index_buffer.buffer.slice(0..);
+        //     render_pass_builder.set_index_buffer(
+        //         &buffer_ref,
+        //         index_buffer.index_format,
+        //         buffer_slice.offset,
+        //         buffer_slice.size,
+        //     );
 
-        if let Some(index_buffer) = &geometry_data.index_buffer {
-            let buffer_ref = render_pass_builder.read_material(&index_buffer.buffer);
-            let buffer_slice = index_buffer.buffer.slice(0..);
-            render_pass_builder.set_index_buffer(
-                &buffer_ref,
-                index_buffer.index_format,
-                buffer_slice.offset,
-                buffer_slice.size,
-            );
-
-            render_pass_builder.draw_indexed(0..index_buffer.num_indices, 0, 0..1);
-        } else {
-            render_pass_builder.draw(0..3, 0..1);
-        }
+        //     render_pass_builder.draw_indexed(0..index_buffer.num_indices, 0, 0..1);
+        // } else {
+        //     render_pass_builder.draw(0..3, 0..1);
+        // }
     }
 }
 
@@ -483,7 +463,9 @@ fn new_batch() -> Batch {
 }
 
 fn new_material() -> Material {
-    Material::new(MaterialDefinition::new(CustomMaterial::default()))
+    Material::new(PipelineSpecializerResource::new_embedded(
+        PipelineSpecializer::new_render_specializer(CustomPipelineSpecializer::default()),
+    ))
 }
 
 #[derive(Default)]

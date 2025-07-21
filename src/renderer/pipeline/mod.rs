@@ -19,22 +19,11 @@ impl Batch {
 }
 
 impl MeshPhase for Batch {
-    fn prepare(&self, world: &mut RenderWorld) {
+    fn prepare(&self, _world: &mut RenderWorld) {
         let geometry_state = self.geometry.state();
 
         if let Some(geometry_state) = geometry_state.data_ref() {
-            let vertex_layout = geometry_state.vertex.get_vertex_layout();
-
-            if let Some(desc) = world
-                .pipeline_descriptor_cache
-                .get_or_create(&[vertex_layout], &self.material)
-            {
-                let _ = world.material_cache.get_or_create(
-                    &self.material,
-                    desc,
-                    &mut world.pipeline_cache,
-                );
-            }
+            let _vertex_layout = geometry_state.vertex.get_vertex_layout();
         }
     }
 }
