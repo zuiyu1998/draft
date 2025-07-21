@@ -6,7 +6,7 @@ use crate::{
     render_resource::RenderBuffer,
 };
 
-pub struct UniformBufferHandle {
+pub struct UniformBufferKey {
     desc: BufferInfo,
     index: usize,
 }
@@ -30,7 +30,7 @@ impl UniformBufferSet {
         self.free = 0;
     }
 
-    fn get_or_create(&mut self, device: &RenderDevice) -> UniformBufferHandle {
+    fn get_or_create(&mut self, device: &RenderDevice) -> UniformBufferKey {
         let index = if self.free < self.buffers.len() {
             let index = self.free;
             self.free += 1;
@@ -52,7 +52,7 @@ impl UniformBufferSet {
             index
         };
 
-        UniformBufferHandle {
+        UniformBufferKey {
             desc: self.desc.clone(),
             index,
         }
@@ -74,9 +74,20 @@ impl UniformBufferCache {
         }
     }
 
-    pub fn upload_bytes(&mut self, handle: &UniformBufferHandle, bytes: &[u8]) {
-        if let Some(set) = self.cache.get_mut(&handle.desc) {
-            if let Some(render_buffer) = set.buffers.get_mut(handle.index) {
+    pub fn get_render_buffer(&self, key: &UniformBufferKey) -> &RenderBuffer {
+        self.try_get_render_buffer(key)
+            .expect("must have uniform buffer")
+    }
+
+    pub fn try_get_render_buffer(&self, key: &UniformBufferKey) -> Option<&RenderBuffer> {
+        self.cache
+            .get(&key.desc)
+            .and_then(|set| set.buffers.get(key.index))
+    }
+
+    pub fn upload_bytes(&mut self, key: &UniformBufferKey, bytes: &[u8]) {
+        if let Some(set) = self.cache.get_mut(&key.desc) {
+            if let Some(render_buffer) = set.buffers.get_mut(key.index) {
                 self.queue
                     .wgpu_queue()
                     .write_buffer(&render_buffer.value, 0, bytes);
@@ -84,7 +95,7 @@ impl UniformBufferCache {
         }
     }
 
-    pub fn get_or_create(&mut self, desc: BufferInfo) -> UniformBufferHandle {
+    pub fn get_or_create(&mut self, desc: BufferInfo) -> UniformBufferKey {
         let set = self
             .cache
             .entry(desc.clone())
