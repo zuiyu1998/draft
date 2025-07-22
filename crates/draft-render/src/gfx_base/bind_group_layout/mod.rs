@@ -105,13 +105,8 @@ pub mod binding_types {
         TextureSampleType, TextureViewDimension,
     };
     use core::num::NonZero;
-    use encase::ShaderType;
 
     use super::*;
-
-    pub fn storage_buffer<T: ShaderType>(has_dynamic_offset: bool) -> BindGroupLayoutEntryBuilder {
-        storage_buffer_sized(has_dynamic_offset, Some(T::min_size()))
-    }
 
     pub fn storage_buffer_sized(
         has_dynamic_offset: bool,
@@ -125,12 +120,6 @@ pub mod binding_types {
         .into_bind_group_layout_entry_builder()
     }
 
-    pub fn storage_buffer_read_only<T: ShaderType>(
-        has_dynamic_offset: bool,
-    ) -> BindGroupLayoutEntryBuilder {
-        storage_buffer_read_only_sized(has_dynamic_offset, Some(T::min_size()))
-    }
-
     pub fn storage_buffer_read_only_sized(
         has_dynamic_offset: bool,
         min_binding_size: Option<NonZero<u64>>,
@@ -141,10 +130,6 @@ pub mod binding_types {
             min_binding_size: min_binding_size.map(|v| v.get()),
         }
         .into_bind_group_layout_entry_builder()
-    }
-
-    pub fn uniform_buffer<T: ShaderType>(has_dynamic_offset: bool) -> BindGroupLayoutEntryBuilder {
-        uniform_buffer_sized(has_dynamic_offset, Some(T::min_size()))
     }
 
     pub fn uniform_buffer_sized(

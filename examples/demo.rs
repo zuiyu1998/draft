@@ -463,7 +463,7 @@ fn new_batch() -> Batch {
 }
 
 fn new_material() -> Material {
-    Material::new(PipelineSpecializerResource::new_embedded(
+    Material::from_specializer(PipelineSpecializerResource::new_embedded(
         PipelineSpecializer::new_render_specializer(CustomPipelineSpecializer::default()),
     ))
 }

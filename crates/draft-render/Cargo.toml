@@ -16,7 +16,16 @@ bytemuck = { version = "1.5" }
 bitflags = { version = "2.9" }
 tracing = { version = "0.1" }
 wgpu = { version = "24", features = ["wgsl", "dx12", "metal", "naga-ir"] }
-encase = { version = "0.10" }
-image = { version = "0.25.1", default-features = false, features = ["gif", "jpeg", "png", "tga", "tiff", "bmp"] }
+image = { version = "0.25.1", default-features = false, features = [
+    "gif",
+    "jpeg",
+    "png",
+    "tga",
+    "tiff",
+    "bmp",
+] }
 downcast-rs = "2.0.1"
-fxhash = { version = "0.2"}
+fxhash = { version = "0.2" }
+strum = "0.26.1"
+strum_macros = "0.26.1"
+bytes = { version = "1.10"}
