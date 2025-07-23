@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use std::sync::Arc;
 
-use crate::gfx_base::{BufferAddress, COPY_BUFFER_ALIGNMENT};
+use crate::gfx_base::{BufferAddress, BufferUsages, COPY_BUFFER_ALIGNMENT};
 
 use super::{
     AnyTransientResource, AnyTransientResourceDescriptor, ArcTransientResource,
@@ -41,7 +41,7 @@ impl TransientResource for TransientBuffer {
 pub struct BufferInfo {
     pub label: Option<Cow<'static, str>>,
     pub size: BufferAddress,
-    pub usage: wgpu::BufferUsages,
+    pub usage: BufferUsages,
     pub mapped_at_creation: bool,
 }
 
@@ -50,7 +50,6 @@ impl BufferInfo {
         if desc.contents.is_empty() {
             BufferInfo {
                 label: desc.label.map(|label| label.to_string().into()),
-
                 size: 0,
                 usage: desc.usage,
                 mapped_at_creation: false,

@@ -1,6 +1,7 @@
 use fxhash::FxHashMap;
 
 use crate::{
+    UniformBuffer,
     frame_graph::BufferInfo,
     gfx_base::{RenderDevice, RenderQueue},
     render_resource::RenderBuffer,
@@ -15,6 +16,13 @@ pub struct UniformBufferSet {
     desc: BufferInfo,
     buffers: Vec<RenderBuffer>,
     free: usize,
+}
+
+fn get_buffer_key(desc: &BufferInfo, index: usize) -> String {
+    match &desc.label {
+        Some(label) => format!("UniformBuffer_{}_{}_{}", label, desc.size, index),
+        None => format!("UniformBuffer_{}_{}", desc.size, index),
+    }
 }
 
 impl UniformBufferSet {
@@ -40,7 +48,7 @@ impl UniformBufferSet {
                 .wgpu_device()
                 .create_buffer(&self.desc.get_buffer_desc());
 
-            let key = format!("UniformBuffer_{}_{}", self.desc.size, self.buffers.len());
+            let key = get_buffer_key(&self.desc, self.buffers.len());
             let index = self.buffers.len();
             self.buffers.push(RenderBuffer {
                 key,
@@ -93,6 +101,13 @@ impl UniformBufferCache {
                     .write_buffer(&render_buffer.value, 0, bytes);
             }
         }
+    }
+
+    pub fn allocate<T>(&mut self, buffer: UniformBuffer) -> UniformBufferKey {
+        let desc = buffer.get_buffer_info();
+        let key = self.get_or_create(desc);
+        self.upload_bytes(&key, buffer.data());
+        key
     }
 
     pub fn get_or_create(&mut self, desc: BufferInfo) -> UniformBufferKey {

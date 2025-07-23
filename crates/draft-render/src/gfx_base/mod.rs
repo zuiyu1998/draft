@@ -27,7 +27,7 @@ pub use wgpu::{
     BlendComponent as RawBlendComponent, BlendFactor as RawBlendFactor,
     BlendOperation as RawBlendOperation, BlendState as RawBlendState, Buffer as RawBuffer,
     BufferAddress, BufferBinding as RawBufferBinding, BufferBindingType as RawBufferBindingType,
-    COPY_BUFFER_ALIGNMENT, Color, ColorTargetState as RawColorTargetState,
+    BufferUsages, COPY_BUFFER_ALIGNMENT, Color, ColorTargetState as RawColorTargetState,
     ColorWrites as RawColorWrites, CommandBuffer as RawCommandBuffer, CommandEncoder,
     CompareFunction as RawCompareFunction, DepthBiasState as RawDepthBiasState,
     DepthStencilState as RawDepthStencilState, Device as RawDevice, Extent3d as RawExtent3d,

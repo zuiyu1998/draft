@@ -252,6 +252,17 @@ impl Material {
         Material::new(specializer, Default::default())
     }
 
+    pub fn push_binding(
+        &mut self,
+        name: impl Into<ImmutableString>,
+        binding: MaterialResourceBinding,
+    ) {
+        self.resource_bindings
+            .entry(name.into())
+            .or_default()
+            .push(binding);
+    }
+
     pub fn new(
         specializer: PipelineSpecializerResource,
         resource_bindings: FxHashMap<ImmutableString, Vec<MaterialResourceBinding>>,
