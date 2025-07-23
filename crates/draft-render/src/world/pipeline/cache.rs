@@ -2,7 +2,6 @@ use std::{
     collections::{HashMap, HashSet},
     fmt::Debug,
     mem,
-    ops::Deref,
 };
 
 use fyrox_core::{reflect::*, visitor::*};
@@ -43,7 +42,7 @@ impl PipelineState {
     }
 }
 
-#[derive(Debug, Clone, Reflect, Visit, PartialEq, Hash, Eq)]
+#[derive(Debug, Clone, Reflect, Visit, PartialEq, Eq, Hash)]
 pub enum PipelineDescriptor {
     RenderPipelineDescriptor(Box<RenderPipelineDescriptor>),
     ComputePipelineDescriptor(Box<ComputePipelineDescriptor>),
@@ -93,9 +92,9 @@ impl PipelineCache {
     ) -> Result<RawBindGroupLayout, FrameworkError> {
         let data = self
             .pipeline_layout_cache
-            .get_or_insert_bind_group_layout_data(&self.device, desc)?;
+            .get_or_create_bind_group_layout(&self.device, desc)?;
 
-        Ok(data.bind_group_layout.deref().clone())
+        Ok(data.raw().clone())
     }
 
     pub fn get_or_create(&mut self, desc: &PipelineDescriptor) -> CachedPipelineId {
@@ -199,7 +198,9 @@ fn create_pipeline_with_render_pipeline_descriptor(
         None => None,
     };
 
-    let layout = pipeline_layout_cache.get(device, &desc.layout)?.clone();
+    let pipeline_layout = pipeline_layout_cache
+        .get_or_create_pipeline_layout(device, &desc.layout)?
+        .clone();
 
     let vertex_buffer_layouts = desc
         .vertex
@@ -247,7 +248,7 @@ fn create_pipeline_with_render_pipeline_descriptor(
             .as_ref()
             .map(|depth_stencil| depth_stencil.into()),
         label: Some(&desc.label),
-        layout: Some(&layout),
+        layout: Some(&pipeline_layout.layout),
         multisample: desc.multisample.into(),
         primitive: desc.primitive.into(),
         vertex: RawVertexState {

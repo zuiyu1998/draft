@@ -1,6 +1,4 @@
-mod named_value;
-
-use crate::{PipelineSpecializerResource, Std140, TextureResource};
+use crate::{NamedValue, PipelineSpecializerResource, Std140, TextureResource};
 use bytes::BufMut;
 use fxhash::FxHashMap;
 use fyrox_core::{
@@ -15,14 +13,13 @@ use fyrox_resource::{Resource, ResourceData};
 use std::{error::Error, fmt::Debug, path::Path};
 use strum_macros::{AsRefStr, EnumString, VariantNames};
 
-pub use named_value::*;
 pub type MaterialResource = Resource<Material>;
 
 pub struct PropertyGroup<'a, const N: usize> {
     pub properties: [NamedValue<MaterialPropertyRef<'a>>; N],
 }
 
-impl<'a, const N: usize> Std140 for PropertyGroup<'a, N> {
+impl<const N: usize> Std140 for PropertyGroup<'_, N> {
     fn write(&self, dest: &mut dyn BufMut, size: &mut u32) {
         for property in self.properties.iter() {
             property.value.write(dest, size);
@@ -156,7 +153,7 @@ pub enum MaterialProperty {
     Color(Color),
 }
 
-impl<'a> Std140 for MaterialPropertyRef<'a> {
+impl Std140 for MaterialPropertyRef<'_> {
     fn write(&self, dest: &mut dyn BufMut, size: &mut u32) {
         match self {
             MaterialPropertyRef::Bool(v) => v.write(dest, size),

@@ -1,9 +1,17 @@
-use fyrox_core::{reflect::*, sparse::AtomicIndex, visitor::*};
-use std::{collections::HashMap, ops::Deref, sync::Arc};
+use fxhash::FxHashMap;
+use fyrox_core::{ImmutableString, reflect::*, visitor::*};
+use std::{
+    hash::Hash,
+    ops::{Deref, DerefMut},
+    sync::Arc,
+};
 
 use crate::{
-    FrameworkError, TemporaryCache,
-    gfx_base::{BindGroupLayoutEntry, RawBindGroupLayout, RenderDevice},
+    FrameworkError, NamedValue, NamedValuesContainer,
+    gfx_base::{
+        BindGroupLayoutEntry, RawBindGroupLayout, RawPipelineLayout, RawPipelineLayoutDescriptor,
+        RenderDevice,
+    },
 };
 
 #[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
@@ -11,121 +19,134 @@ pub struct BindGroupLayoutDescriptor {
     pub entries: Vec<BindGroupLayoutEntry>,
 }
 
-#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
-pub struct PipelineLayoutDescriptor {
-    pub bind_group_layouts: Vec<BindGroupLayoutDescriptor>,
+#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq)]
+pub struct PipelineLayoutDescriptor(FxHashMap<ImmutableString, BindGroupLayoutDescriptor>);
+
+impl Deref for PipelineLayoutDescriptor {
+    type Target = FxHashMap<ImmutableString, BindGroupLayoutDescriptor>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for PipelineLayoutDescriptor {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl Hash for PipelineLayoutDescriptor {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        for (name, desc) in self.0.iter() {
+            name.hash(state);
+            desc.hash(state);
+        }
+    }
+}
+
+impl PipelineLayoutDescriptor {
+    pub fn get_bind_group_layouts(&self) -> NamedValuesContainer<BindGroupLayoutDescriptor> {
+        let bind_group_layouts = self
+            .0
+            .iter()
+            .map(|(name, value)| NamedValue {
+                name: name.clone(),
+                value: value.clone(),
+            })
+            .collect::<Vec<NamedValue<BindGroupLayoutDescriptor>>>();
+
+        NamedValuesContainer::from(bind_group_layouts)
+    }
 }
 
 #[derive(Default)]
 pub struct PipelineLayoutCache {
-    pub pipeline_layout_map: HashMap<PipelineLayoutDescriptor, PipelineLayout>,
-    pub pipeline_layout_cache: TemporaryCache<PipelineLayoutData>,
-    pub bind_group_layout_cache: TemporaryCache<BindGroupLayoutData>,
-    pub bind_group_layout_map: HashMap<BindGroupLayoutDescriptor, BindGroupLayout>,
+    pipeline_layout_cache:
+        FxHashMap<NamedValuesContainer<BindGroupLayoutDescriptor>, PipelineLayout>,
+    bind_group_layout_cache: FxHashMap<BindGroupLayoutDescriptor, BindGroupLayout>,
 }
 
 impl PipelineLayoutCache {
-    pub fn get_or_insert_bind_group_layout_data(
+    pub fn get_or_create_bind_group_layout(
         &mut self,
         device: &RenderDevice,
         desc: &BindGroupLayoutDescriptor,
-    ) -> Result<&BindGroupLayoutData, FrameworkError> {
-        let layout = self.get_or_insert_bind_group_layout(desc).clone();
-
-        self.bind_group_layout_cache.get_or_insert_with(
-            &layout.cache_index,
-            Default::default(),
-            || BindGroupLayoutData::new(device, &layout),
-        )
-    }
-
-    pub fn get_bind_group_layout(
-        &self,
-        desc: &BindGroupLayoutDescriptor,
-    ) -> Option<&RawBindGroupLayout> {
-        self.bind_group_layout_map.get(desc).and_then(|layout| {
+    ) -> Result<&BindGroupLayout, FrameworkError> {
+        if !self.bind_group_layout_cache.contains_key(desc) {
+            let bind_group_layout = BindGroupLayout::new(device, desc)?;
             self.bind_group_layout_cache
-                .buffer
-                .get(&layout.cache_index)
-                .map(|entry| entry.bind_group_layout.deref())
-        })
-    }
-
-    pub fn get_or_insert_bind_group_layout(
-        &mut self,
-        desc: &BindGroupLayoutDescriptor,
-    ) -> &BindGroupLayout {
-        if !self.bind_group_layout_map.contains_key(desc) {
-            let layout = BindGroupLayout::new(desc.clone());
-            self.bind_group_layout_map.insert(desc.clone(), layout);
+                .insert(desc.clone(), bind_group_layout);
         }
 
-        self.bind_group_layout_map.get(desc).unwrap()
+        Ok(self.bind_group_layout_cache.get(desc).unwrap())
     }
 
-    pub fn get_pipeline_layout(
+    pub fn get_or_create_pipeline_layout(
         &mut self,
         device: &RenderDevice,
         desc: &PipelineLayoutDescriptor,
     ) -> Result<&PipelineLayout, FrameworkError> {
-        if !self.pipeline_layout_map.contains_key(desc) {
-            let mut bind_group_layouts = vec![];
+        let named_values_container = desc.get_bind_group_layouts();
 
-            for bind_group_layout in desc.bind_group_layouts.iter() {
-                let data = self.get_or_insert_bind_group_layout_data(device, bind_group_layout)?;
+        if !self
+            .pipeline_layout_cache
+            .contains_key(&named_values_container)
+        {
+            let mut bind_group_layouts = FxHashMap::default();
 
-                bind_group_layouts.push(data.clone());
+            for bind_group_layout_desc in named_values_container.iter() {
+                let data =
+                    self.get_or_create_bind_group_layout(device, &bind_group_layout_desc.value)?;
+
+                bind_group_layouts.insert(bind_group_layout_desc.name.clone(), data.clone());
             }
 
-            let layout = PipelineLayout::new(desc.clone(), bind_group_layouts);
-            self.pipeline_layout_map.insert(desc.clone(), layout);
+            let raw_bind_group_layouts = bind_group_layouts
+                .values()
+                .map(|value| value.raw())
+                .collect::<Vec<&RawBindGroupLayout>>();
+
+            let layout =
+                device
+                    .wgpu_device()
+                    .create_pipeline_layout(&RawPipelineLayoutDescriptor {
+                        label: None,
+                        bind_group_layouts: &raw_bind_group_layouts,
+                        push_constant_ranges: &[],
+                    });
+
+            let layout = PipelineLayout::new(desc.clone(), bind_group_layouts, layout);
+            self.pipeline_layout_cache
+                .insert(named_values_container.clone(), layout);
         }
 
-        Ok(self.pipeline_layout_map.get(desc).unwrap())
+        Ok(self
+            .pipeline_layout_cache
+            .get(&named_values_container)
+            .unwrap())
     }
 
-    pub fn get(
-        &mut self,
-        device: &RenderDevice,
-        desc: &PipelineLayoutDescriptor,
-    ) -> Result<&wgpu::PipelineLayout, FrameworkError> {
-        let layout = self.get_pipeline_layout(device, desc)?.clone();
+    pub fn get(&mut self, desc: &PipelineLayoutDescriptor) -> Option<&PipelineLayout> {
+        let named_values_container = desc.get_bind_group_layouts();
 
-        match self.pipeline_layout_cache.get_or_insert_with(
-            &layout.cache_index,
-            Default::default(),
-            || PipelineLayoutData::new(device, &layout),
-        ) {
-            Ok(data) => Ok(&data.layout),
-            Err(error) => Err(error),
-        }
+        self.pipeline_layout_cache.get(&named_values_container)
     }
 }
 
 #[derive(Clone)]
-pub struct BindGroupLayout {
-    pub desc: BindGroupLayoutDescriptor,
-    pub cache_index: Arc<AtomicIndex>,
-}
+pub struct BindGroupLayout(Arc<RawBindGroupLayout>);
 
 impl BindGroupLayout {
-    pub fn new(desc: BindGroupLayoutDescriptor) -> Self {
-        Self {
-            desc,
-            cache_index: Default::default(),
-        }
+    pub fn raw(&self) -> &RawBindGroupLayout {
+        &self.0
     }
-}
 
-#[derive(Clone)]
-pub struct BindGroupLayoutData {
-    pub bind_group_layout: Arc<RawBindGroupLayout>,
-}
-
-impl BindGroupLayoutData {
-    pub fn new(device: &RenderDevice, layout: &BindGroupLayout) -> Result<Self, FrameworkError> {
-        let entries = layout
-            .desc
+    pub fn new(
+        device: &RenderDevice,
+        desc: &BindGroupLayoutDescriptor,
+    ) -> Result<Self, FrameworkError> {
+        let entries = desc
             .entries
             .clone()
             .into_iter()
@@ -140,54 +161,27 @@ impl BindGroupLayoutData {
                     entries: &entries,
                 });
 
-        Ok(BindGroupLayoutData {
-            bind_group_layout: Arc::new(bind_group_layout),
-        })
-    }
-}
-
-pub struct PipelineLayoutData {
-    pub layout: Arc<wgpu::PipelineLayout>,
-}
-
-impl PipelineLayoutData {
-    pub fn new(device: &RenderDevice, layout: &PipelineLayout) -> Result<Self, FrameworkError> {
-        let bind_group_layouts = layout
-            .bind_group_layouts
-            .iter()
-            .map(|data| data.bind_group_layout.as_ref())
-            .collect::<Vec<&wgpu::BindGroupLayout>>();
-
-        let layout = device
-            .wgpu_device()
-            .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: None,
-                bind_group_layouts: &bind_group_layouts,
-                //todo PushConstantRange
-                push_constant_ranges: &[],
-            });
-        Ok(PipelineLayoutData {
-            layout: Arc::new(layout),
-        })
+        Ok(BindGroupLayout(Arc::new(bind_group_layout)))
     }
 }
 
 #[derive(Clone)]
 pub struct PipelineLayout {
     pub desc: PipelineLayoutDescriptor,
-    pub bind_group_layouts: Vec<BindGroupLayoutData>,
-    pub cache_index: Arc<AtomicIndex>,
+    pub bind_group_layouts: FxHashMap<ImmutableString, BindGroupLayout>,
+    pub layout: Arc<RawPipelineLayout>,
 }
 
 impl PipelineLayout {
     pub fn new(
         desc: PipelineLayoutDescriptor,
-        bind_group_layouts: Vec<BindGroupLayoutData>,
+        bind_group_layouts: FxHashMap<ImmutableString, BindGroupLayout>,
+        layout: RawPipelineLayout,
     ) -> Self {
         Self {
             desc,
             bind_group_layouts,
-            cache_index: Default::default(),
+            layout: Arc::new(layout),
         }
     }
 }

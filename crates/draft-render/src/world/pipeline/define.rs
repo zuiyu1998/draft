@@ -7,7 +7,7 @@ use crate::{
 
 use fyrox_core::{reflect::*, visitor::*};
 
-#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Hash, Eq)]
+#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
 pub struct RenderPipelineDescriptor {
     pub label: String,
     pub layout: PipelineLayoutDescriptor,

@@ -70,9 +70,10 @@ impl RenderPipelineSpecializer for CustomPipelineSpecializer {
     type Data = CustomPipeline;
 
     fn specialize(&self, desc: &mut RenderPipelineDescriptor) {
-        desc.layout
-            .bind_group_layouts
-            .push(self.diffuse_bind_group_layout.clone());
+        desc.layout.insert(
+            "diffuse_bind_group_layout".into(),
+            self.diffuse_bind_group_layout.clone(),
+        );
     }
 
     fn create_pipeline_data(
