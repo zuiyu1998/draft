@@ -1,6 +1,6 @@
 mod named_value;
 
-use crate::{PipelineSpecializerResource, TextureResource};
+use crate::{PipelineSpecializerResource, Std140, TextureResource};
 use bytes::BufMut;
 use fxhash::FxHashMap;
 use fyrox_core::{
@@ -19,11 +19,15 @@ pub use named_value::*;
 pub type MaterialResource = Resource<Material>;
 
 pub struct PropertyGroup<'a, const N: usize> {
-    pub properties: NamedValuesContainer<MaterialPropertyRef<'a>, N>,
+    pub properties: [NamedValue<MaterialPropertyRef<'a>>; N],
 }
 
-impl<'a, const N: usize> PropertyGroup<'a, N> {
-    pub fn write<Bytes: BufMut>(&self, _bytes: &mut Bytes) {}
+impl<'a, const N: usize> Std140 for PropertyGroup<'a, N> {
+    fn write(&self, dest: &mut dyn BufMut, size: &mut u32) {
+        for property in self.properties.iter() {
+            property.value.write(dest, size);
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -150,6 +154,33 @@ pub enum MaterialProperty {
 
     /// An sRGB color.
     Color(Color),
+}
+
+impl<'a> Std140 for MaterialPropertyRef<'a> {
+    fn write(&self, dest: &mut dyn BufMut, size: &mut u32) {
+        match self {
+            MaterialPropertyRef::Bool(v) => v.write(dest, size),
+            MaterialPropertyRef::Float(v) => v.write(dest, size),
+            MaterialPropertyRef::FloatArray(v) => v.write(dest, size),
+            MaterialPropertyRef::Int(v) => v.write(dest, size),
+            MaterialPropertyRef::IntArray(v) => v.write(dest, size),
+            MaterialPropertyRef::UInt(v) => v.write(dest, size),
+            MaterialPropertyRef::UIntArray(v) => v.write(dest, size),
+            MaterialPropertyRef::Vector2(v) => v.write(dest, size),
+            MaterialPropertyRef::Vector2Array(v) => v.write(dest, size),
+            MaterialPropertyRef::Vector3(v) => v.write(dest, size),
+            MaterialPropertyRef::Vector3Array(v) => v.write(dest, size),
+            MaterialPropertyRef::Vector4(v) => v.write(dest, size),
+            MaterialPropertyRef::Vector4Array(v) => v.write(dest, size),
+            MaterialPropertyRef::Matrix2(v) => v.write(dest, size),
+            MaterialPropertyRef::Matrix2Array(v) => v.write(dest, size),
+            MaterialPropertyRef::Matrix3(v) => v.write(dest, size),
+            MaterialPropertyRef::Matrix3Array(v) => v.write(dest, size),
+            MaterialPropertyRef::Matrix4(v) => v.write(dest, size),
+            MaterialPropertyRef::Matrix4Array(v) => v.write(dest, size),
+            MaterialPropertyRef::Color(v) => v.write(dest, size),
+        }
+    }
 }
 
 impl Default for MaterialProperty {
