@@ -249,15 +249,12 @@ impl Material {
         Material::new(specializer, Default::default())
     }
 
-    pub fn push_binding(
-        &mut self,
-        name: impl Into<ImmutableString>,
-        binding: MaterialResourceBinding,
-    ) {
-        self.resource_bindings
-            .entry(name.into())
-            .or_default()
-            .push(binding);
+    pub fn specializer(&self) -> &PipelineSpecializerResource {
+        &self.specializer
+    }
+
+    pub fn push_binding(&mut self, key: ImmutableString, binding: MaterialResourceBinding) {
+        self.resource_bindings.entry(key).or_default().push(binding);
     }
 
     pub fn new(

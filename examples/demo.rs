@@ -2,8 +2,8 @@ use std::{collections::HashMap, sync::Arc};
 
 use draft_render::{
     BindGroupLayoutDescriptor, Geometry, GeometryResource, Material, MaterialResource,
-    PipelineSpecializer, PipelineSpecializerResource, RenderPipelineDescriptor, RenderServer,
-    RenderWorld, Shader, ShaderResource, Texture, TextureResource, Vertex,
+    PhasesContainer, PipelineSpecializer, PipelineSpecializerResource, RenderPipelineDescriptor,
+    RenderServer, RenderWorld, Shader, ShaderResource, Texture, TextureResource, Vertex,
     VertexAttributeDescriptor,
     frame_graph::{ColorAttachment, FrameGraph},
     gfx_base::{
@@ -60,6 +60,7 @@ impl PipelineNode for TestNode {
         frame_graph: &mut FrameGraph,
         world: &mut RenderWorld,
         context: &PipelineContext,
+        _phases_container: &PhasesContainer,
     ) {
         let Some(_texture_data) = world.texture_cache.get_or_insert(
             &world.server.device,

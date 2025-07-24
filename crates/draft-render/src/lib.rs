@@ -1,4 +1,5 @@
 mod error;
+mod phase;
 mod utils;
 mod world;
 
@@ -8,6 +9,7 @@ pub mod render_resource;
 
 pub use error::*;
 
+pub use phase::*;
 pub use utils::*;
 pub use world::*;
 
