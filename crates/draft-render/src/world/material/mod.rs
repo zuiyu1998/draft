@@ -1,4 +1,4 @@
-use crate::{NamedValue, PipelineSpecializerResource, Std140, TextureResource};
+use crate::{NamedValue, PipelineSpecializerResource, Std140, TextureRenderData, TextureResource};
 use bytes::BufMut;
 use fxhash::FxHashMap;
 use fyrox_core::{
@@ -237,11 +237,15 @@ impl Default for MaterialResourceBinding {
     }
 }
 
+pub enum MaterialResourceRenderData {
+    Texture(TextureRenderData),
+}
+
 #[derive(Debug, Clone, Reflect, Visit, Default, TypeUuidProvider)]
 #[type_uuid(id = "3cee68e7-ef0a-463b-a2f5-68f90586b654")]
 pub struct Material {
     specializer: PipelineSpecializerResource,
-    resource_bindings: FxHashMap<ImmutableString, Vec<MaterialResourceBinding>>,
+    resource_bindings: FxHashMap<ImmutableString, MaterialResourceBinding>,
 }
 
 impl Material {
@@ -253,13 +257,13 @@ impl Material {
         &self.specializer
     }
 
-    pub fn push_binding(&mut self, key: ImmutableString, binding: MaterialResourceBinding) {
-        self.resource_bindings.entry(key).or_default().push(binding);
+    pub fn insert(&mut self, key: ImmutableString, binding: MaterialResourceBinding) {
+        self.resource_bindings.insert(key, binding);
     }
 
     pub fn new(
         specializer: PipelineSpecializerResource,
-        resource_bindings: FxHashMap<ImmutableString, Vec<MaterialResourceBinding>>,
+        resource_bindings: FxHashMap<ImmutableString, MaterialResourceBinding>,
     ) -> Self {
         Self {
             specializer,

@@ -1,29 +1,99 @@
 use fxhash::FxHashMap;
 use fyrox_core::{ImmutableString, reflect::*, visitor::*};
 use std::{
+    collections::HashMap,
     hash::Hash,
     ops::{Deref, DerefMut},
     sync::Arc,
 };
 
 use crate::{
-    FrameworkError, NamedValue, NamedValuesContainer,
+    FrameworkError,
     gfx_base::{
-        BindGroupLayoutEntry, RawBindGroupLayout, RawPipelineLayout, RawPipelineLayoutDescriptor,
-        RenderDevice,
+        BindGroupLayoutEntry, BindGroupLayoutEntryBuilder, RawBindGroupLayout, RawPipelineLayout,
+        RawPipelineLayoutDescriptor, RenderDevice, ShaderStages,
     },
 };
 
-#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
-pub struct BindGroupLayoutDescriptor {
-    pub entries: Vec<BindGroupLayoutEntry>,
+pub struct BindGroupLayoutDescriptorBuilder {
+    entries: Vec<BindGroupLayoutEntryDescriptor>,
+    default_visibility: ShaderStages,
+    binding_to_entries: HashMap<u32, usize>,
 }
 
-#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq)]
-pub struct PipelineLayoutDescriptor(FxHashMap<ImmutableString, BindGroupLayoutDescriptor>);
+impl BindGroupLayoutDescriptorBuilder {
+    pub fn new(default_visibility: ShaderStages) -> BindGroupLayoutDescriptorBuilder {
+        BindGroupLayoutDescriptorBuilder {
+            entries: vec![],
+            default_visibility,
+            binding_to_entries: HashMap::default(),
+        }
+    }
+
+    pub fn add_bind_group_layout(
+        &mut self,
+        name: ImmutableString,
+        binding: u32,
+        bind_group_layout: BindGroupLayoutEntryBuilder,
+    ) {
+        let bind_group_layout_entry = bind_group_layout.build(binding, self.default_visibility);
+
+        let bind_group_layout = BindGroupLayoutEntryDescriptor {
+            entry: bind_group_layout_entry,
+            name,
+        };
+
+        if let Some(index) = self.binding_to_entries.get(&binding) {
+            self.entries[*index] = bind_group_layout;
+        } else {
+            let index = self.entries.len();
+            self.entries.push(bind_group_layout);
+            self.binding_to_entries.insert(binding, index);
+        }
+    }
+
+    pub fn build(self) -> BindGroupLayoutDescriptor {
+        BindGroupLayoutDescriptor {
+            entries: self.entries,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
+pub struct BindGroupLayoutDescriptor {
+    pub entries: Vec<BindGroupLayoutEntryDescriptor>,
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
+pub struct BindGroupLayoutEntryDescriptor {
+    pub entry: BindGroupLayoutEntry,
+    pub name: ImmutableString,
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
+pub struct PipelineLayoutDescriptor(Vec<BindGroupLayoutDescriptor>);
+
+pub struct BindGroupLayoutNameContainer {
+    pub names: Vec<ImmutableString>,
+}
+
+impl PipelineLayoutDescriptor {
+    pub fn get_bind_group_layout_names(&self) -> Vec<BindGroupLayoutNameContainer> {
+        self.0
+            .iter()
+            .map(|desc| BindGroupLayoutNameContainer {
+                names: desc
+                    .entries
+                    .iter()
+                    .map(|entry| entry.name.clone())
+                    .collect::<Vec<ImmutableString>>(),
+            })
+            .collect()
+    }
+}
 
 impl Deref for PipelineLayoutDescriptor {
-    type Target = FxHashMap<ImmutableString, BindGroupLayoutDescriptor>;
+    type Target = Vec<BindGroupLayoutDescriptor>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -33,30 +103,6 @@ impl Deref for PipelineLayoutDescriptor {
 impl DerefMut for PipelineLayoutDescriptor {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
-    }
-}
-
-impl Hash for PipelineLayoutDescriptor {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        for (name, desc) in self.0.iter() {
-            name.hash(state);
-            desc.hash(state);
-        }
-    }
-}
-
-impl PipelineLayoutDescriptor {
-    pub fn get_bind_group_layouts(&self) -> NamedValuesContainer<BindGroupLayoutDescriptor> {
-        let bind_group_layouts = self
-            .0
-            .iter()
-            .map(|(name, value)| NamedValue {
-                name: name.clone(),
-                value: value.clone(),
-            })
-            .collect::<Vec<NamedValue<BindGroupLayoutDescriptor>>>();
-
-        NamedValuesContainer::from(bind_group_layouts)
     }
 }
 
@@ -87,20 +133,20 @@ impl PipelineLayoutCache {
         desc: &PipelineLayoutDescriptor,
     ) -> Result<&PipelineLayout, FrameworkError> {
         if !self.pipeline_layout_cache.contains_key(desc) {
-            let mut bind_group_layouts = FxHashMap::default();
-            let named_values_container = desc.get_bind_group_layouts();
+            let mut bind_group_layouts = vec![];
 
-            for bind_group_layout_desc in named_values_container.iter() {
-                let data =
-                    self.get_or_create_bind_group_layout(device, &bind_group_layout_desc.value)?;
-
-                bind_group_layouts.insert(bind_group_layout_desc.name.clone(), data.clone());
+            for bind_group_layout_desc in desc.0.iter() {
+                let data = self
+                    .get_or_create_bind_group_layout(device, bind_group_layout_desc)?
+                    .clone();
+                bind_group_layouts.push(data);
             }
 
-            let raw_bind_group_layouts = bind_group_layouts
-                .values()
-                .map(|value| value.raw())
-                .collect::<Vec<&RawBindGroupLayout>>();
+            let mut raw_bind_group_layouts = vec![];
+
+            for bind_group_layout in bind_group_layouts.iter() {
+                raw_bind_group_layouts.push(bind_group_layout.raw());
+            }
 
             let layout =
                 device
@@ -139,7 +185,7 @@ impl BindGroupLayout {
             .entries
             .clone()
             .into_iter()
-            .map(|v| v.into())
+            .map(|v| v.entry.into())
             .collect::<Vec<_>>();
 
         let bind_group_layout =

@@ -2,43 +2,6 @@ mod entry;
 
 pub use entry::*;
 
-use std::collections::HashMap;
-
-pub struct BindGroupLayoutEntriesBuilder {
-    entries: Vec<BindGroupLayoutEntry>,
-    default_visibility: ShaderStages,
-    binding_to_entries: HashMap<u32, usize>,
-}
-
-impl BindGroupLayoutEntriesBuilder {
-    pub fn new(default_visibility: ShaderStages) -> BindGroupLayoutEntriesBuilder {
-        BindGroupLayoutEntriesBuilder {
-            entries: vec![],
-            default_visibility,
-            binding_to_entries: HashMap::default(),
-        }
-    }
-
-    pub fn add_bind_group_layout(
-        &mut self,
-        binding: u32,
-        bind_group_layout: BindGroupLayoutEntryBuilder,
-    ) {
-        let bind_group_layout = bind_group_layout.build(binding, self.default_visibility);
-        if let Some(index) = self.binding_to_entries.get(&binding) {
-            self.entries[*index] = bind_group_layout;
-        } else {
-            let index = self.entries.len();
-            self.entries.push(bind_group_layout);
-            self.binding_to_entries.insert(binding, index);
-        }
-    }
-
-    pub fn build(self) -> Vec<BindGroupLayoutEntry> {
-        self.entries
-    }
-}
-
 #[derive(Clone, Copy)]
 pub struct BindGroupLayoutEntryBuilder {
     ty: BindingType,

@@ -1,14 +1,14 @@
 use std::{collections::HashMap, sync::Arc};
 
 use draft_render::{
-    BindGroupLayoutDescriptor, Geometry, GeometryResource, Material, MaterialResource,
+    BindGroupLayoutDescriptorBuilder, Geometry, GeometryResource, Material, MaterialResource,
     PhasesContainer, PipelineSpecializer, PipelineSpecializerResource, RenderPipelineDescriptor,
     RenderServer, RenderWorld, Shader, ShaderResource, Texture, TextureResource, Vertex,
     VertexAttributeDescriptor,
     frame_graph::{ColorAttachment, FrameGraph},
     gfx_base::{
-        BindGroupLayoutEntriesBuilder, RawTextureFormat, RawTextureView, SamplerBindingType,
-        ShaderStages, TextureSampleType, VertexFormat,
+        RawTextureFormat, RawTextureView, SamplerBindingType, ShaderStages, TextureSampleType,
+        VertexFormat,
         binding_types::{sampler, texture_2d},
         initialize_resources,
     },
@@ -410,15 +410,15 @@ fn new_batch() -> Batch {
 fn new_material() -> Material {
     let mut desc = RenderPipelineDescriptor::default();
 
-    let mut builder = BindGroupLayoutEntriesBuilder::new(ShaderStages::FRAGMENT);
-    builder.add_bind_group_layout(0, texture_2d(TextureSampleType::Float { filterable: true }));
-    builder.add_bind_group_layout(1, sampler(SamplerBindingType::Filtering));
-    let entries = builder.build();
-
-    desc.insert_bind_group_layout(
-        "diffuse_bind_group_layout".into(),
-        BindGroupLayoutDescriptor { entries },
+    let mut builder = BindGroupLayoutDescriptorBuilder::new(ShaderStages::FRAGMENT);
+    builder.add_bind_group_layout(
+        "diffuse".into(),
+        0,
+        texture_2d(TextureSampleType::Float { filterable: true }),
     );
+    builder.add_bind_group_layout("diffuse".into(), 1, sampler(SamplerBindingType::Filtering));
+
+    desc.push_bind_group_layout(builder.build());
 
     Material::from_specializer(PipelineSpecializerResource::new_embedded(
         PipelineSpecializer::new_render_specializer(desc),

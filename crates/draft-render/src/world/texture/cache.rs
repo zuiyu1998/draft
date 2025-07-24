@@ -54,6 +54,11 @@ impl TextureCache {
 }
 
 pub struct TextureData {
+    pub render_data: TextureRenderData,
+}
+
+#[derive(Clone)]
+pub struct TextureRenderData {
     pub sampler: Sampler,
     pub texture: RenderTexture,
 }
@@ -64,7 +69,7 @@ fn get_texture_key(texture: &Texture) -> String {
 
 impl TextureData {
     pub fn update(&mut self, texture: &Texture) {
-        self.texture.key = get_texture_key(texture);
+        self.render_data.texture.key = get_texture_key(texture);
     }
 
     pub fn new(
@@ -111,8 +116,10 @@ impl TextureData {
         let sampler = Sampler::new(raw_sampler, texture.sampler_info.info.clone());
 
         Ok(TextureData {
-            texture: render_texture,
-            sampler,
+            render_data: TextureRenderData {
+                sampler,
+                texture: render_texture,
+            },
         })
     }
 }

@@ -21,19 +21,14 @@ impl Batch {
 
 impl MeshPhaseExtractor for Batch {
     fn extra(&self, world: &mut RenderWorld, _phases_container: &mut PhasesContainer) {
-        let Some(_geometry_data) = world
+        let Some(geometry_data) = world
             .geometry_cache
             .get_or_insert(&world.server.device, &self.geometry)
         else {
             return;
         };
 
-        let geometry_state = self.geometry.state();
-
-        let Some(geometry_state) = geometry_state.data_ref() else {
-            return;
-        };
-        let vertex_layout = geometry_state.vertex.get_vertex_layout();
+        let vertex_layout = geometry_data.layout.clone();
 
         let material_state = self.material.state();
         let Some(material_state) = material_state.data_ref() else {
@@ -53,6 +48,10 @@ impl MeshPhaseExtractor for Batch {
         specializer_state.specialize(&mut desc);
 
         let _pipeline_id = world.pipeline_cache.get_or_create(&desc);
+
+        let desc = desc.render_pipeline_descriptor().unwrap();
+
+        let _name_containers = desc.layout.get_bind_group_layout_names();
     }
 }
 
