@@ -1,15 +1,14 @@
 use std::{collections::HashMap, sync::Arc};
 
 use draft_render::{
-    BindGroupLayoutDescriptor, FrameworkError, Geometry, GeometryResource, Material,
-    MaterialResource, PipelineCache, PipelineData, PipelineDataContainer, PipelineDescriptor,
-    PipelineSpecializer, PipelineSpecializerResource, RenderPipelineDescriptor,
-    RenderPipelineSpecializer, RenderServer, RenderWorld, Shader, ShaderResource, Texture,
-    TextureResource, Vertex, VertexAttributeDescriptor,
+    BindGroupLayoutDescriptor, Geometry, GeometryResource, Material, MaterialResource,
+    PipelineSpecializer, PipelineSpecializerResource, RenderPipelineDescriptor, RenderServer,
+    RenderWorld, Shader, ShaderResource, Texture, TextureResource, Vertex,
+    VertexAttributeDescriptor,
     frame_graph::{ColorAttachment, FrameGraph},
     gfx_base::{
-        BindGroupLayoutEntriesBuilder, CachedPipelineId, RawBindGroupLayout, RawTextureFormat,
-        RawTextureView, SamplerBindingType, ShaderStages, TextureSampleType, VertexFormat,
+        BindGroupLayoutEntriesBuilder, RawTextureFormat, RawTextureView, SamplerBindingType,
+        ShaderStages, TextureSampleType, VertexFormat,
         binding_types::{sampler, texture_2d},
         initialize_resources,
     },
@@ -22,7 +21,7 @@ use draft_render::{
 
 use draft::renderer::{Batch, PipelineContext, PipelineNode, WorldRenderer};
 
-use fyrox_core::{futures, reflect::*, task::TaskPool, uuid, visitor::*};
+use fyrox_core::{futures, task::TaskPool, uuid};
 use fyrox_resource::{
     embedded_data_source,
     io::FsResourceIo,
@@ -51,62 +50,6 @@ lazy_static! {
             )
         }
     );
-}
-
-#[derive(Clone)]
-pub struct CustomPipeline {
-    pub diffuse_bind_group_layout: RawBindGroupLayout,
-    pub pipeline_id: CachedPipelineId,
-}
-
-impl PipelineData for CustomPipeline {}
-
-#[derive(Debug, Clone, Visit, Reflect)]
-pub struct CustomPipelineSpecializer {
-    diffuse_bind_group_layout: BindGroupLayoutDescriptor,
-}
-
-impl RenderPipelineSpecializer for CustomPipelineSpecializer {
-    type Data = CustomPipeline;
-
-    fn specialize(&self, desc: &mut RenderPipelineDescriptor) {
-        desc.layout.insert(
-            "diffuse_bind_group_layout".into(),
-            self.diffuse_bind_group_layout.clone(),
-        );
-    }
-
-    fn create_pipeline_data(
-        &self,
-        pipeline_cache: &mut PipelineCache,
-        desc: &mut PipelineDescriptor,
-    ) -> Result<draft_render::PipelineDataContainer, FrameworkError> {
-        if let Some(desc) = desc.render_pipeline_descriptor() {
-            self.specialize(desc);
-        }
-
-        let diffuse_bind_group_layout =
-            pipeline_cache.get_or_create_bind_group_layout(&self.diffuse_bind_group_layout)?;
-        let id = pipeline_cache.get_or_create(desc);
-
-        Ok(PipelineDataContainer::new(CustomPipeline {
-            diffuse_bind_group_layout,
-            pipeline_id: id,
-        }))
-    }
-}
-
-impl Default for CustomPipelineSpecializer {
-    fn default() -> Self {
-        let mut builder = BindGroupLayoutEntriesBuilder::new(ShaderStages::FRAGMENT);
-        builder.add_bind_group_layout(0, texture_2d(TextureSampleType::Float { filterable: true }));
-        builder.add_bind_group_layout(1, sampler(SamplerBindingType::Filtering));
-        let entries = builder.build();
-
-        Self {
-            diffuse_bind_group_layout: BindGroupLayoutDescriptor { entries },
-        }
-    }
 }
 
 pub struct TestNode;
@@ -464,8 +407,20 @@ fn new_batch() -> Batch {
 }
 
 fn new_material() -> Material {
+    let mut desc = RenderPipelineDescriptor::default();
+
+    let mut builder = BindGroupLayoutEntriesBuilder::new(ShaderStages::FRAGMENT);
+    builder.add_bind_group_layout(0, texture_2d(TextureSampleType::Float { filterable: true }));
+    builder.add_bind_group_layout(1, sampler(SamplerBindingType::Filtering));
+    let entries = builder.build();
+
+    desc.insert_bind_group_layout(
+        "diffuse_bind_group_layout".into(),
+        BindGroupLayoutDescriptor { entries },
+    );
+
     Material::from_specializer(PipelineSpecializerResource::new_embedded(
-        PipelineSpecializer::new_render_specializer(CustomPipelineSpecializer::default()),
+        PipelineSpecializer::new_render_specializer(desc),
     ))
 }
 

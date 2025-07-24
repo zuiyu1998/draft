@@ -20,7 +20,6 @@ pub struct RenderWorld {
     pub pipeline_cache: PipelineCache,
     pub geometry_cache: GeometryCache,
     pub texture_cache: TextureCache,
-    pub pipeline_specializer_cache: PipelineSpecializerCache,
     pub uniform_buffer_cache: UniformBufferCache,
 }
 
@@ -35,7 +34,6 @@ impl RenderWorld {
             server,
             geometry_cache: Default::default(),
             texture_cache: Default::default(),
-            pipeline_specializer_cache: Default::default(),
         }
     }
 

@@ -55,6 +55,18 @@ impl PipelineDescriptor {
             _ => None,
         }
     }
+
+    pub fn merge(&mut self, other: &PipelineDescriptor) {
+        match (self, other) {
+            (
+                PipelineDescriptor::RenderPipelineDescriptor(desc),
+                PipelineDescriptor::RenderPipelineDescriptor(other_desc),
+            ) => {
+                desc.merge(other_desc);
+            }
+            _ => panic!("Cannot merge different types of pipeline descriptors"),
+        }
+    }
 }
 
 impl Default for PipelineDescriptor {
@@ -198,9 +210,8 @@ fn create_pipeline_with_render_pipeline_descriptor(
         None => None,
     };
 
-    let pipeline_layout = pipeline_layout_cache
-        .get_or_create_pipeline_layout(device, &desc.layout)?
-        .clone();
+    let pipeline_layout =
+        pipeline_layout_cache.get_or_create_pipeline_layout(device, &desc.layout)?;
 
     let vertex_buffer_layouts = desc
         .vertex
@@ -248,7 +259,7 @@ fn create_pipeline_with_render_pipeline_descriptor(
             .as_ref()
             .map(|depth_stencil| depth_stencil.into()),
         label: Some(&desc.label),
-        layout: Some(&pipeline_layout.layout),
+        layout: Some(pipeline_layout),
         multisample: desc.multisample.into(),
         primitive: desc.primitive.into(),
         vertex: RawVertexState {

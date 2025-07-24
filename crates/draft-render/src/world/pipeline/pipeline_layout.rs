@@ -62,8 +62,7 @@ impl PipelineLayoutDescriptor {
 
 #[derive(Default)]
 pub struct PipelineLayoutCache {
-    pipeline_layout_cache:
-        FxHashMap<NamedValuesContainer<BindGroupLayoutDescriptor>, PipelineLayout>,
+    pipeline_layout_cache: FxHashMap<PipelineLayoutDescriptor, PipelineLayout>,
     bind_group_layout_cache: FxHashMap<BindGroupLayoutDescriptor, BindGroupLayout>,
 }
 
@@ -87,13 +86,9 @@ impl PipelineLayoutCache {
         device: &RenderDevice,
         desc: &PipelineLayoutDescriptor,
     ) -> Result<&PipelineLayout, FrameworkError> {
-        let named_values_container = desc.get_bind_group_layouts();
-
-        if !self
-            .pipeline_layout_cache
-            .contains_key(&named_values_container)
-        {
+        if !self.pipeline_layout_cache.contains_key(desc) {
             let mut bind_group_layouts = FxHashMap::default();
+            let named_values_container = desc.get_bind_group_layouts();
 
             for bind_group_layout_desc in named_values_container.iter() {
                 let data =
@@ -116,21 +111,15 @@ impl PipelineLayoutCache {
                         push_constant_ranges: &[],
                     });
 
-            let layout = PipelineLayout::new(desc.clone(), bind_group_layouts, layout);
-            self.pipeline_layout_cache
-                .insert(named_values_container.clone(), layout);
+            let layout = PipelineLayout::new(layout);
+            self.pipeline_layout_cache.insert(desc.clone(), layout);
         }
 
-        Ok(self
-            .pipeline_layout_cache
-            .get(&named_values_container)
-            .unwrap())
+        Ok(self.pipeline_layout_cache.get(desc).unwrap())
     }
 
     pub fn get(&mut self, desc: &PipelineLayoutDescriptor) -> Option<&PipelineLayout> {
-        let named_values_container = desc.get_bind_group_layouts();
-
-        self.pipeline_layout_cache.get(&named_values_container)
+        self.pipeline_layout_cache.get(desc)
     }
 }
 
@@ -166,22 +155,18 @@ impl BindGroupLayout {
 }
 
 #[derive(Clone)]
-pub struct PipelineLayout {
-    pub desc: PipelineLayoutDescriptor,
-    pub bind_group_layouts: FxHashMap<ImmutableString, BindGroupLayout>,
-    pub layout: Arc<RawPipelineLayout>,
-}
+pub struct PipelineLayout(Arc<RawPipelineLayout>);
 
 impl PipelineLayout {
-    pub fn new(
-        desc: PipelineLayoutDescriptor,
-        bind_group_layouts: FxHashMap<ImmutableString, BindGroupLayout>,
-        layout: RawPipelineLayout,
-    ) -> Self {
-        Self {
-            desc,
-            bind_group_layouts,
-            layout: Arc::new(layout),
-        }
+    pub fn new(layout: RawPipelineLayout) -> Self {
+        Self(Arc::new(layout))
+    }
+}
+
+impl Deref for PipelineLayout {
+    type Target = RawPipelineLayout;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
