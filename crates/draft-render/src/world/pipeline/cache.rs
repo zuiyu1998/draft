@@ -55,18 +55,6 @@ impl PipelineDescriptor {
             _ => None,
         }
     }
-
-    pub fn merge(&mut self, other: &PipelineDescriptor) {
-        match (self, other) {
-            (
-                PipelineDescriptor::RenderPipelineDescriptor(desc),
-                PipelineDescriptor::RenderPipelineDescriptor(other_desc),
-            ) => {
-                desc.merge(other_desc);
-            }
-            _ => panic!("Cannot merge different types of pipeline descriptors"),
-        }
-    }
 }
 
 impl Default for PipelineDescriptor {
@@ -95,6 +83,20 @@ impl PipelineCache {
             pipeline_map: Default::default(),
             waiting_pipelines: Default::default(),
             device,
+        }
+    }
+
+    pub fn has_render_pipeline(&self, id: CachedPipelineId) -> bool {
+        if let Some(pipeline) = self.pipelines.get(id) {
+            match &pipeline.state {
+                PipelineState::Ok(pipeline) => match pipeline {
+                    Pipeline::RenderPipeline(_) => true,
+                    Pipeline::ComputePipeline(_) => false,
+                },
+                _ => false,
+            }
+        } else {
+            false
         }
     }
 

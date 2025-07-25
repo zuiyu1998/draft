@@ -1,18 +1,25 @@
 use draft_render::{
-    FrameworkError, GeometryResource, MaterialBindGroupHandle, MaterialResource,
+    FrameworkError, GeometryResource, IndexRenderBuffer, MaterialBindGroupHandle, MaterialResource,
     MaterialResourceHandle, MaterialResourceHandleContainer, MeshRenderPhase, PhasesContainer,
-    PipelineDescriptor, RenderPipelineDescriptor, RenderWorld, TextureResource,
+    RenderPhaseContainer, RenderWorld, TextureResource,
     frame_graph::{FrameGraph, RenderPassBuilder},
     gfx_base::{CachedPipelineId, RawTextureView},
+    render_resource::RenderBuffer,
 };
 
 pub struct MeshPhase {
     pub pipeline_id: CachedPipelineId,
     pub bind_groups: Vec<MaterialBindGroupHandle>,
+    pub vertex_buffer: RenderBuffer,
+    pub index_buffer: Option<IndexRenderBuffer>,
 }
 
 impl MeshRenderPhase for MeshPhase {
-    fn render_mesh(&self, render_pass_builder: &mut RenderPassBuilder, _world: &RenderWorld) {
+    fn render_mesh(&self, render_pass_builder: &mut RenderPassBuilder, world: &RenderWorld) {
+        if !world.pipeline_cache.has_render_pipeline(self.pipeline_id) {
+            return;
+        }
+
         render_pass_builder.set_render_pipeline(self.pipeline_id);
 
         for (index, bind_group) in self.bind_groups.iter().enumerate() {
@@ -43,6 +50,30 @@ impl MeshRenderPhase for MeshPhase {
 
             render_pass_builder.set_bind_group_handle(index as u32, &bind_group_handle, &[]);
         }
+
+        let buffer_ref = render_pass_builder.read_material(&self.vertex_buffer);
+        let buffer_slice = self.vertex_buffer.slice(0..);
+        render_pass_builder.set_vertex_buffer(
+            0,
+            &buffer_ref,
+            buffer_slice.offset,
+            buffer_slice.size,
+        );
+
+        if let Some(index_buffer) = &self.index_buffer {
+            let buffer_ref = render_pass_builder.read_material(&index_buffer.buffer);
+            let buffer_slice = index_buffer.buffer.slice(0..);
+            render_pass_builder.set_index_buffer(
+                &buffer_ref,
+                index_buffer.index_format,
+                buffer_slice.offset,
+                buffer_slice.size,
+            );
+
+            render_pass_builder.draw_indexed(0..index_buffer.num_indices, 0, 0..1);
+        } else {
+            render_pass_builder.draw(0..3, 0..1);
+        }
     }
 }
 
@@ -51,7 +82,7 @@ pub trait MeshPhaseExtractor {
         &self,
         world: &mut RenderWorld,
         phases_container: &mut PhasesContainer,
-    ) -> Result<MeshPhase, FrameworkError>;
+    ) -> Result<(), FrameworkError>;
 }
 
 pub struct Batch {
@@ -69,13 +100,15 @@ impl MeshPhaseExtractor for Batch {
     fn extra(
         &self,
         world: &mut RenderWorld,
-        _phases_container: &mut PhasesContainer,
-    ) -> Result<MeshPhase, FrameworkError> {
+        phases_container: &mut PhasesContainer,
+    ) -> Result<(), FrameworkError> {
         let geometry_data = world
             .geometry_cache
             .get_or_create(&world.server.device, &self.geometry)?;
 
         let vertex_layout = geometry_data.layout.clone();
+        let vertex_buffer = geometry_data.vertex_buffer.clone();
+        let index_buffer = geometry_data.index_buffer.clone();
 
         let material_state = self.material.state();
         let Some(material_state) = material_state.data_ref() else {
@@ -88,11 +121,12 @@ impl MeshPhaseExtractor for Batch {
             return Err(material_state.specializer().clone().into());
         };
 
-        let mut desc = RenderPipelineDescriptor::default();
-        desc.vertex.buffers.push(vertex_layout);
+        let mut desc = specializer_state.desc.clone();
+        {
+            let render_pipeline_desc = desc.render_pipeline_descriptor().unwrap();
 
-        let mut desc = PipelineDescriptor::RenderPipelineDescriptor(Box::new(desc));
-        specializer_state.specialize(&mut desc);
+            render_pipeline_desc.vertex.buffers.push(vertex_layout);
+        }
 
         let pipeline_id = world.pipeline_cache.get_or_create(&desc);
 
@@ -128,10 +162,18 @@ impl MeshPhaseExtractor for Batch {
             });
         }
 
-        Ok(MeshPhase {
+        let phase = MeshPhase {
             pipeline_id,
             bind_groups,
-        })
+            vertex_buffer,
+            index_buffer,
+        };
+
+        let render_phase = RenderPhaseContainer::new(phase);
+
+        phases_container.insert(render_phase.name(), render_phase);
+
+        Ok(())
     }
 }
 

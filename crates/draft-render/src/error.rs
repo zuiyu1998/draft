@@ -13,6 +13,8 @@ pub enum FrameworkError {
     ProcessShaderError(Box<naga_oil::compose::ComposerError>),
     #[error("Resource not loaded, path: {path:?}, error: {error:?}")]
     ResourceNotLoaded { path: PathBuf, error: LoadError },
+    #[error("Resource is loading, path: {path:?}")]
+    ResourcePending { path: PathBuf },
 }
 
 impl From<naga_oil::compose::ComposerError> for FrameworkError {
@@ -23,15 +25,19 @@ impl From<naga_oil::compose::ComposerError> for FrameworkError {
 
 impl<T: TypedResourceData> From<Resource<T>> for FrameworkError {
     fn from(value: Resource<T>) -> Self {
-        let shader_state = value.header();
+        let resource_state = value.header();
 
-        if let ResourceState::LoadError { path, error } = &shader_state.state {
-            FrameworkError::ResourceNotLoaded {
+        match &resource_state.state {
+            ResourceState::LoadError { path, error } => FrameworkError::ResourceNotLoaded {
                 path: path.clone(),
                 error: error.clone(),
+            },
+            ResourceState::Pending { path, .. } => {
+                FrameworkError::ResourcePending { path: path.clone() }
             }
-        } else {
-            unimplemented!()
+            _ => {
+                unimplemented!()
+            }
         }
     }
 }

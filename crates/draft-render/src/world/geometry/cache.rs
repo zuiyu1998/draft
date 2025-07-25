@@ -19,6 +19,7 @@ pub struct GeometryData {
     pub layout: VertexBufferLayout,
 }
 
+#[derive(Clone)]
 pub struct IndexRenderBuffer {
     pub buffer: RenderBuffer,
     pub num_indices: u32,

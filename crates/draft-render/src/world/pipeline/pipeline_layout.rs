@@ -85,12 +85,15 @@ impl PipelineLayoutDescriptor {
     pub fn get_bind_group_layout_names(&self) -> Vec<BindGroupLayoutNameContainer> {
         self.0
             .iter()
-            .map(|desc| BindGroupLayoutNameContainer {
-                names: desc
-                    .entries
-                    .iter()
-                    .map(|entry| entry.name.clone())
-                    .collect::<Vec<ImmutableString>>(),
+            .map(|desc| {
+                let mut names = vec![];
+                for entry in desc.entries.iter() {
+                    if !names.contains(&entry.name) {
+                        names.push(entry.name.clone());
+                    }
+                }
+
+                BindGroupLayoutNameContainer { names }
             })
             .collect()
     }

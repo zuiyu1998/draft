@@ -1,13 +1,15 @@
 use std::{collections::HashMap, sync::Arc};
 
 use draft_render::{
-    BindGroupLayoutDescriptorBuilder, Geometry, GeometryResource, Material, MaterialResource,
-    PhasesContainer, PipelineSpecializer, PipelineSpecializerResource, RenderPipelineDescriptor,
-    RenderServer, RenderWorld, Shader, ShaderResource, Texture, TextureResource, Vertex,
+    BindGroupLayoutDescriptorBuilder, FragmentState, Geometry, GeometryResource, Material,
+    MaterialResource, MaterialResourceBinding, MaterialTextureBinding, PhasesContainer,
+    PipelineSpecializer, PipelineSpecializerResource, RenderPipelineDescriptor, RenderServer,
+    RenderWorld, Shader, ShaderResource, Texture, TextureResource, Vertex,
     VertexAttributeDescriptor,
     frame_graph::{ColorAttachment, FrameGraph},
     gfx_base::{
-        RawTextureFormat, RawTextureView, SamplerBindingType, ShaderStages, TextureSampleType,
+        BlendComponent, BlendState, ColorTargetState, ColorWrites, RawTextureFormat,
+        RawTextureView, SamplerBindingType, ShaderStages, TextureFormat, TextureSampleType,
         VertexFormat,
         binding_types::{sampler, texture_2d},
         initialize_resources,
@@ -58,9 +60,9 @@ impl PipelineNode for TestNode {
     fn run(
         &mut self,
         frame_graph: &mut FrameGraph,
-        _world: &mut RenderWorld,
+        world: &mut RenderWorld,
         context: &PipelineContext,
-        _phases_container: &PhasesContainer,
+        phases_container: &PhasesContainer,
     ) {
         let mut pass_builder = frame_graph.create_pass_builder("test_node");
         let mut render_pass_builder = pass_builder.create_render_pass_builder("test_pass");
@@ -74,47 +76,11 @@ impl PipelineNode for TestNode {
             },
         });
 
-        // render_pass_builder.set_render_pipeline(custom_material_data.pipeline_id);
+        let phase_key = "MeshRenderPhase".into();
 
-        // let geometry_data = world
-        //     .geometry_cache
-        //     .get_or_insert(&world.server.device, &context.batch.geometry)
-        //     .unwrap();
-
-        // let buffer_ref = render_pass_builder.read_material(&geometry_data.vertex_buffer);
-        // let buffer_slice = geometry_data.vertex_buffer.slice(0..);
-        // render_pass_builder.set_vertex_buffer(
-        //     0,
-        //     &buffer_ref,
-        //     buffer_slice.offset,
-        //     buffer_slice.size,
-        // );
-
-        // let bind_group_handle = render_pass_builder
-        //     .create_bind_group_handle_builder(
-        //         None,
-        //         custom_material_data.diffuse_bind_group_layout.clone(),
-        //     )
-        //     .add_texture_view(0, &texture_data.texture)
-        //     .add_handle(1, texture_data.sampler.sampler())
-        //     .build();
-
-        // render_pass_builder.set_bind_group_handle(0, &bind_group_handle, &[]);
-
-        // if let Some(index_buffer) = &geometry_data.index_buffer {
-        //     let buffer_ref = render_pass_builder.read_material(&index_buffer.buffer);
-        //     let buffer_slice = index_buffer.buffer.slice(0..);
-        //     render_pass_builder.set_index_buffer(
-        //         &buffer_ref,
-        //         index_buffer.index_format,
-        //         buffer_slice.offset,
-        //         buffer_slice.size,
-        //     );
-
-        //     render_pass_builder.draw_indexed(0..index_buffer.num_indices, 0, 0..1);
-        // } else {
-        //     render_pass_builder.draw(0..3, 0..1);
-        // }
+        if let Some(phase_container) = phases_container.get(&phase_key) {
+            phase_container.render(&mut render_pass_builder, world);
+        }
     }
 }
 
@@ -317,7 +283,7 @@ impl State {
         resource_manager.update_or_load_registry();
 
         let image = resource_manager.request::<Texture>("data/happy-tree.png");
-        let batch = new_batch();
+        let batch = new_batch(&image);
 
         State {
             windows,
@@ -361,7 +327,7 @@ impl State {
     }
 }
 
-fn new_batch() -> Batch {
+fn new_batch(image: &TextureResource) -> Batch {
     let mut vertex = Vertex::default();
     let mut modifier = vertex.modify();
     modifier.insert_attribute(
@@ -391,7 +357,14 @@ fn new_batch() -> Batch {
     let indexes: Vec<u16> = vec![0, 1, 4, 1, 2, 4, 2, 3, 4];
     let geometry = Geometry::new(vertex, indexes.into());
 
-    let material = new_material();
+    let mut material = new_material();
+
+    material.insert(
+        "diffuse".into(),
+        MaterialResourceBinding::Texture(MaterialTextureBinding {
+            value: Some(image.clone()),
+        }),
+    );
 
     Batch::new(
         GeometryResource::new_embedded(geometry),
@@ -401,6 +374,21 @@ fn new_batch() -> Batch {
 
 fn new_material() -> Material {
     let mut desc = RenderPipelineDescriptor::default();
+
+    desc.vertex.shader = BUILT_IN_SHADER.resource().clone();
+    desc.vertex.entry_point = Some("vs_main".into());
+    desc.fragment = Some(FragmentState {
+        shader: BUILT_IN_SHADER.resource().clone(),
+        entry_point: Some("fs_main".into()),
+        targets: vec![Some(ColorTargetState {
+            format: TextureFormat::Bgra8UnormSrgb,
+            blend: Some(BlendState {
+                color: BlendComponent::REPLACE,
+                alpha: BlendComponent::REPLACE,
+            }),
+            write_mask: ColorWrites::ALL,
+        })],
+    });
 
     let mut builder = BindGroupLayoutDescriptorBuilder::new(ShaderStages::FRAGMENT);
     builder.add_bind_group_layout(

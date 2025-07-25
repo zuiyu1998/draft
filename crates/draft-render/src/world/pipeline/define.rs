@@ -22,18 +22,6 @@ impl RenderPipelineDescriptor {
     pub fn push_bind_group_layout(&mut self, value: BindGroupLayoutDescriptor) {
         self.layout.push(value);
     }
-
-    pub fn merge(&mut self, other: &RenderPipelineDescriptor) {
-        self.label = other.label.clone();
-        for value in other.layout.iter() {
-            self.push_bind_group_layout(value.clone());
-        }
-        self.vertex = other.vertex.clone();
-        self.primitive = other.primitive;
-        self.depth_stencil = other.depth_stencil.clone();
-        self.multisample = other.multisample;
-        self.fragment = other.fragment.clone();
-    }
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Hash, Eq)]

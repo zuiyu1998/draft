@@ -39,11 +39,14 @@ impl TextureCache {
             ) {
                 Ok(data) => {
                     data.update(texture_state);
+
                     Ok(data)
                 }
                 Err(error) => Err(error),
             }
         } else {
+            drop(texture_state);
+
             Err(texture.clone().into())
         }
     }

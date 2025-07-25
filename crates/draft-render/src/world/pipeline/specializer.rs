@@ -18,10 +18,6 @@ impl PipelineSpecializer {
             desc: PipelineDescriptor::RenderPipelineDescriptor(Box::new(desc)),
         }
     }
-
-    pub fn specialize(&self, desc: &mut PipelineDescriptor) {
-        desc.merge(&self.desc);
-    }
 }
 
 impl ResourceData for PipelineSpecializer {

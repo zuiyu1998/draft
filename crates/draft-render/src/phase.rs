@@ -36,7 +36,7 @@ impl RenderPhaseContainer {
         self.0.name()
     }
 
-    pub fn render(&mut self, render_pass_builder: &mut RenderPassBuilder, world: &RenderWorld) {
+    pub fn render(&self, render_pass_builder: &mut RenderPassBuilder, world: &RenderWorld) {
         self.0.render(render_pass_builder, world);
     }
 }
