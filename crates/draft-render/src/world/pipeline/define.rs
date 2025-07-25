@@ -1,31 +1,9 @@
 use crate::{
-    BindGroupLayoutDescriptor, PipelineLayoutDescriptor, ShaderResource,
-    gfx_base::{
-        ColorTargetState, DepthStencilState, MultisampleState, PrimitiveState, VertexBufferLayout,
-    },
+    ShaderResource,
+    gfx_base::{ColorTargetState, VertexBufferLayout},
 };
 
 use fyrox_core::{reflect::*, visitor::*};
-
-#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
-pub struct RenderPipelineDescriptor {
-    pub label: String,
-    pub layout: PipelineLayoutDescriptor,
-    pub vertex: VertexState,
-    pub primitive: PrimitiveState,
-    pub depth_stencil: Option<DepthStencilState>,
-    pub multisample: MultisampleState,
-    pub fragment: Option<FragmentState>,
-}
-
-impl RenderPipelineDescriptor {
-    pub fn push_bind_group_layout(&mut self, value: BindGroupLayoutDescriptor) {
-        self.layout.push(value);
-    }
-}
-
-#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Hash, Eq)]
-pub struct ComputePipelineDescriptor {}
 
 #[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Hash, Eq)]
 pub struct VertexState {

@@ -1,11 +1,12 @@
 mod binding;
 mod handle;
+mod resource_bindings;
 
 pub use binding::*;
 pub use handle::*;
+pub use resource_bindings::*;
 
-use crate::{BindGroupLayout, PipelineSpecializerResource};
-use fxhash::FxHashMap;
+use crate::{BindGroupLayout, PipelineDescriptorResource};
 use fyrox_core::{ImmutableString, TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
 use fyrox_resource::{Resource, ResourceData};
 use std::{error::Error, fmt::Debug, path::Path};
@@ -20,20 +21,20 @@ pub struct MaterialBindGroupHandle {
 #[derive(Debug, Clone, Reflect, Visit, Default, TypeUuidProvider)]
 #[type_uuid(id = "3cee68e7-ef0a-463b-a2f5-68f90586b654")]
 pub struct Material {
-    specializer: PipelineSpecializerResource,
-    resource_bindings: FxHashMap<ImmutableString, MaterialResourceBinding>,
+    pipeline_descriptor: PipelineDescriptorResource,
+    resource_bindings: ResourceBindings,
 }
 
 impl Material {
-    pub fn from_specializer(specializer: PipelineSpecializerResource) -> Self {
-        Material::new(specializer, Default::default())
+    pub fn from_specializer(pipeline_descriptor: PipelineDescriptorResource) -> Self {
+        Material::new(pipeline_descriptor, Default::default())
     }
 
-    pub fn specializer(&self) -> &PipelineSpecializerResource {
-        &self.specializer
+    pub fn pipeline_descriptor(&self) -> &PipelineDescriptorResource {
+        &self.pipeline_descriptor
     }
 
-    pub fn resource_bindings(&self) -> &FxHashMap<ImmutableString, MaterialResourceBinding> {
+    pub fn resource_bindings(&self) -> &ResourceBindings {
         &self.resource_bindings
     }
 
@@ -42,11 +43,11 @@ impl Material {
     }
 
     pub fn new(
-        specializer: PipelineSpecializerResource,
-        resource_bindings: FxHashMap<ImmutableString, MaterialResourceBinding>,
+        pipeline_descriptor: PipelineDescriptorResource,
+        resource_bindings: ResourceBindings,
     ) -> Self {
         Self {
-            specializer,
+            pipeline_descriptor,
             resource_bindings,
         }
     }

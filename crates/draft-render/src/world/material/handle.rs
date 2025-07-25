@@ -1,12 +1,11 @@
 use std::ops::{Deref, DerefMut};
 
-use fxhash::FxHashMap;
-use fyrox_core::ImmutableString;
-
 use crate::{
-    BindGroupLayoutNameContainer, FrameworkError, MaterialResourceBinding, RenderWorld,
-    gfx_base::RawSampler, render_resource::RenderTexture,
+    BindGroupLayoutNameContainer, FrameworkError, RenderWorld, gfx_base::RawSampler,
+    render_resource::RenderTexture,
 };
+
+use super::{MaterialResourceBinding, ResourceBindings};
 
 pub enum MaterialResourceHandle {
     Texture(MaterialTextureHandle),
@@ -45,8 +44,8 @@ impl DerefMut for MaterialResourceHandleContainer {
 impl MaterialResourceHandleContainer {
     pub fn extra(
         name_container: &BindGroupLayoutNameContainer,
-        resource_bindings: &FxHashMap<ImmutableString, MaterialResourceBinding>,
-        world: &mut RenderWorld,
+        resource_bindings: &ResourceBindings,
+        render_world: &mut RenderWorld,
     ) -> Result<Self, FrameworkError> {
         let mut binding = 0;
 
@@ -56,7 +55,7 @@ impl MaterialResourceHandleContainer {
             match resource_bindings.get(name).unwrap() {
                 MaterialResourceBinding::Texture(v) => {
                     let resource = v.value.clone().unwrap();
-                    let texture_data = world.get_or_create_texture(&resource)?;
+                    let texture_data = render_world.get_or_create_texture(&resource)?;
 
                     target.push(MaterialResourceHandle::Texture(MaterialTextureHandle {
                         binding,

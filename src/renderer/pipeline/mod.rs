@@ -1,7 +1,6 @@
 use draft_render::{
-    FrameworkError, GeometryResource, MaterialBindGroupHandle, MaterialResource,
-    MaterialResourceHandleContainer, MeshRenderPhase, RenderPhasesContainer, RenderWorld,
-    frame_graph::FrameGraph, gfx_base::RawTextureView,
+    FrameworkError, GeometryResource, MaterialResource, MeshRenderPhase, RenderPhasesContainer,
+    RenderWorld, frame_graph::FrameGraph, gfx_base::RawTextureView,
 };
 
 pub trait MeshPhaseExtractor {
@@ -42,56 +41,26 @@ impl MeshPhaseExtractor for Batch {
             return Err(self.material.clone().into());
         };
 
-        let specializer_state = material_state.specializer().state();
+        let pipeline_descriptor = material_state.pipeline_descriptor().state();
 
-        let Some(specializer_state) = specializer_state.data_ref() else {
-            return Err(material_state.specializer().clone().into());
+        let Some(pipeline_descriptor) = pipeline_descriptor.data_ref() else {
+            drop(pipeline_descriptor);
+            return Err(material_state.pipeline_descriptor().clone().into());
         };
 
-        let mut desc = specializer_state.desc.clone();
+        let mut desc = pipeline_descriptor.clone();
         {
-            let render_pipeline_desc = desc.render_pipeline_descriptor().unwrap();
+            let render_pipeline_desc = desc.render_pipeline_descriptor_mut().unwrap();
 
             render_pipeline_desc.vertex.buffers.push(vertex_layout);
         }
 
-        let pipeline_id = world.pipeline_cache.get_or_create(&desc);
-
         let desc = desc.render_pipeline_descriptor().unwrap();
 
-        let bind_group_layout_descs = desc.layout.get_bind_group_layout_descs();
-
-        let mut bind_group_layouts = vec![];
-
-        for bind_group_layout_desc in bind_group_layout_descs.iter() {
-            let bind_group_layout = world
-                .pipeline_cache
-                .get_or_create_bind_group_layout(bind_group_layout_desc)?
-                .clone();
-
-            bind_group_layouts.push(bind_group_layout);
-        }
-
-        let name_containers = desc.layout.get_bind_group_layout_names();
-
-        let mut bind_groups = vec![];
-
-        for (index, bind_group_layout) in bind_group_layouts.into_iter().enumerate() {
-            let handle_container = MaterialResourceHandleContainer::extra(
-                &name_containers[index],
-                material_state.resource_bindings(),
-                world,
-            )?;
-
-            bind_groups.push(MaterialBindGroupHandle {
-                bind_group_layout,
-                material_resource_handle_container: handle_container,
-            });
-        }
+        let material_render_data = material_state.resource_bindings().extra(desc, world)?;
 
         let phase = MeshRenderPhase {
-            pipeline_id,
-            bind_groups,
+            material_render_data,
             vertex_buffer,
             index_buffer,
         };

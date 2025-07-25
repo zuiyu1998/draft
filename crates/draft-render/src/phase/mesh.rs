@@ -1,14 +1,12 @@
 use fyrox_core::ImmutableString;
 
 use crate::{
-    IndexRenderBuffer, MaterialBindGroupHandle, MaterialResourceHandle, PhaseName, RenderPhase,
-    RenderWorld, frame_graph::RenderPassBuilder, gfx_base::CachedPipelineId,
-    render_resource::RenderBuffer,
+    IndexRenderBuffer, MaterialRenderData, MaterialResourceHandle, PhaseName, RenderPhase,
+    RenderWorld, frame_graph::RenderPassBuilder, render_resource::RenderBuffer,
 };
 
 pub struct MeshRenderPhase {
-    pub pipeline_id: CachedPipelineId,
-    pub bind_groups: Vec<MaterialBindGroupHandle>,
+    pub material_render_data: MaterialRenderData,
     pub vertex_buffer: RenderBuffer,
     pub index_buffer: Option<IndexRenderBuffer>,
 }
@@ -21,17 +19,28 @@ impl PhaseName for MeshRenderPhase {
 
 impl RenderPhase for MeshRenderPhase {
     fn render(&self, render_pass_builder: &mut RenderPassBuilder, world: &RenderWorld) {
-        if !world.pipeline_cache.has_render_pipeline(self.pipeline_id) {
+        if !world
+            .pipeline_cache
+            .has_render_pipeline(self.material_render_data.pipeline_id)
+        {
             return;
         }
 
-        render_pass_builder.set_render_pipeline(self.pipeline_id);
+        render_pass_builder.set_render_pipeline(self.material_render_data.pipeline_id);
 
-        for (index, bind_group) in self.bind_groups.iter().enumerate() {
+        for (index, bind_group_handle) in self
+            .material_render_data
+            .bind_group_handles
+            .iter()
+            .enumerate()
+        {
             let mut bind_group_handle_builder = render_pass_builder
-                .create_bind_group_handle_builder(None, bind_group.bind_group_layout.raw().clone());
+                .create_bind_group_handle_builder(
+                    None,
+                    bind_group_handle.bind_group_layout.raw().clone(),
+                );
 
-            for handle in bind_group.material_resource_handle_container.iter() {
+            for handle in bind_group_handle.material_resource_handle_container.iter() {
                 match handle {
                     MaterialResourceHandle::Texture(material_texture_handle) => {
                         bind_group_handle_builder = bind_group_handle_builder.add_texture_view(

@@ -3,7 +3,7 @@ use std::{collections::HashMap, sync::Arc};
 use draft_render::{
     BindGroupLayoutDescriptorBuilder, FragmentState, Geometry, GeometryResource, Material,
     MaterialResource, MaterialResourceBinding, MaterialTextureBinding, MeshRenderPhase,
-    PipelineSpecializer, PipelineSpecializerResource, RenderPhasesContainer,
+    PipelineDescriptor, PipelineDescriptorResource, RenderPhasesContainer,
     RenderPipelineDescriptor, RenderServer, RenderWorld, Shader, ShaderResource, Texture,
     TextureResource, Vertex, VertexAttributeDescriptor,
     frame_graph::{ColorAttachment, FrameGraph},
@@ -391,8 +391,8 @@ fn new_material() -> Material {
 
     desc.push_bind_group_layout(builder.build());
 
-    Material::from_specializer(PipelineSpecializerResource::new_embedded(
-        PipelineSpecializer::new_render_specializer(desc),
+    Material::from_specializer(PipelineDescriptorResource::new_embedded(
+        PipelineDescriptor::new_render_specializer(desc),
     ))
 }
 

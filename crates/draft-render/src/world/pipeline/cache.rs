@@ -4,15 +4,10 @@ use std::{
     mem,
 };
 
-use fyrox_core::{reflect::*, visitor::*};
-
-use super::{
-    BindGroupLayoutDescriptor, ComputePipelineDescriptor, PipelineLayoutCache,
-    RenderPipelineDescriptor,
-};
+use super::{BindGroupLayoutDescriptor, PipelineLayoutCache, RenderPipelineDescriptor};
 
 use crate::{
-    BindGroupLayout, FrameworkError, ShaderCache,
+    BindGroupLayout, FrameworkError, PipelineDescriptor, ShaderCache,
     gfx_base::{
         CachedPipelineId, GetPipelineContainer, Pipeline, PipelineContainer, RawFragmentState,
         RawPipelineCompilationOptions, RawRenderPipelineDescriptor, RawVertexAttribute,
@@ -39,27 +34,6 @@ impl PipelineState {
             PipelineState::Ok(pipeline) => Some(pipeline),
             _ => None,
         }
-    }
-}
-
-#[derive(Debug, Clone, Reflect, Visit, PartialEq, Eq, Hash)]
-pub enum PipelineDescriptor {
-    RenderPipelineDescriptor(Box<RenderPipelineDescriptor>),
-    ComputePipelineDescriptor(Box<ComputePipelineDescriptor>),
-}
-
-impl PipelineDescriptor {
-    pub fn render_pipeline_descriptor(&mut self) -> Option<&mut RenderPipelineDescriptor> {
-        match self {
-            PipelineDescriptor::RenderPipelineDescriptor(desc) => Some(desc),
-            _ => None,
-        }
-    }
-}
-
-impl Default for PipelineDescriptor {
-    fn default() -> Self {
-        PipelineDescriptor::RenderPipelineDescriptor(Box::default())
     }
 }
 
@@ -106,6 +80,15 @@ impl PipelineCache {
     ) -> Result<&BindGroupLayout, FrameworkError> {
         self.pipeline_layout_cache
             .get_or_create_bind_group_layout(&self.device, desc)
+    }
+
+    pub fn get_or_create_with_render_descriptor(
+        &mut self,
+        desc: &RenderPipelineDescriptor,
+    ) -> CachedPipelineId {
+        let desc = PipelineDescriptor::RenderPipelineDescriptor(Box::new(desc.clone()));
+
+        self.get_or_create(&desc)
     }
 
     pub fn get_or_create(&mut self, desc: &PipelineDescriptor) -> CachedPipelineId {
