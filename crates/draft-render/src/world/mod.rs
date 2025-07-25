@@ -13,13 +13,16 @@ pub use shader::*;
 pub use texture::*;
 pub use uniform::*;
 
-use crate::gfx_base::{RenderAdapter, RenderDevice, RenderInstance, RenderQueue};
+use crate::{
+    FrameworkError,
+    gfx_base::{RenderAdapter, RenderDevice, RenderInstance, RenderQueue},
+};
 
 pub struct RenderWorld {
     pub server: RenderServer,
     pub pipeline_cache: PipelineCache,
     pub geometry_cache: GeometryCache,
-    pub texture_cache: TextureCache,
+    texture_cache: TextureCache,
     pub uniform_buffer_cache: UniformBufferCache,
 }
 
@@ -42,12 +45,20 @@ impl RenderWorld {
         self.texture_cache.update(dt);
     }
 
+    pub fn get_or_create_texture(
+        &mut self,
+        texture: &TextureResource,
+    ) -> Result<&TextureData, FrameworkError> {
+        self.texture_cache
+            .get_or_create(&self.server.device, &self.server.queue, texture)
+    }
+
     pub fn update_texture(&mut self, texture: &TextureResource) {
         self.texture_cache.remove(texture);
 
         let _ = self
             .texture_cache
-            .get_or_insert(&self.server.device, &self.server.queue, texture);
+            .get_or_create(&self.server.device, &self.server.queue, texture);
     }
 }
 

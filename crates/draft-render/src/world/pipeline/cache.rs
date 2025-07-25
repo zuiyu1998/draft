@@ -12,11 +12,11 @@ use super::{
 };
 
 use crate::{
-    FrameworkError, ShaderCache,
+    BindGroupLayout, FrameworkError, ShaderCache,
     gfx_base::{
-        CachedPipelineId, GetPipelineContainer, Pipeline, PipelineContainer, RawBindGroupLayout,
-        RawFragmentState, RawPipelineCompilationOptions, RawRenderPipelineDescriptor,
-        RawVertexAttribute, RawVertexBufferLayout, RawVertexState, RenderDevice, RenderPipeline,
+        CachedPipelineId, GetPipelineContainer, Pipeline, PipelineContainer, RawFragmentState,
+        RawPipelineCompilationOptions, RawRenderPipelineDescriptor, RawVertexAttribute,
+        RawVertexBufferLayout, RawVertexState, RenderDevice, RenderPipeline,
     },
 };
 
@@ -101,12 +101,9 @@ impl PipelineCache {
     pub fn get_or_create_bind_group_layout(
         &mut self,
         desc: &BindGroupLayoutDescriptor,
-    ) -> Result<RawBindGroupLayout, FrameworkError> {
-        let data = self
-            .pipeline_layout_cache
-            .get_or_create_bind_group_layout(&self.device, desc)?;
-
-        Ok(data.raw().clone())
+    ) -> Result<&BindGroupLayout, FrameworkError> {
+        self.pipeline_layout_cache
+            .get_or_create_bind_group_layout(&self.device, desc)
     }
 
     pub fn get_or_create(&mut self, desc: &PipelineDescriptor) -> CachedPipelineId {

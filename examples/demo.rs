@@ -58,18 +58,10 @@ impl PipelineNode for TestNode {
     fn run(
         &mut self,
         frame_graph: &mut FrameGraph,
-        world: &mut RenderWorld,
+        _world: &mut RenderWorld,
         context: &PipelineContext,
         _phases_container: &PhasesContainer,
     ) {
-        let Some(_texture_data) = world.texture_cache.get_or_insert(
-            &world.server.device,
-            &world.server.queue,
-            context.image,
-        ) else {
-            return;
-        };
-
         let mut pass_builder = frame_graph.create_pass_builder("test_node");
         let mut render_pass_builder = pass_builder.create_render_pass_builder("test_pass");
 

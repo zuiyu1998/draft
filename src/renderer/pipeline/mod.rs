@@ -1,11 +1,57 @@
 use draft_render::{
-    GeometryResource, MaterialResource, PhasesContainer, PipelineDescriptor,
-    RenderPipelineDescriptor, RenderWorld, TextureResource, frame_graph::FrameGraph,
-    gfx_base::RawTextureView,
+    FrameworkError, GeometryResource, MaterialBindGroupHandle, MaterialResource,
+    MaterialResourceHandle, MaterialResourceHandleContainer, MeshRenderPhase, PhasesContainer,
+    PipelineDescriptor, RenderPipelineDescriptor, RenderWorld, TextureResource,
+    frame_graph::{FrameGraph, RenderPassBuilder},
+    gfx_base::{CachedPipelineId, RawTextureView},
 };
 
+pub struct MeshPhase {
+    pub pipeline_id: CachedPipelineId,
+    pub bind_groups: Vec<MaterialBindGroupHandle>,
+}
+
+impl MeshRenderPhase for MeshPhase {
+    fn render_mesh(&self, render_pass_builder: &mut RenderPassBuilder, _world: &RenderWorld) {
+        render_pass_builder.set_render_pipeline(self.pipeline_id);
+
+        for (index, bind_group) in self.bind_groups.iter().enumerate() {
+            let mut bind_group_handle_builder = render_pass_builder
+                .create_bind_group_handle_builder(None, bind_group.bind_group_layout.raw().clone());
+
+            for handle in bind_group.material_resource_handle_container.iter() {
+                match handle {
+                    MaterialResourceHandle::Texture(material_texture_handle) => {
+                        bind_group_handle_builder = bind_group_handle_builder.add_texture_view(
+                            material_texture_handle.binding,
+                            &material_texture_handle.texture,
+                        );
+                    }
+                    MaterialResourceHandle::Sampler(material_sampler_handle) => {
+                        bind_group_handle_builder = bind_group_handle_builder.add_handle(
+                            material_sampler_handle.binding,
+                            &material_sampler_handle.sampler,
+                        );
+                    }
+                    MaterialResourceHandle::PropertyGroup(_material_property_group_handle) => {
+                        todo!()
+                    }
+                }
+            }
+
+            let bind_group_handle = bind_group_handle_builder.build();
+
+            render_pass_builder.set_bind_group_handle(index as u32, &bind_group_handle, &[]);
+        }
+    }
+}
+
 pub trait MeshPhaseExtractor {
-    fn extra(&self, world: &mut RenderWorld, phases_container: &mut PhasesContainer);
+    fn extra(
+        &self,
+        world: &mut RenderWorld,
+        phases_container: &mut PhasesContainer,
+    ) -> Result<MeshPhase, FrameworkError>;
 }
 
 pub struct Batch {
@@ -20,25 +66,26 @@ impl Batch {
 }
 
 impl MeshPhaseExtractor for Batch {
-    fn extra(&self, world: &mut RenderWorld, _phases_container: &mut PhasesContainer) {
-        let Some(geometry_data) = world
+    fn extra(
+        &self,
+        world: &mut RenderWorld,
+        _phases_container: &mut PhasesContainer,
+    ) -> Result<MeshPhase, FrameworkError> {
+        let geometry_data = world
             .geometry_cache
-            .get_or_insert(&world.server.device, &self.geometry)
-        else {
-            return;
-        };
+            .get_or_create(&world.server.device, &self.geometry)?;
 
         let vertex_layout = geometry_data.layout.clone();
 
         let material_state = self.material.state();
         let Some(material_state) = material_state.data_ref() else {
-            return;
+            return Err(self.material.clone().into());
         };
 
         let specializer_state = material_state.specializer().state();
 
         let Some(specializer_state) = specializer_state.data_ref() else {
-            return;
+            return Err(material_state.specializer().clone().into());
         };
 
         let mut desc = RenderPipelineDescriptor::default();
@@ -47,11 +94,44 @@ impl MeshPhaseExtractor for Batch {
         let mut desc = PipelineDescriptor::RenderPipelineDescriptor(Box::new(desc));
         specializer_state.specialize(&mut desc);
 
-        let _pipeline_id = world.pipeline_cache.get_or_create(&desc);
+        let pipeline_id = world.pipeline_cache.get_or_create(&desc);
 
         let desc = desc.render_pipeline_descriptor().unwrap();
 
-        let _name_containers = desc.layout.get_bind_group_layout_names();
+        let bind_group_layout_descs = desc.layout.get_bind_group_layout_descs();
+
+        let mut bind_group_layouts = vec![];
+
+        for bind_group_layout_desc in bind_group_layout_descs.iter() {
+            let bind_group_layout = world
+                .pipeline_cache
+                .get_or_create_bind_group_layout(bind_group_layout_desc)?
+                .clone();
+
+            bind_group_layouts.push(bind_group_layout);
+        }
+
+        let name_containers = desc.layout.get_bind_group_layout_names();
+
+        let mut bind_groups = vec![];
+
+        for (index, bind_group_layout) in bind_group_layouts.into_iter().enumerate() {
+            let handle_container = MaterialResourceHandleContainer::extra(
+                &name_containers[index],
+                material_state.resource_bindings(),
+                world,
+            )?;
+
+            bind_groups.push(MaterialBindGroupHandle {
+                bind_group_layout,
+                material_resource_handle_container: handle_container,
+            });
+        }
+
+        Ok(MeshPhase {
+            pipeline_id,
+            bind_groups,
+        })
     }
 }
 

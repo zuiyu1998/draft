@@ -1,4 +1,3 @@
-use fyrox_core::log::Log;
 use wgpu::util::DeviceExt;
 
 use crate::{
@@ -24,12 +23,12 @@ impl TextureCache {
         self.cache.update(dt)
     }
 
-    pub fn get_or_insert(
+    pub fn get_or_create(
         &mut self,
         device: &RenderDevice,
         queue: &RenderQueue,
         texture: &TextureResource,
-    ) -> Option<&TextureData> {
+    ) -> Result<&TextureData, FrameworkError> {
         let mut texture_state = texture.state();
 
         if let Some(texture_state) = texture_state.data() {
@@ -40,15 +39,12 @@ impl TextureCache {
             ) {
                 Ok(data) => {
                     data.update(texture_state);
-                    Some(data)
+                    Ok(data)
                 }
-                Err(error) => {
-                    Log::err(format!("{error}"));
-                    None
-                }
+                Err(error) => Err(error),
             }
         } else {
-            None
+            Err(texture.clone().into())
         }
     }
 }

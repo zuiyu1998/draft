@@ -6,7 +6,7 @@ use fyrox_core::ImmutableString;
 use crate::{RenderWorld, frame_graph::RenderPassBuilder};
 
 pub trait MeshRenderPhase: 'static {
-    fn render_mesh(&mut self, render_pass_builder: &mut RenderPassBuilder, world: &RenderWorld);
+    fn render_mesh(&self, render_pass_builder: &mut RenderPassBuilder, world: &RenderWorld);
 }
 
 impl<T: MeshRenderPhase> RenderPhase for T {
@@ -14,7 +14,7 @@ impl<T: MeshRenderPhase> RenderPhase for T {
         ImmutableString::new("MeshRenderPhase")
     }
 
-    fn render(&mut self, render_pass_builder: &mut RenderPassBuilder, world: &RenderWorld) {
+    fn render(&self, render_pass_builder: &mut RenderPassBuilder, world: &RenderWorld) {
         self.render_mesh(render_pass_builder, world);
     }
 }
@@ -22,7 +22,7 @@ impl<T: MeshRenderPhase> RenderPhase for T {
 pub trait RenderPhase: 'static {
     fn name(&self) -> ImmutableString;
 
-    fn render(&mut self, render_pass_builder: &mut RenderPassBuilder, world: &RenderWorld);
+    fn render(&self, render_pass_builder: &mut RenderPassBuilder, world: &RenderWorld);
 }
 
 pub struct RenderPhaseContainer(Box<dyn RenderPhase>);

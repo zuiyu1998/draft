@@ -3,7 +3,6 @@ use crate::{
     frame_graph::BufferInfo,
     gfx_base::{RawIndexFormat, RenderDevice, VertexBufferLayout},
 };
-use fyrox_core::log::Log;
 
 use wgpu::{
     BufferUsages,
@@ -131,11 +130,11 @@ pub struct GeometryCache {
 }
 
 impl GeometryCache {
-    pub fn get_or_insert(
+    pub fn get_or_create(
         &mut self,
         device: &RenderDevice,
         geometry: &GeometryResource,
-    ) -> Option<&GeometryData> {
+    ) -> Result<&GeometryData, FrameworkError> {
         let mut geometry_state = geometry.state();
 
         if let Some(geometry_state) = geometry_state.data() {
@@ -146,15 +145,12 @@ impl GeometryCache {
             ) {
                 Ok(data) => {
                     data.update(geometry_state);
-                    Some(data)
+                    Ok(data)
                 }
-                Err(error) => {
-                    Log::err(format!("{error}"));
-                    None
-                }
+                Err(error) => Err(error),
             }
         } else {
-            None
+            Err(geometry.clone().into())
         }
     }
 }

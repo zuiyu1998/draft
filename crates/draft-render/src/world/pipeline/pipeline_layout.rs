@@ -78,6 +78,10 @@ pub struct BindGroupLayoutNameContainer {
 }
 
 impl PipelineLayoutDescriptor {
+    pub fn get_bind_group_layout_descs(&self) -> &[BindGroupLayoutDescriptor] {
+        &self.0
+    }
+
     pub fn get_bind_group_layout_names(&self) -> Vec<BindGroupLayoutNameContainer> {
         self.0
             .iter()

@@ -55,9 +55,11 @@ impl WorldRenderer {
         pipeline_context: &PipelineContext,
         phases_container: &mut PhasesContainer,
     ) {
-        pipeline_context
+        let _ = pipeline_context
             .batch
             .extra(&mut self.world, phases_container);
+
+        //todo
     }
 
     pub fn render_frame(
