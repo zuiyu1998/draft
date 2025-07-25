@@ -2,10 +2,10 @@ use std::{collections::HashMap, sync::Arc};
 
 use draft_render::{
     BindGroupLayoutDescriptorBuilder, FragmentState, Geometry, GeometryResource, Material,
-    MaterialResource, MaterialResourceBinding, MaterialTextureBinding, PhasesContainer,
-    PipelineSpecializer, PipelineSpecializerResource, RenderPipelineDescriptor, RenderServer,
-    RenderWorld, Shader, ShaderResource, Texture, TextureResource, Vertex,
-    VertexAttributeDescriptor,
+    MaterialResource, MaterialResourceBinding, MaterialTextureBinding, MeshRenderPhase,
+    PipelineSpecializer, PipelineSpecializerResource, RenderPhasesContainer,
+    RenderPipelineDescriptor, RenderServer, RenderWorld, Shader, ShaderResource, Texture,
+    TextureResource, Vertex, VertexAttributeDescriptor,
     frame_graph::{ColorAttachment, FrameGraph},
     gfx_base::{
         BlendComponent, BlendState, ColorTargetState, ColorWrites, RawTextureFormat,
@@ -62,7 +62,7 @@ impl PipelineNode for TestNode {
         frame_graph: &mut FrameGraph,
         world: &mut RenderWorld,
         context: &PipelineContext,
-        phases_container: &PhasesContainer,
+        phases_container: &RenderPhasesContainer,
     ) {
         let mut pass_builder = frame_graph.create_pass_builder("test_node");
         let mut render_pass_builder = pass_builder.create_render_pass_builder("test_pass");
@@ -76,10 +76,8 @@ impl PipelineNode for TestNode {
             },
         });
 
-        let phase_key = "MeshRenderPhase".into();
-
-        if let Some(phase_container) = phases_container.get(&phase_key) {
-            phase_container.render(&mut render_pass_builder, world);
+        if let Some(phases) = phases_container.get_phases::<MeshRenderPhase>() {
+            phases.render(&mut render_pass_builder, world);
         }
     }
 }
@@ -262,7 +260,6 @@ struct State {
     _resource_manager: ResourceManager,
     renderer: WorldRenderer,
     batch: Batch,
-    image: TextureResource,
 }
 
 impl State {
@@ -290,7 +287,6 @@ impl State {
             size,
             _resource_manager: resource_manager,
             renderer,
-            image,
             batch,
         }
     }
@@ -313,14 +309,9 @@ impl State {
             let pipeline_context = PipelineContext {
                 texture_view,
                 batch: &self.batch,
-                image: &self.image,
             };
 
             self.renderer.render(&pipeline_context);
-
-            // let header = self.image.header();
-
-            // println!("{:?}", header.state);
         }
 
         self.windows.present();
@@ -381,7 +372,7 @@ fn new_material() -> Material {
         shader: BUILT_IN_SHADER.resource().clone(),
         entry_point: Some("fs_main".into()),
         targets: vec![Some(ColorTargetState {
-            format: TextureFormat::Bgra8UnormSrgb,
+            format: TextureFormat::Rgba8UnormSrgb,
             blend: Some(BlendState {
                 color: BlendComponent::REPLACE,
                 alpha: BlendComponent::REPLACE,

@@ -3,7 +3,7 @@ mod pipeline;
 pub use pipeline::*;
 
 use draft_render::{
-    PhasesContainer, RenderServer, RenderWorld, Texture, TextureLoader,
+    RenderPhasesContainer, RenderServer, RenderWorld, Texture, TextureLoader,
     frame_graph::{FrameGraph, FrameGraphContext, TransientResourceCache},
 };
 use fyrox_resource::{event::ResourceEvent, manager::ResourceManager};
@@ -53,11 +53,11 @@ impl WorldRenderer {
     pub fn prepare(
         &mut self,
         pipeline_context: &PipelineContext,
-        phases_container: &mut PhasesContainer,
+        render_phases_container: &mut RenderPhasesContainer,
     ) {
         let _ = pipeline_context
             .batch
-            .extra(&mut self.world, phases_container);
+            .extra(&mut self.world, render_phases_container);
 
         //todo
     }
@@ -65,7 +65,7 @@ impl WorldRenderer {
     pub fn render_frame(
         &mut self,
         pipeline_context: &PipelineContext,
-        phases_container: &PhasesContainer,
+        render_phases_container: &RenderPhasesContainer,
     ) {
         let mut frame_graph = FrameGraph::default();
 
@@ -73,7 +73,7 @@ impl WorldRenderer {
             &mut frame_graph,
             &mut self.world,
             pipeline_context,
-            phases_container,
+            render_phases_container,
         );
 
         frame_graph.compile();
@@ -92,7 +92,7 @@ impl WorldRenderer {
     }
 
     pub fn render(&mut self, pipeline_context: &PipelineContext) {
-        let mut phases_container = PhasesContainer::default();
+        let mut phases_container = RenderPhasesContainer::default();
 
         self.prepare(pipeline_context, &mut phases_container);
 

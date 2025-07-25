@@ -1,87 +1,14 @@
 use draft_render::{
-    FrameworkError, GeometryResource, IndexRenderBuffer, MaterialBindGroupHandle, MaterialResource,
-    MaterialResourceHandle, MaterialResourceHandleContainer, MeshRenderPhase, PhasesContainer,
-    RenderPhaseContainer, RenderWorld, TextureResource,
-    frame_graph::{FrameGraph, RenderPassBuilder},
-    gfx_base::{CachedPipelineId, RawTextureView},
-    render_resource::RenderBuffer,
+    FrameworkError, GeometryResource, MaterialBindGroupHandle, MaterialResource,
+    MaterialResourceHandleContainer, MeshRenderPhase, RenderPhasesContainer, RenderWorld,
+    frame_graph::FrameGraph, gfx_base::RawTextureView,
 };
-
-pub struct MeshPhase {
-    pub pipeline_id: CachedPipelineId,
-    pub bind_groups: Vec<MaterialBindGroupHandle>,
-    pub vertex_buffer: RenderBuffer,
-    pub index_buffer: Option<IndexRenderBuffer>,
-}
-
-impl MeshRenderPhase for MeshPhase {
-    fn render_mesh(&self, render_pass_builder: &mut RenderPassBuilder, world: &RenderWorld) {
-        if !world.pipeline_cache.has_render_pipeline(self.pipeline_id) {
-            return;
-        }
-
-        render_pass_builder.set_render_pipeline(self.pipeline_id);
-
-        for (index, bind_group) in self.bind_groups.iter().enumerate() {
-            let mut bind_group_handle_builder = render_pass_builder
-                .create_bind_group_handle_builder(None, bind_group.bind_group_layout.raw().clone());
-
-            for handle in bind_group.material_resource_handle_container.iter() {
-                match handle {
-                    MaterialResourceHandle::Texture(material_texture_handle) => {
-                        bind_group_handle_builder = bind_group_handle_builder.add_texture_view(
-                            material_texture_handle.binding,
-                            &material_texture_handle.texture,
-                        );
-                    }
-                    MaterialResourceHandle::Sampler(material_sampler_handle) => {
-                        bind_group_handle_builder = bind_group_handle_builder.add_handle(
-                            material_sampler_handle.binding,
-                            &material_sampler_handle.sampler,
-                        );
-                    }
-                    MaterialResourceHandle::PropertyGroup(_material_property_group_handle) => {
-                        todo!()
-                    }
-                }
-            }
-
-            let bind_group_handle = bind_group_handle_builder.build();
-
-            render_pass_builder.set_bind_group_handle(index as u32, &bind_group_handle, &[]);
-        }
-
-        let buffer_ref = render_pass_builder.read_material(&self.vertex_buffer);
-        let buffer_slice = self.vertex_buffer.slice(0..);
-        render_pass_builder.set_vertex_buffer(
-            0,
-            &buffer_ref,
-            buffer_slice.offset,
-            buffer_slice.size,
-        );
-
-        if let Some(index_buffer) = &self.index_buffer {
-            let buffer_ref = render_pass_builder.read_material(&index_buffer.buffer);
-            let buffer_slice = index_buffer.buffer.slice(0..);
-            render_pass_builder.set_index_buffer(
-                &buffer_ref,
-                index_buffer.index_format,
-                buffer_slice.offset,
-                buffer_slice.size,
-            );
-
-            render_pass_builder.draw_indexed(0..index_buffer.num_indices, 0, 0..1);
-        } else {
-            render_pass_builder.draw(0..3, 0..1);
-        }
-    }
-}
 
 pub trait MeshPhaseExtractor {
     fn extra(
         &self,
         world: &mut RenderWorld,
-        phases_container: &mut PhasesContainer,
+        render_phases_container: &mut RenderPhasesContainer,
     ) -> Result<(), FrameworkError>;
 }
 
@@ -100,7 +27,7 @@ impl MeshPhaseExtractor for Batch {
     fn extra(
         &self,
         world: &mut RenderWorld,
-        phases_container: &mut PhasesContainer,
+        render_phases_container: &mut RenderPhasesContainer,
     ) -> Result<(), FrameworkError> {
         let geometry_data = world
             .geometry_cache
@@ -162,16 +89,14 @@ impl MeshPhaseExtractor for Batch {
             });
         }
 
-        let phase = MeshPhase {
+        let phase = MeshRenderPhase {
             pipeline_id,
             bind_groups,
             vertex_buffer,
             index_buffer,
         };
 
-        let render_phase = RenderPhaseContainer::new(phase);
-
-        phases_container.insert(render_phase.name(), render_phase);
+        render_phases_container.push(phase);
 
         Ok(())
     }
@@ -180,7 +105,6 @@ impl MeshPhaseExtractor for Batch {
 pub struct PipelineContext<'a> {
     pub batch: &'a Batch,
     pub texture_view: RawTextureView,
-    pub image: &'a TextureResource,
 }
 
 pub trait PipelineNode: 'static {
@@ -189,7 +113,7 @@ pub trait PipelineNode: 'static {
         frame_graph: &mut FrameGraph,
         world: &mut RenderWorld,
         context: &PipelineContext,
-        phases_container: &PhasesContainer,
+        render_phases_container: &RenderPhasesContainer,
     );
 }
 
@@ -211,10 +135,10 @@ impl Pipeline {
         frame_graph: &mut FrameGraph,
         world: &mut RenderWorld,
         context: &PipelineContext,
-        phases_container: &PhasesContainer,
+        render_phases_container: &RenderPhasesContainer,
     ) {
         for node in self.nodes.iter_mut() {
-            node.run(frame_graph, world, context, phases_container);
+            node.run(frame_graph, world, context, render_phases_container);
         }
     }
 }
