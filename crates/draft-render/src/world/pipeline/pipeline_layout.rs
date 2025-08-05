@@ -32,7 +32,7 @@ impl BindGroupLayoutDescriptorBuilder {
 
     pub fn add_bind_group_layout(
         &mut self,
-        name: ImmutableString,
+        name: BindGroupLayoutName,
         binding: u32,
         bind_group_layout: BindGroupLayoutEntryBuilder,
     ) {
@@ -64,17 +64,50 @@ pub struct BindGroupLayoutDescriptor {
     pub entries: Vec<BindGroupLayoutEntryDescriptor>,
 }
 
+#[derive(Debug, Clone, Reflect, Visit, PartialEq, Eq, Hash)]
+pub enum BindGroupLayoutName {
+    BuiltIn(ImmutableString),
+    Local(ImmutableString),
+}
+
+impl Default for BindGroupLayoutName {
+    fn default() -> Self {
+        Self::Local(ImmutableString::new(""))
+    }
+}
+
+impl BindGroupLayoutName {
+    pub fn immutable_string(&self) -> &ImmutableString {
+        match self {
+            BindGroupLayoutName::BuiltIn(v) => v,
+            BindGroupLayoutName::Local(v) => v,
+        }
+    }
+
+    pub fn is_built_in(&self) -> bool {
+        matches!(self, BindGroupLayoutName::BuiltIn(_))
+    }
+
+    pub fn new_local(name: &str) -> Self {
+        Self::Local(ImmutableString::new(name))
+    }
+
+    pub fn new_built_in(name: &str) -> Self {
+        Self::BuiltIn(ImmutableString::new(name))
+    }
+}
+
 #[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
 pub struct BindGroupLayoutEntryDescriptor {
     pub entry: BindGroupLayoutEntry,
-    pub name: ImmutableString,
+    pub name: BindGroupLayoutName,
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
 pub struct PipelineLayoutDescriptor(Vec<BindGroupLayoutDescriptor>);
 
 pub struct BindGroupLayoutNameContainer {
-    pub names: Vec<ImmutableString>,
+    pub names: Vec<BindGroupLayoutName>,
 }
 
 impl PipelineLayoutDescriptor {

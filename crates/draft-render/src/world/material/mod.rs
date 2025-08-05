@@ -6,8 +6,8 @@ pub use binding::*;
 pub use handle::*;
 pub use resource_bindings::*;
 
-use crate::{BindGroupLayout, PipelineDescriptorResource};
-use fyrox_core::{ImmutableString, TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
+use crate::{BindGroupLayout, BindGroupLayoutName, PipelineDescriptorResource};
+use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
 use fyrox_resource::{Resource, ResourceData};
 use std::{error::Error, fmt::Debug, path::Path};
 
@@ -38,7 +38,7 @@ impl Material {
         &self.resource_bindings
     }
 
-    pub fn insert(&mut self, key: ImmutableString, binding: MaterialResourceBinding) {
+    pub fn insert(&mut self, key: BindGroupLayoutName, binding: MaterialResourceBinding) {
         self.resource_bindings.insert(key, binding);
     }
 

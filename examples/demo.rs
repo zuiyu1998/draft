@@ -1,9 +1,9 @@
 use std::{collections::HashMap, sync::Arc};
 
 use draft_render::{
-    BindGroupLayoutDescriptorBuilder, FragmentState, Geometry, GeometryResource, Material,
-    MaterialResource, MaterialResourceBinding, MaterialTextureBinding, MeshRenderPhase,
-    PipelineDescriptor, PipelineDescriptorResource, RenderPhasesContainer,
+    BindGroupLayoutDescriptorBuilder, BindGroupLayoutName, FragmentState, Geometry,
+    GeometryResource, Material, MaterialResource, MaterialResourceBinding, MaterialTextureBinding,
+    MeshRenderPhase, PipelineDescriptor, PipelineDescriptorResource, RenderPhasesContainer,
     RenderPipelineDescriptor, RenderServer, RenderWorld, Shader, ShaderResource, Texture,
     TextureResource, Vertex, VertexAttributeDescriptor,
     frame_graph::{ColorAttachment, FrameGraph},
@@ -350,8 +350,10 @@ fn new_batch(image: &TextureResource) -> Batch {
 
     let mut material = new_material();
 
+    let name = BindGroupLayoutName::new_local("diffuse");
+
     material.insert(
-        "diffuse".into(),
+        name,
         MaterialResourceBinding::Texture(MaterialTextureBinding {
             value: Some(image.clone()),
         }),
@@ -381,13 +383,15 @@ fn new_material() -> Material {
         })],
     });
 
+    let name = BindGroupLayoutName::new_local("diffuse");
+
     let mut builder = BindGroupLayoutDescriptorBuilder::new(ShaderStages::FRAGMENT);
     builder.add_bind_group_layout(
-        "diffuse".into(),
+        name.clone(),
         0,
         texture_2d(TextureSampleType::Float { filterable: true }),
     );
-    builder.add_bind_group_layout("diffuse".into(), 1, sampler(SamplerBindingType::Filtering));
+    builder.add_bind_group_layout(name, 1, sampler(SamplerBindingType::Filtering));
 
     desc.push_bind_group_layout(builder.build());
 
