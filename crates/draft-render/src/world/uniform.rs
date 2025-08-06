@@ -1,7 +1,6 @@
 use fxhash::FxHashMap;
 
 use crate::{
-    UniformBuffer,
     frame_graph::BufferInfo,
     gfx_base::{RenderDevice, RenderQueue},
     render_resource::RenderBuffer,
@@ -101,13 +100,6 @@ impl UniformBufferCache {
                     .write_buffer(&render_buffer.value, 0, bytes);
             }
         }
-    }
-
-    pub fn allocate<T>(&mut self, buffer: UniformBuffer) -> UniformBufferKey {
-        let desc = buffer.get_buffer_info();
-        let key = self.get_or_create(desc);
-        self.upload_bytes(&key, buffer.data());
-        key
     }
 
     pub fn get_or_create(&mut self, desc: BufferInfo) -> UniformBufferKey {

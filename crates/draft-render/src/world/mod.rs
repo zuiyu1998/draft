@@ -1,14 +1,17 @@
+mod buffer_allocator;
 mod geometry;
 mod material;
 mod pipeline;
-
+mod resource_key;
 mod shader;
 mod texture;
 mod uniform;
 
+pub use buffer_allocator::*;
 pub use geometry::*;
 pub use material::*;
 pub use pipeline::*;
+pub use resource_key::*;
 pub use shader::*;
 pub use texture::*;
 pub use uniform::*;

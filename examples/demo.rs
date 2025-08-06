@@ -1,11 +1,11 @@
 use std::{collections::HashMap, sync::Arc};
 
 use draft_render::{
-    BindGroupLayoutDescriptorBuilder, BindGroupLayoutName, FragmentState, Geometry,
-    GeometryResource, Material, MaterialResource, MaterialResourceBinding, MaterialTextureBinding,
-    MeshRenderPhase, PipelineDescriptor, PipelineDescriptorResource, RenderPhasesContainer,
-    RenderPipelineDescriptor, RenderServer, RenderWorld, Shader, ShaderResource, Texture,
-    TextureResource, Vertex, VertexAttributeDescriptor,
+    BindGroupLayoutDescriptorBuilder, FragmentState, Geometry, GeometryResource, Material,
+    MaterialResource, MaterialResourceBinding, MaterialTextureBinding, MeshRenderPhase,
+    PipelineDescriptor, PipelineDescriptorResource, RenderPhasesContainer,
+    RenderPipelineDescriptor, RenderServer, RenderWorld, ResourceKey, Shader, ShaderResource,
+    Texture, TextureResource, Vertex, VertexAttributeDescriptor,
     frame_graph::{ColorAttachment, FrameGraph},
     gfx_base::{
         BlendComponent, BlendState, ColorTargetState, ColorWrites, RawTextureFormat,
@@ -350,7 +350,7 @@ fn new_batch(image: &TextureResource) -> Batch {
 
     let mut material = new_material();
 
-    let name = BindGroupLayoutName::new_local("diffuse");
+    let name = ResourceKey::new_local("diffuse");
 
     material.insert(
         name,
@@ -383,7 +383,7 @@ fn new_material() -> Material {
         })],
     });
 
-    let name = BindGroupLayoutName::new_local("diffuse");
+    let name = ResourceKey::new_local("diffuse");
 
     let mut builder = BindGroupLayoutDescriptorBuilder::new(ShaderStages::FRAGMENT);
     builder.add_bind_group_layout(

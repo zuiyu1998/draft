@@ -1,7 +1,7 @@
 use std::ops::{Deref, DerefMut};
 
 use crate::{
-    BindGroupLayoutNameContainer, FrameworkError, RenderWorld, gfx_base::RawSampler,
+    FrameworkError, RenderWorld, ResourceKeyContainer, gfx_base::RawSampler,
     render_resource::RenderTexture,
 };
 
@@ -43,7 +43,7 @@ impl DerefMut for MaterialResourceHandleContainer {
 
 impl MaterialResourceHandleContainer {
     pub fn extra(
-        name_container: &BindGroupLayoutNameContainer,
+        key_container: &ResourceKeyContainer,
         resource_bindings: &ResourceBindings,
         render_world: &mut RenderWorld,
     ) -> Result<Self, FrameworkError> {
@@ -51,7 +51,7 @@ impl MaterialResourceHandleContainer {
 
         let mut target = vec![];
 
-        for name in name_container.names.iter() {
+        for name in key_container.keys.iter() {
             match resource_bindings.get(name).unwrap() {
                 MaterialResourceBinding::Texture(v) => {
                     let resource = v.value.clone().unwrap();

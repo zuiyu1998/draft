@@ -1,20 +1,19 @@
 use super::{MaterialBindGroupHandle, MaterialResourceBinding, MaterialResourceHandleContainer};
 use crate::{
-    BindGroupLayoutName, FrameworkError, RenderPipelineDescriptor, RenderWorld,
-    gfx_base::CachedPipelineId,
+    FrameworkError, RenderPipelineDescriptor, RenderWorld, ResourceKey, gfx_base::CachedPipelineId,
 };
 use fxhash::FxHashMap;
 use fyrox_core::{reflect::*, visitor::*};
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
-pub struct ResourceBindings(FxHashMap<BindGroupLayoutName, MaterialResourceBinding>);
+pub struct ResourceBindings(FxHashMap<ResourceKey, MaterialResourceBinding>);
 
 impl ResourceBindings {
-    pub fn get(&self, key: &BindGroupLayoutName) -> Option<&MaterialResourceBinding> {
+    pub fn get(&self, key: &ResourceKey) -> Option<&MaterialResourceBinding> {
         self.0.get(key)
     }
 
-    pub fn insert(&mut self, key: BindGroupLayoutName, binding: MaterialResourceBinding) {
+    pub fn insert(&mut self, key: ResourceKey, binding: MaterialResourceBinding) {
         self.0.insert(key, binding);
     }
 

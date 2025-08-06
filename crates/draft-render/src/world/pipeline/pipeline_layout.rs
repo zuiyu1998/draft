@@ -1,5 +1,5 @@
 use fxhash::FxHashMap;
-use fyrox_core::{ImmutableString, reflect::*, visitor::*};
+use fyrox_core::{reflect::*, visitor::*};
 use std::{
     collections::HashMap,
     hash::Hash,
@@ -8,7 +8,7 @@ use std::{
 };
 
 use crate::{
-    FrameworkError,
+    FrameworkError, ResourceKey,
     gfx_base::{
         BindGroupLayoutEntry, BindGroupLayoutEntryBuilder, RawBindGroupLayout, RawPipelineLayout,
         RawPipelineLayoutDescriptor, RenderDevice, ShaderStages,
@@ -32,7 +32,7 @@ impl BindGroupLayoutDescriptorBuilder {
 
     pub fn add_bind_group_layout(
         &mut self,
-        name: BindGroupLayoutName,
+        key: ResourceKey,
         binding: u32,
         bind_group_layout: BindGroupLayoutEntryBuilder,
     ) {
@@ -40,7 +40,7 @@ impl BindGroupLayoutDescriptorBuilder {
 
         let bind_group_layout = BindGroupLayoutEntryDescriptor {
             entry: bind_group_layout_entry,
-            name,
+            key,
         };
 
         if let Some(index) = self.binding_to_entries.get(&binding) {
@@ -64,50 +64,17 @@ pub struct BindGroupLayoutDescriptor {
     pub entries: Vec<BindGroupLayoutEntryDescriptor>,
 }
 
-#[derive(Debug, Clone, Reflect, Visit, PartialEq, Eq, Hash)]
-pub enum BindGroupLayoutName {
-    BuiltIn(ImmutableString),
-    Local(ImmutableString),
-}
-
-impl Default for BindGroupLayoutName {
-    fn default() -> Self {
-        Self::Local(ImmutableString::new(""))
-    }
-}
-
-impl BindGroupLayoutName {
-    pub fn immutable_string(&self) -> &ImmutableString {
-        match self {
-            BindGroupLayoutName::BuiltIn(v) => v,
-            BindGroupLayoutName::Local(v) => v,
-        }
-    }
-
-    pub fn is_built_in(&self) -> bool {
-        matches!(self, BindGroupLayoutName::BuiltIn(_))
-    }
-
-    pub fn new_local(name: &str) -> Self {
-        Self::Local(ImmutableString::new(name))
-    }
-
-    pub fn new_built_in(name: &str) -> Self {
-        Self::BuiltIn(ImmutableString::new(name))
-    }
-}
-
 #[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
 pub struct BindGroupLayoutEntryDescriptor {
     pub entry: BindGroupLayoutEntry,
-    pub name: BindGroupLayoutName,
+    pub key: ResourceKey,
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
 pub struct PipelineLayoutDescriptor(Vec<BindGroupLayoutDescriptor>);
 
-pub struct BindGroupLayoutNameContainer {
-    pub names: Vec<BindGroupLayoutName>,
+pub struct ResourceKeyContainer {
+    pub keys: Vec<ResourceKey>,
 }
 
 impl PipelineLayoutDescriptor {
@@ -115,18 +82,18 @@ impl PipelineLayoutDescriptor {
         &self.0
     }
 
-    pub fn get_bind_group_layout_names(&self) -> Vec<BindGroupLayoutNameContainer> {
+    pub fn get_bind_group_layout_names(&self) -> Vec<ResourceKeyContainer> {
         self.0
             .iter()
             .map(|desc| {
-                let mut names = vec![];
+                let mut keys = vec![];
                 for entry in desc.entries.iter() {
-                    if !names.contains(&entry.name) {
-                        names.push(entry.name.clone());
+                    if !keys.contains(&entry.key) {
+                        keys.push(entry.key.clone());
                     }
                 }
 
-                BindGroupLayoutNameContainer { names }
+                ResourceKeyContainer { keys }
             })
             .collect()
     }
