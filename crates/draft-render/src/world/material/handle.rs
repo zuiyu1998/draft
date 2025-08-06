@@ -1,7 +1,7 @@
 use std::ops::{Deref, DerefMut};
 
 use crate::{
-    FrameworkError, RenderWorld, ResourceKeyContainer, gfx_base::RawSampler,
+    FrameworkError, RenderWorld, ResourceKey, ResourceKeyContainer, gfx_base::RawSampler,
     render_resource::RenderTexture,
 };
 
@@ -23,7 +23,10 @@ pub struct MaterialSamplerHandle {
     pub sampler: RawSampler,
 }
 
-pub struct MaterialPropertyGroupHandle {}
+pub struct MaterialPropertyGroupHandle {
+    pub offset: u32,
+    pub resource_key: ResourceKey,
+}
 
 pub struct MaterialResourceHandleContainer(Vec<MaterialResourceHandle>);
 
@@ -51,8 +54,8 @@ impl MaterialResourceHandleContainer {
 
         let mut target = vec![];
 
-        for name in key_container.keys.iter() {
-            match resource_bindings.get(name).unwrap() {
+        for key in key_container.keys.iter() {
+            match resource_bindings.get(key).unwrap() {
                 MaterialResourceBinding::Texture(v) => {
                     let resource = v.value.clone().unwrap();
                     let texture_data = render_world.get_or_create_texture(&resource)?;
@@ -71,8 +74,20 @@ impl MaterialResourceHandleContainer {
 
                     binding += 1;
                 }
-                MaterialResourceBinding::PropertyGroup(_v) => {
-                    todo!()
+                MaterialResourceBinding::PropertyGroup(v) => {
+                    let named_values_container = v.get_named_values_container();
+                    let offset = render_world
+                        .buffer_allocator
+                        .write(key, named_values_container);
+
+                    target.push(MaterialResourceHandle::PropertyGroup(
+                        MaterialPropertyGroupHandle {
+                            offset,
+                            resource_key: key.clone(),
+                        },
+                    ));
+
+                    binding += 1;
                 }
             }
         }

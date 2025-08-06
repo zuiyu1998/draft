@@ -9,15 +9,11 @@ use fyrox_core::{
 };
 use strum_macros::{AsRefStr, EnumString, VariantNames};
 
-use crate::{NamedValue, Std140, TextureResource};
+use crate::{NamedValue, NamedValuesContainer, Std140, TextureResource};
 
-pub struct PropertyGroup<'a, const N: usize> {
-    pub properties: [NamedValue<MaterialPropertyRef<'a>>; N],
-}
-
-impl<const N: usize> Std140 for PropertyGroup<'_, N> {
+impl<'a> Std140 for NamedValuesContainer<MaterialPropertyRef<'a>> {
     fn write(&self, dest: &mut dyn BufMut, size: &mut u32) {
-        for property in self.properties.iter() {
+        for property in self.iter() {
             property.value.write(dest, size);
         }
     }
@@ -212,6 +208,21 @@ impl MaterialProperty {
 #[derive(Default, Debug, Visit, Clone, Reflect)]
 pub struct MaterialPropertyGroup {
     properties: FxHashMap<ImmutableString, MaterialProperty>,
+}
+
+impl MaterialPropertyGroup {
+    pub fn get_named_values_container<'a>(
+        &'a self,
+    ) -> NamedValuesContainer<MaterialPropertyRef<'a>> {
+        self.properties
+            .iter()
+            .map(|(key, property)| NamedValue {
+                name: key.clone(),
+                value: property.as_ref(),
+            })
+            .collect::<Vec<NamedValue<MaterialPropertyRef<'a>>>>()
+            .into()
+    }
 }
 
 #[derive(Debug, Clone, Visit, Reflect, Default)]

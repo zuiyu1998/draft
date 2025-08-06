@@ -1,20 +1,18 @@
-mod buffer_allocator;
+mod buffer;
 mod geometry;
 mod material;
 mod pipeline;
 mod resource_key;
 mod shader;
 mod texture;
-mod uniform;
 
-pub use buffer_allocator::*;
+pub use buffer::*;
 pub use geometry::*;
 pub use material::*;
 pub use pipeline::*;
 pub use resource_key::*;
 pub use shader::*;
 pub use texture::*;
-pub use uniform::*;
 
 use crate::{
     FrameworkError,
@@ -26,20 +24,19 @@ pub struct RenderWorld {
     pub pipeline_cache: PipelineCache,
     pub geometry_cache: GeometryCache,
     texture_cache: TextureCache,
-    pub uniform_buffer_cache: UniformBufferCache,
+    pub buffer_cache: BufferCache,
+    pub buffer_allocator: BufferAllocator,
 }
 
 impl RenderWorld {
     pub fn new(server: RenderServer) -> Self {
         Self {
             pipeline_cache: PipelineCache::new(server.device.clone()),
-            uniform_buffer_cache: UniformBufferCache::new(
-                server.device.clone(),
-                server.queue.clone(),
-            ),
+            buffer_cache: BufferCache::new(server.device.clone(), server.queue.clone()),
             server,
             geometry_cache: Default::default(),
             texture_cache: Default::default(),
+            buffer_allocator: Default::default(),
         }
     }
 
