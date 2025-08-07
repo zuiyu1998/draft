@@ -5,20 +5,22 @@ pub use mesh::*;
 use fxhash::FxHashMap;
 use fyrox_core::ImmutableString;
 
-use crate::{RenderWorld, frame_graph::RenderPassBuilder};
+use crate::{MaterialRenderData, RenderWorld, frame_graph::RenderPassBuilder};
 
 pub trait PhaseName {
     fn name() -> ImmutableString;
 }
 
 pub trait RenderPhase: 'static + PhaseName {
-    fn render(&self, render_pass_builder: &mut RenderPassBuilder, world: &RenderWorld);
+    fn get_material_render_data_mut(&mut self) -> &mut MaterialRenderData;
+
+    fn render(&self, render_pass_builder: &mut RenderPassBuilder, world: &mut RenderWorld);
 }
 
 pub trait ErasedRenderPhase: 'static {
     fn name(&self) -> ImmutableString;
 
-    fn render(&self, render_pass_builder: &mut RenderPassBuilder, world: &RenderWorld);
+    fn render(&self, render_pass_builder: &mut RenderPassBuilder, world: &mut RenderWorld);
 }
 
 impl<T: RenderPhase> ErasedRenderPhase for T {
@@ -26,7 +28,7 @@ impl<T: RenderPhase> ErasedRenderPhase for T {
         <T as PhaseName>::name()
     }
 
-    fn render(&self, render_pass_builder: &mut RenderPassBuilder, world: &RenderWorld) {
+    fn render(&self, render_pass_builder: &mut RenderPassBuilder, world: &mut RenderWorld) {
         <T as RenderPhase>::render(self, render_pass_builder, world);
     }
 }
@@ -52,7 +54,7 @@ impl RenderPhases {
         self.name.clone()
     }
 
-    pub fn render(&self, render_pass_builder: &mut RenderPassBuilder, world: &RenderWorld) {
+    pub fn render(&self, render_pass_builder: &mut RenderPassBuilder, world: &mut RenderWorld) {
         for phase in self.phases.iter() {
             phase.render(render_pass_builder, world);
         }

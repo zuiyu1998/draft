@@ -1,4 +1,5 @@
 use fyrox_core::ImmutableString;
+use wgpu::BufferUsages;
 
 use crate::{
     IndexRenderBuffer, MaterialRenderData, MaterialResourceHandle, PhaseName, RenderPhase,
@@ -18,7 +19,11 @@ impl PhaseName for MeshRenderPhase {
 }
 
 impl RenderPhase for MeshRenderPhase {
-    fn render(&self, render_pass_builder: &mut RenderPassBuilder, world: &RenderWorld) {
+    fn get_material_render_data_mut(&mut self) -> &mut MaterialRenderData {
+        &mut self.material_render_data
+    }
+
+    fn render(&self, render_pass_builder: &mut RenderPassBuilder, world: &mut RenderWorld) {
         if !world
             .pipeline_cache
             .has_render_pipeline(self.material_render_data.pipeline_id)
@@ -40,29 +45,45 @@ impl RenderPhase for MeshRenderPhase {
                     bind_group_handle.bind_group_layout.raw().clone(),
                 );
 
-            for handle in bind_group_handle.material_resource_handle_container.iter() {
+            let mut offsets = vec![];
+
+            for (binding, handle) in bind_group_handle
+                .material_resource_handle_container
+                .iter()
+                .enumerate()
+            {
                 match handle {
                     MaterialResourceHandle::Texture(material_texture_handle) => {
-                        bind_group_handle_builder = bind_group_handle_builder.add_texture_view(
-                            material_texture_handle.binding,
-                            &material_texture_handle.texture,
-                        );
+                        bind_group_handle_builder = bind_group_handle_builder
+                            .add_texture_view(binding as u32, &material_texture_handle.texture);
                     }
                     MaterialResourceHandle::Sampler(material_sampler_handle) => {
-                        bind_group_handle_builder = bind_group_handle_builder.add_handle(
-                            material_sampler_handle.binding,
-                            &material_sampler_handle.sampler,
-                        );
+                        bind_group_handle_builder = bind_group_handle_builder
+                            .add_handle(binding as u32, &material_sampler_handle.sampler);
                     }
-                    MaterialResourceHandle::PropertyGroup(_material_property_group_handle) => {
-                        todo!()
+                    MaterialResourceHandle::PropertyGroup(material_property_group_handle) => {
+                        let handle = world.material_buffer_handle_cache.get_or_create(
+                            &mut world.buffer_allocator,
+                            &mut world.buffer_cache,
+                            bind_group_handle_builder.frame_graph_mut(),
+                            material_property_group_handle,
+                            BufferUsages::UNIFORM | BufferUsages::COPY_DST,
+                        );
+                        offsets.push(material_property_group_handle.offset);
+                        bind_group_handle_builder =
+                            bind_group_handle_builder.add_handle(binding as u32, &handle);
+                    }
+                    MaterialResourceHandle::Buffer(material_buffer_handle) => {
+                        offsets.push(material_buffer_handle.offset);
+                        bind_group_handle_builder = bind_group_handle_builder
+                            .add_handle(binding as u32, &material_buffer_handle.handle);
                     }
                 }
             }
 
             let bind_group_handle = bind_group_handle_builder.build();
 
-            render_pass_builder.set_bind_group_handle(index as u32, &bind_group_handle, &[]);
+            render_pass_builder.set_bind_group_handle(index as u32, &bind_group_handle, &offsets);
         }
 
         let buffer_ref = render_pass_builder.read_material(&self.vertex_buffer);

@@ -1,19 +1,17 @@
 use super::{MaterialBindGroupHandle, MaterialResourceBinding, MaterialResourceHandleContainer};
-use crate::{
-    FrameworkError, RenderPipelineDescriptor, RenderWorld, ResourceKey, gfx_base::CachedPipelineId,
-};
+use crate::{FrameworkError, RenderPipelineDescriptor, RenderWorld, gfx_base::CachedPipelineId};
 use fxhash::FxHashMap;
-use fyrox_core::{reflect::*, visitor::*};
+use fyrox_core::{ImmutableString, reflect::*, visitor::*};
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
-pub struct ResourceBindings(FxHashMap<ResourceKey, MaterialResourceBinding>);
+pub struct ResourceBindings(FxHashMap<ImmutableString, MaterialResourceBinding>);
 
 impl ResourceBindings {
-    pub fn get(&self, key: &ResourceKey) -> Option<&MaterialResourceBinding> {
+    pub fn get(&self, key: &ImmutableString) -> Option<&MaterialResourceBinding> {
         self.0.get(key)
     }
 
-    pub fn insert(&mut self, key: ResourceKey, binding: MaterialResourceBinding) {
+    pub fn insert(&mut self, key: ImmutableString, binding: MaterialResourceBinding) {
         self.0.insert(key, binding);
     }
 

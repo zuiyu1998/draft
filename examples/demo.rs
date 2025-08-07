@@ -4,8 +4,8 @@ use draft_render::{
     BindGroupLayoutDescriptorBuilder, FragmentState, Geometry, GeometryResource, Material,
     MaterialResource, MaterialResourceBinding, MaterialTextureBinding, MeshRenderPhase,
     PipelineDescriptor, PipelineDescriptorResource, RenderPhasesContainer,
-    RenderPipelineDescriptor, RenderServer, RenderWorld, ResourceKey, Shader, ShaderResource,
-    Texture, TextureResource, Vertex, VertexAttributeDescriptor,
+    RenderPipelineDescriptor, RenderServer, RenderWorld, Shader, ShaderResource, Texture,
+    TextureResource, Vertex, VertexAttributeDescriptor,
     frame_graph::{ColorAttachment, FrameGraph},
     gfx_base::{
         BlendComponent, BlendState, ColorTargetState, ColorWrites, RawTextureFormat,
@@ -23,7 +23,7 @@ use draft_render::{
 
 use draft::renderer::{Batch, PipelineContext, PipelineNode, WorldRenderer};
 
-use fyrox_core::{futures, task::TaskPool, uuid};
+use fyrox_core::{ImmutableString, futures, task::TaskPool, uuid};
 use fyrox_resource::{
     embedded_data_source,
     io::FsResourceIo,
@@ -350,7 +350,7 @@ fn new_batch(image: &TextureResource) -> Batch {
 
     let mut material = new_material();
 
-    let name = ResourceKey::new_local("diffuse");
+    let name = "diffuse".into();
 
     material.insert(
         name,
@@ -383,7 +383,7 @@ fn new_material() -> Material {
         })],
     });
 
-    let name = ResourceKey::new_local("diffuse");
+    let name: ImmutableString = "diffuse".into();
 
     let mut builder = BindGroupLayoutDescriptorBuilder::new(ShaderStages::FRAGMENT);
     builder.add_bind_group_layout(

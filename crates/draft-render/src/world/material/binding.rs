@@ -236,6 +236,8 @@ pub enum MaterialResourceBinding {
     Texture(MaterialTextureBinding),
     /// A group of properties.
     PropertyGroup(MaterialPropertyGroup),
+    /// BuiltIn
+    BuiltIn,
 }
 
 impl Default for MaterialResourceBinding {

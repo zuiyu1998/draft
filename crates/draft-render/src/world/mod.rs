@@ -2,7 +2,6 @@ mod buffer;
 mod geometry;
 mod material;
 mod pipeline;
-mod resource_key;
 mod shader;
 mod texture;
 
@@ -10,7 +9,6 @@ pub use buffer::*;
 pub use geometry::*;
 pub use material::*;
 pub use pipeline::*;
-pub use resource_key::*;
 pub use shader::*;
 pub use texture::*;
 
@@ -26,6 +24,7 @@ pub struct RenderWorld {
     texture_cache: TextureCache,
     pub buffer_cache: BufferCache,
     pub buffer_allocator: BufferAllocator,
+    pub material_buffer_handle_cache: MaterialBufferHandleCache,
 }
 
 impl RenderWorld {
@@ -37,6 +36,7 @@ impl RenderWorld {
             geometry_cache: Default::default(),
             texture_cache: Default::default(),
             buffer_allocator: Default::default(),
+            material_buffer_handle_cache: Default::default(),
         }
     }
 

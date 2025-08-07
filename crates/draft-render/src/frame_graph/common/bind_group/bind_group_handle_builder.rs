@@ -27,6 +27,11 @@ impl<'a> BindGroupHandleBuilder<'a> {
             frame_graph,
         }
     }
+
+    pub fn frame_graph_mut(&mut self) -> &mut FrameGraph {
+        self.frame_graph
+    }
+
     pub fn add_texture_view<T: BindGroupTextureViewHandleHelper>(
         self,
         binding: u32,

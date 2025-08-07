@@ -1,11 +1,14 @@
 use bytes::BytesMut;
 use fxhash::FxHashMap;
+use fyrox_core::ImmutableString;
+use image::EncodableLayout;
+use wgpu::BufferUsages;
 
-use crate::{ResourceKey, Std140};
+use crate::{Std140, frame_graph::BufferInfo};
 
 #[derive(Default)]
 pub struct BufferAllocator {
-    buffers: FxHashMap<ResourceKey, Buffer>,
+    buffers: FxHashMap<ImmutableString, Buffer>,
 }
 
 #[derive(Default)]
@@ -22,20 +25,37 @@ impl Buffer {
 }
 
 impl BufferAllocator {
-    fn get_or_create(&mut self, key: ResourceKey) -> &mut Buffer {
+    pub fn get_bytes(&self, key: &ImmutableString) -> &[u8] {
+        self.buffers.get(key).unwrap().bytes.as_bytes()
+    }
+
+    pub fn get_buffer_info(&self, key: &ImmutableString, usage: BufferUsages) -> BufferInfo {
+        let size = self.buffers.get(key).unwrap().bytes.len();
+
+        BufferInfo {
+            label: None,
+            size: size as u64,
+            usage,
+            mapped_at_creation: false,
+        }
+    }
+
+    fn get_or_create(&mut self, key: ImmutableString) -> &mut Buffer {
         self.buffers.entry(key).or_default()
     }
 
-    pub fn write<T: Std140>(&mut self, key: &ResourceKey, value: T) -> u32 {
+    pub fn write<T: Std140>(&mut self, key: &ImmutableString, value: T) -> (u32, u32) {
         let buffer = self.get_or_create(key.clone());
 
         let mut offset = buffer.last_offset;
 
         value.write(&mut buffer.bytes, &mut offset);
 
+        let size = offset - buffer.last_offset;
+
         buffer.last_offset = offset;
 
-        offset
+        (offset, size)
     }
 
     pub fn clear(&mut self) {

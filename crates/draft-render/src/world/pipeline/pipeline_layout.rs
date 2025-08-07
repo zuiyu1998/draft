@@ -1,5 +1,5 @@
 use fxhash::FxHashMap;
-use fyrox_core::{reflect::*, visitor::*};
+use fyrox_core::{ImmutableString, reflect::*, visitor::*};
 use std::{
     collections::HashMap,
     hash::Hash,
@@ -8,7 +8,7 @@ use std::{
 };
 
 use crate::{
-    FrameworkError, ResourceKey,
+    FrameworkError,
     gfx_base::{
         BindGroupLayoutEntry, BindGroupLayoutEntryBuilder, RawBindGroupLayout, RawPipelineLayout,
         RawPipelineLayoutDescriptor, RenderDevice, ShaderStages,
@@ -32,7 +32,7 @@ impl BindGroupLayoutDescriptorBuilder {
 
     pub fn add_bind_group_layout(
         &mut self,
-        key: ResourceKey,
+        key: ImmutableString,
         binding: u32,
         bind_group_layout: BindGroupLayoutEntryBuilder,
     ) {
@@ -67,14 +67,14 @@ pub struct BindGroupLayoutDescriptor {
 #[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
 pub struct BindGroupLayoutEntryDescriptor {
     pub entry: BindGroupLayoutEntry,
-    pub key: ResourceKey,
+    pub key: ImmutableString,
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
 pub struct PipelineLayoutDescriptor(Vec<BindGroupLayoutDescriptor>);
 
 pub struct ResourceKeyContainer {
-    pub keys: Vec<ResourceKey>,
+    pub keys: Vec<ImmutableString>,
 }
 
 impl PipelineLayoutDescriptor {
