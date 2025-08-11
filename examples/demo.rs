@@ -6,7 +6,7 @@ use draft_render::{
     PipelineDescriptor, PipelineDescriptorResource, RenderPhasesContainer,
     RenderPipelineDescriptor, RenderServer, RenderWorld, Shader, ShaderResource, Texture,
     TextureResource, Vertex, VertexAttributeDescriptor,
-    frame_graph::{ColorAttachment, FrameGraph},
+    frame_graph::{ColorAttachment, FrameGraph, TextureView},
     gfx_base::{
         BlendComponent, BlendState, ColorTargetState, ColorWrites, RawTextureFormat,
         RawTextureView, SamplerBindingType, ShaderStages, TextureFormat, TextureSampleType,
@@ -307,7 +307,7 @@ impl State {
             .clone()
         {
             let pipeline_context = PipelineContext {
-                texture_view,
+                texture_view: TextureView::new(texture_view),
                 batch: &self.batch,
             };
 

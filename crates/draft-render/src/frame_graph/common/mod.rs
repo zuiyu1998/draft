@@ -12,11 +12,3 @@ pub use depth_stencil_attachment::*;
 pub use render_pass::*;
 pub use texel_copy_texture_info::*;
 pub use texture_view::*;
-
-use crate::frame_graph::FrameGraphContext;
-
-pub trait TransientResourceBinding {
-    type Resource;
-
-    fn make_resource(&self, frame_graph_context: &FrameGraphContext<'_>) -> Self::Resource;
-}

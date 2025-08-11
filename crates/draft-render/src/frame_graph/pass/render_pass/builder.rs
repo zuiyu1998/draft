@@ -7,17 +7,17 @@ use wgpu::{QuerySet, ShaderStages};
 
 use crate::{
     frame_graph::{
-        BindGroupBinding, BindGroupHandle, ColorAttachment, ColorAttachmentRecord,
-        DepthStencilAttachment, FrameGraph, Ref, RenderPassCommandBuilder,
-        RenderPassCommandContainer, ResourceMaterial, ResourceRead, ResourceWrite, TransientBuffer,
+        BindGroupHandle, BindGroupInfo, ColorAttachment, ColorAttachmentInfo,
+        DepthStencilAttachmentInfo, FrameGraph, PassBuilder, Ref, RenderPassCommandBuilder,
+        ResourceMaterial, ResourceRead, ResourceWrite, TransientBuffer,
     },
     gfx_base::CachedPipelineId,
 };
 
-use super::PassBuilder;
+use super::RenderPass;
 
 pub struct RenderPassBuilder<'a, 'b> {
-    render_pass: RenderPassCommandContainer,
+    render_pass: RenderPass,
     pass_builder: &'b mut PassBuilder<'a>,
 }
 
@@ -43,7 +43,7 @@ impl Drop for RenderPassBuilder<'_, '_> {
 
 impl<'a, 'b> RenderPassBuilder<'a, 'b> {
     pub fn new(pass_builder: &'b mut PassBuilder<'a>, name: &str) -> Self {
-        let mut render_pass = RenderPassCommandContainer::default();
+        let mut render_pass = RenderPass::default();
         render_pass.set_pass_name(name);
 
         Self {
@@ -81,7 +81,7 @@ impl<'a, 'b> RenderPassBuilder<'a, 'b> {
     pub fn set_bind_group_binding(
         &mut self,
         index: u32,
-        bind_group: &BindGroupBinding,
+        bind_group: &BindGroupInfo,
         offsets: &[u32],
     ) -> &mut Self {
         self.render_pass.set_bind_group(index, bind_group, offsets);
@@ -96,10 +96,8 @@ impl<'a, 'b> RenderPassBuilder<'a, 'b> {
     }
 
     fn finish(&mut self) {
-        self.render_pass.finish();
-
         let render_pass = take(&mut self.render_pass);
-        self.pass_builder.add_executor(render_pass);
+        self.pass_builder.push(render_pass);
     }
 
     pub fn end_pipeline_statistics_query(&mut self) -> &mut Self {
@@ -323,14 +321,14 @@ impl<'a, 'b> RenderPassBuilder<'a, 'b> {
 
     pub fn add_color_attachments(
         &mut self,
-        color_attachments: Vec<Option<ColorAttachmentRecord>>,
+        color_attachments: Vec<Option<ColorAttachmentInfo>>,
     ) -> &mut Self {
         self.render_pass.add_color_attachments(color_attachments);
 
         self
     }
 
-    pub fn add_color_attachment(&mut self, color_attachment: ColorAttachmentRecord) -> &mut Self {
+    pub fn add_color_attachment(&mut self, color_attachment: ColorAttachmentInfo) -> &mut Self {
         self.render_pass
             .add_color_attachment(Some(color_attachment));
 
@@ -339,7 +337,7 @@ impl<'a, 'b> RenderPassBuilder<'a, 'b> {
 
     pub fn set_depth_stencil_attachment(
         &mut self,
-        depth_stencil_attachment: DepthStencilAttachment,
+        depth_stencil_attachment: DepthStencilAttachmentInfo,
     ) -> &mut Self {
         self.render_pass
             .set_depth_stencil_attachment(depth_stencil_attachment);

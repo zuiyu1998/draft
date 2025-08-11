@@ -1,6 +1,7 @@
 use draft_render::{
     FrameworkError, GeometryResource, MaterialResource, MeshRenderPhase, RenderPhasesContainer,
-    RenderWorld, frame_graph::FrameGraph, gfx_base::RawTextureView,
+    RenderWorld,
+    frame_graph::{FrameGraph, TextureView},
 };
 
 pub trait MeshPhaseExtractor {
@@ -73,7 +74,7 @@ impl MeshPhaseExtractor for Batch {
 
 pub struct PipelineContext<'a> {
     pub batch: &'a Batch,
-    pub texture_view: RawTextureView,
+    pub texture_view: TextureView,
 }
 
 pub trait PipelineNode: 'static {

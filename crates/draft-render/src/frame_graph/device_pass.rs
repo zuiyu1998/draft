@@ -1,6 +1,6 @@
-use super::{
-    FrameGraph, FrameGraphContext, IndexHandle, Pass, PassNode, ResourceRelease, ResourceRequese,
-};
+use crate::frame_graph::FrameGraphContext;
+
+use super::{FrameGraph, IndexHandle, Pass, PassNode, ResourceRelease, ResourceRequese};
 
 #[derive(Default)]
 pub struct DevicePass {
@@ -11,31 +11,31 @@ pub struct DevicePass {
 }
 
 impl DevicePass {
-    pub fn request_resources(&self, frame_graph_context: &mut FrameGraphContext) {
+    pub fn request_resources(&self, context: &mut FrameGraphContext) {
         for resource in self.resource_request_array.iter() {
-            frame_graph_context.resource_table.request_resource(
+            context.resource_table.request_resource(
                 resource,
-                frame_graph_context.render_device,
-                frame_graph_context.transient_resource_cache,
+                &context.render_device,
+                context.transient_resource_cache,
             );
         }
     }
 
-    pub fn release_resources(&self, frame_graph_context: &mut FrameGraphContext) {
+    pub fn release_resources(&self, context: &mut FrameGraphContext) {
         for handle in self.resource_release_array.iter() {
-            frame_graph_context
+            context
                 .resource_table
-                .release_resource(handle, frame_graph_context.transient_resource_cache);
+                .release_resource(handle, context.transient_resource_cache);
         }
     }
 
-    pub fn execute(&self, frame_graph_context: &mut FrameGraphContext) {
-        self.request_resources(frame_graph_context);
+    pub fn execute(&self, context: &mut FrameGraphContext) {
+        self.request_resources(context);
 
         if let Some(pass) = &self.pass {
-            pass.render(frame_graph_context);
+            pass.render(context);
         }
-        self.release_resources(frame_graph_context);
+        self.release_resources(context);
     }
 
     pub fn extra(&mut self, graph: &mut FrameGraph, index: IndexHandle<PassNode>) {

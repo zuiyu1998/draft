@@ -1,53 +1,51 @@
 use crate::{
-    frame_graph::FrameGraphContext,
-    gfx_base::{Color, Operations, RawTextureView},
+    frame_graph::PassContext,
+    gfx_base::{Color, Operations},
 };
 
-use super::{TextureViewRead, TextureViewWrite, TransientResourceBinding};
+use super::{TextureView, TextureViewInfoRead, TextureViewInfoWrite};
 
 #[derive(Clone)]
-pub struct ColorAttachmentRecord {
-    pub view: TextureViewWrite,
-    pub resolve_target: Option<TextureViewRead>,
+pub struct ColorAttachmentInfo {
+    pub view: TextureViewInfoWrite,
+    pub resolve_target: Option<TextureViewInfoRead>,
     pub ops: Operations<Color>,
 }
 
 #[derive(Clone)]
 pub struct ColorAttachment {
-    pub view: RawTextureView,
-    pub resolve_target: Option<RawTextureView>,
+    pub view: TextureView,
+    pub resolve_target: Option<TextureView>,
     pub ops: Operations<Color>,
 }
 
 impl ColorAttachment {
     pub fn get_render_pass_color_attachment(&self) -> wgpu::RenderPassColorAttachment {
         wgpu::RenderPassColorAttachment {
-            view: &self.view,
-            resolve_target: self.resolve_target.as_ref(),
+            view: self.view.get_gpu_texture_view(),
+            resolve_target: self
+                .resolve_target
+                .as_ref()
+                .map(|view| view.get_gpu_texture_view()),
             ops: self.ops,
         }
     }
-}
 
-impl TransientResourceBinding for ColorAttachmentRecord {
-    type Resource = ColorAttachment;
-
-    fn make_resource(&self, frame_graph_context: &FrameGraphContext<'_>) -> Self::Resource {
-        let view = self.view.make_resource(frame_graph_context);
-
-        if let Some(resolve_target) = &self.resolve_target {
-            let resolve_target = resolve_target.make_resource(frame_graph_context);
+    pub fn new(context: &PassContext<'_>, info: &ColorAttachmentInfo) -> Self {
+        let view = TextureView::from_info(context, &info.view);
+        if let Some(resolve_target) = &info.resolve_target {
+            let resolve_target = TextureView::from_info(context, resolve_target);
 
             ColorAttachment {
                 view,
                 resolve_target: Some(resolve_target),
-                ops: self.ops,
+                ops: info.ops,
             }
         } else {
             ColorAttachment {
                 view,
                 resolve_target: None,
-                ops: self.ops,
+                ops: info.ops,
             }
         }
     }

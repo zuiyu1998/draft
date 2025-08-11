@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::{
     frame_graph::{
         BindGroupTextureViewHandle, BindGroupTextureViewHandleHelper, FrameGraph, Handle,
-        ResourceMaterial, TextureInfo, TextureViewInfo, TransientTexture,
+        ResourceMaterial, TextureInfo, TextureViewDescriptor, TransientTexture,
     },
     gfx_base::RawTexture,
 };
@@ -24,7 +24,7 @@ impl BindGroupTextureViewHandleHelper for RenderTexture {
 
         BindGroupTextureViewHandle {
             texture,
-            texture_view_info: TextureViewInfo::default(),
+            texture_view_desc: TextureViewDescriptor::default(),
         }
     }
 }

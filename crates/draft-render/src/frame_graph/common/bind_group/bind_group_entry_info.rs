@@ -1,12 +1,12 @@
 use std::num::NonZero;
 
 use crate::{
-    frame_graph::{Ref, ResourceRead, TextureViewInfo, TransientBuffer, TransientTexture},
+    frame_graph::{Ref, ResourceRead, TextureViewDescriptor, TransientBuffer, TransientTexture},
     gfx_base::RawSampler,
 };
 
 #[derive(Clone)]
-pub struct BindGroupEntryBinding {
+pub struct BindGroupEntryInfo {
     pub binding: u32,
     pub resource: BindGroupResourceBinding,
 }
@@ -29,7 +29,7 @@ pub struct BindGroupBufferBinding {
 #[derive(Clone)]
 pub struct BindGroupTextureViewBinding {
     pub texture: Ref<TransientTexture, ResourceRead>,
-    pub texture_view_info: TextureViewInfo,
+    pub texture_view_desc: TextureViewDescriptor,
 }
 
 pub trait IntoBindGroupResourceBinding {
@@ -60,11 +60,13 @@ impl IntoBindGroupResourceBinding for &BindGroupResourceBinding {
     }
 }
 
-impl IntoBindGroupResourceBinding for (&Ref<TransientTexture, ResourceRead>, &TextureViewInfo) {
+impl IntoBindGroupResourceBinding
+    for (&Ref<TransientTexture, ResourceRead>, &TextureViewDescriptor)
+{
     fn into_binding(self) -> BindGroupResourceBinding {
         BindGroupResourceBinding::TextureView(BindGroupTextureViewBinding {
             texture: self.0.clone(),
-            texture_view_info: self.1.clone(),
+            texture_view_desc: self.1.clone(),
         })
     }
 }

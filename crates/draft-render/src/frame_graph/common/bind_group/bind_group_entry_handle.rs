@@ -4,15 +4,15 @@ use wgpu::BindGroupLayout;
 
 use crate::{
     frame_graph::{
-        BindGroupBinding, BindGroupBufferBinding, BindGroupResourceBinding,
+        BindGroupBufferBinding, BindGroupInfo, BindGroupResourceBinding,
         BindGroupResourceBindingHelper, BindGroupTextureViewBinding, Handle,
-        IntoBindGroupResourceBinding, PassNodeBuilder, TextureViewInfo, TransientBuffer,
+        IntoBindGroupResourceBinding, PassNodeBuilder, TextureViewDescriptor, TransientBuffer,
         TransientTexture,
     },
     gfx_base::RawSampler,
 };
 
-use super::BindGroupEntryBinding;
+use super::BindGroupEntryInfo;
 
 #[derive(Clone)]
 pub struct BindGroupHandle {
@@ -22,14 +22,14 @@ pub struct BindGroupHandle {
 }
 
 impl BindGroupHandle {
-    pub fn make_binding(&self, pass_node_builder: &mut PassNodeBuilder) -> BindGroupBinding {
+    pub fn make_binding(&self, pass_node_builder: &mut PassNodeBuilder) -> BindGroupInfo {
         let entries = self
             .entries
             .iter()
             .map(|entry| entry.get_binding(pass_node_builder))
             .collect::<Vec<_>>();
 
-        BindGroupBinding {
+        BindGroupInfo {
             label: self.label.clone(),
             layout: self.layout.clone(),
             entries,
@@ -44,12 +44,12 @@ pub struct BindGroupEntryHandle {
 }
 
 impl BindGroupEntryHandle {
-    pub fn get_binding(&self, pass_node_builder: &mut PassNodeBuilder) -> BindGroupEntryBinding {
+    pub fn get_binding(&self, pass_node_builder: &mut PassNodeBuilder) -> BindGroupEntryInfo {
         let resource = self
             .resource
             .make_bind_group_resource_binding(pass_node_builder);
 
-        BindGroupEntryBinding {
+        BindGroupEntryInfo {
             binding: self.binding,
             resource,
         }
@@ -87,7 +87,7 @@ impl BindGroupResourceBindingHelper for BindGroupResourceHandle {
 
                 BindGroupResourceBinding::TextureView(BindGroupTextureViewBinding {
                     texture,
-                    texture_view_info: handle.texture_view_info.clone(),
+                    texture_view_desc: handle.texture_view_desc.clone(),
                 })
             }
             BindGroupResourceHandle::TextureViewArray(handles) => {
@@ -96,7 +96,7 @@ impl BindGroupResourceBindingHelper for BindGroupResourceHandle {
                     let texture = pass_node_builder.read(handle.texture.clone());
                     target.push(BindGroupTextureViewBinding {
                         texture,
-                        texture_view_info: handle.texture_view_info.clone(),
+                        texture_view_desc: handle.texture_view_desc.clone(),
                     });
                 }
 
@@ -116,7 +116,7 @@ pub struct BindGroupBufferHandle {
 #[derive(Clone)]
 pub struct BindGroupTextureViewHandle {
     pub texture: Handle<TransientTexture>,
-    pub texture_view_info: TextureViewInfo,
+    pub texture_view_desc: TextureViewDescriptor,
 }
 
 pub trait IntoBindGroupResourceHandle {
@@ -201,11 +201,11 @@ impl IntoBindGroupResourceHandle for &RawSampler {
     }
 }
 
-impl IntoBindGroupResourceHandle for (&Handle<TransientTexture>, &TextureViewInfo) {
+impl IntoBindGroupResourceHandle for (&Handle<TransientTexture>, &TextureViewDescriptor) {
     fn into_binding(self) -> BindGroupResourceHandle {
         BindGroupResourceHandle::TextureView(BindGroupTextureViewHandle {
             texture: self.0.clone(),
-            texture_view_info: self.1.clone(),
+            texture_view_desc: self.1.clone(),
         })
     }
 }

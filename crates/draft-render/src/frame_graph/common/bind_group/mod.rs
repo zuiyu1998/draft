@@ -1,12 +1,12 @@
-pub mod bind_group_binding;
-pub mod bind_group_entry_binding;
 pub mod bind_group_entry_handle;
+pub mod bind_group_entry_info;
 pub mod bind_group_handle_builder;
+pub mod bind_group_info;
 
-pub use bind_group_binding::*;
-pub use bind_group_entry_binding::*;
 pub use bind_group_entry_handle::*;
+pub use bind_group_entry_info::*;
 pub use bind_group_handle_builder::*;
+pub use bind_group_info::*;
 
 use crate::frame_graph::{FrameGraph, PassNodeBuilder};
 

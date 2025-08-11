@@ -1,14 +1,50 @@
 use std::{borrow::Cow, sync::Arc};
 
-use wgpu::BindGroupLayout;
+use wgpu::{BindGroupLayout, CommandBuffer};
 
-use crate::frame_graph::{BindGroupHandleBuilder, PassBuilder, PassNodeBuilder};
+use crate::{
+    frame_graph::{
+        BindGroupHandleBuilder, PassBuilder, PassNodeBuilder, ResourceTable, TransientResourceCache,
+    },
+    gfx_base::{GetPipelineContainer, PipelineContainer, RenderDevice},
+};
 
 use super::{
-    DevicePass, FrameGraphContext, Handle, IndexHandle, IntoArcTransientResource, PassNode,
-    ResourceBoard, ResourceNode, TransientResource, TransientResourceDescriptor, TypeEquals,
-    VirtualResource,
+    DevicePass, Handle, IndexHandle, IntoArcTransientResource, PassNode, ResourceBoard,
+    ResourceNode, TransientResource, TransientResourceDescriptor, TypeEquals, VirtualResource,
 };
+
+pub struct FrameGraphContext<'a> {
+    pub resource_table: ResourceTable,
+    pub pipeline_container: PipelineContainer,
+    pub render_device: RenderDevice,
+    pub transient_resource_cache: &'a mut TransientResourceCache,
+    command_buffers: Vec<CommandBuffer>,
+}
+
+impl<'a> FrameGraphContext<'a> {
+    pub fn new<T: GetPipelineContainer>(
+        pipeline_cache: &'a T,
+        render_device: &'a RenderDevice,
+        transient_resource_cache: &'a mut TransientResourceCache,
+    ) -> Self {
+        Self {
+            resource_table: Default::default(),
+            pipeline_container: pipeline_cache.get_pipeline_container(),
+            render_device: render_device.clone(),
+            transient_resource_cache,
+            command_buffers: vec![],
+        }
+    }
+
+    pub fn add_command_buffer(&mut self, command_buffer: CommandBuffer) {
+        self.command_buffers.push(command_buffer);
+    }
+
+    pub fn finish(self) -> Vec<CommandBuffer> {
+        self.command_buffers
+    }
+}
 
 pub trait ResourceMaterial {
     type ResourceType: TransientResource;
@@ -21,9 +57,9 @@ pub struct CompiledFrameGraph {
 }
 
 impl CompiledFrameGraph {
-    pub fn execute(&self, frame_graph_context: &mut FrameGraphContext) {
+    pub fn execute(&self, context: &mut FrameGraphContext) {
         for device_pass in self.device_passes.iter() {
-            device_pass.execute(frame_graph_context);
+            device_pass.execute(context);
         }
     }
 }
@@ -44,13 +80,13 @@ impl FrameGraph {
         self.resource_board = ResourceBoard::default();
     }
 
-    pub fn execute(&mut self, frame_graph_context: &mut FrameGraphContext) {
+    pub fn execute(&mut self, context: &mut FrameGraphContext) {
         if self.compiled_frame_graph.is_none() {
             return;
         }
 
         if let Some(compiled_frame_graph) = &mut self.compiled_frame_graph {
-            compiled_frame_graph.execute(frame_graph_context);
+            compiled_frame_graph.execute(context);
         }
 
         self.reset();

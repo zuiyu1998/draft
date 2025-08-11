@@ -1,75 +1,81 @@
 use std::borrow::Cow;
 
-use crate::frame_graph::FrameGraphContext;
+use crate::frame_graph::PassContext;
 
 use super::{
-    ColorAttachment, ColorAttachmentRecord, DepthStencilAttachment, DepthStencilAttachmentOwned,
-    TransientResourceBinding,
+    ColorAttachment, ColorAttachmentInfo, DepthStencilAttachment, DepthStencilAttachmentInfo,
 };
 
 #[derive(Default)]
-pub struct RenderPassRecord {
+pub struct RenderPassInfo {
     pub label: Option<Cow<'static, str>>,
-    pub color_attachments: Vec<Option<ColorAttachmentRecord>>,
-    pub depth_stencil_attachment: Option<DepthStencilAttachment>,
+    pub color_attachments: Vec<Option<ColorAttachmentInfo>>,
+    pub depth_stencil_attachment: Option<DepthStencilAttachmentInfo>,
     pub out_color_attachments: Vec<Option<ColorAttachment>>,
 }
 
-pub struct RenderPass {
+pub struct RenderPassDescriptor {
     pub label: Option<Cow<'static, str>>,
     pub color_attachments: Vec<Option<ColorAttachment>>,
-    pub depth_stencil_attachment: Option<DepthStencilAttachmentOwned>,
+    pub depth_stencil_attachment: Option<DepthStencilAttachment>,
 }
 
-impl TransientResourceBinding for RenderPassRecord {
-    type Resource = RenderPass;
+impl RenderPassDescriptor {
+    pub fn new(context: &PassContext<'_>, info: &RenderPassInfo) -> Self {
+        let mut color_attachments = info.out_color_attachments.clone();
 
-    fn make_resource(&self, frame_graph_context: &FrameGraphContext<'_>) -> Self::Resource {
-        let mut color_attachments = self.out_color_attachments.clone();
-
-        for color_attachment in self.color_attachments.iter() {
+        for color_attachment in info.color_attachments.iter() {
             if color_attachment.is_none() {
                 color_attachments.push(None);
             } else {
-                color_attachments.push(Some(
-                    color_attachment
-                        .as_ref()
-                        .unwrap()
-                        .make_resource(frame_graph_context),
-                ));
+                color_attachments.push(Some(ColorAttachment::new(
+                    context,
+                    color_attachment.as_ref().unwrap(),
+                )));
             }
         }
 
-        let mut depth_stencil_attachment_owned = None;
+        let mut depth_stencil_attachment = None;
 
-        if let Some(depth_stencil_attachment) = &self.depth_stencil_attachment {
-            depth_stencil_attachment_owned =
-                Some(depth_stencil_attachment.make_resource(frame_graph_context));
+        if let Some(depth_stencil_attachment_info) = &info.depth_stencil_attachment {
+            depth_stencil_attachment = Some(DepthStencilAttachment::new(
+                context,
+                depth_stencil_attachment_info,
+            ));
         }
 
-        RenderPass {
-            label: self.label.clone(),
+        RenderPassDescriptor {
+            label: info.label.clone(),
             color_attachments,
-            depth_stencil_attachment: depth_stencil_attachment_owned,
+            depth_stencil_attachment,
         }
     }
 }
 
-impl RenderPass {
-    pub fn create_render_pass(
-        &self,
-        command_encoder: &mut wgpu::CommandEncoder,
-    ) -> wgpu::RenderPass<'static> {
+pub struct GpuRenderPass(wgpu::RenderPass<'static>);
+
+impl GpuRenderPass {
+    pub fn get_render_pass(&self) -> &wgpu::RenderPass<'static> {
+        &self.0
+    }
+
+    pub fn get_render_pass_mut(&mut self) -> &mut wgpu::RenderPass<'static> {
+        &mut self.0
+    }
+}
+
+impl GpuRenderPass {
+    pub fn new(command_encoder: &mut wgpu::CommandEncoder, desc: &RenderPassDescriptor) -> Self {
         let depth_stencil_attachment =
-            self.depth_stencil_attachment
+            desc.depth_stencil_attachment
                 .as_ref()
                 .map(|depth_stencil_attachment| {
                     depth_stencil_attachment.get_render_pass_depth_stencil_attachment()
                 });
 
         let render_pass = command_encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            label: self.label.as_deref(),
-            color_attachments: &self
+            label: desc.label.as_deref(),
+            color_attachments: &desc
                 .color_attachments
                 .iter()
                 .map(|color_attachment| {
@@ -82,6 +88,6 @@ impl RenderPass {
             ..Default::default()
         });
 
-        render_pass.forget_lifetime()
+        GpuRenderPass(render_pass.forget_lifetime())
     }
 }

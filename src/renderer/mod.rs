@@ -79,9 +79,9 @@ impl WorldRenderer {
         frame_graph.compile();
 
         let mut render_context = FrameGraphContext::new(
+            &self.world.pipeline_cache,
             &self.world.server.device,
             &mut self.transient_resource_cache,
-            &self.world.pipeline_cache,
         );
 
         frame_graph.execute(&mut render_context);

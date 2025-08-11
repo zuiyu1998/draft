@@ -1,20 +1,16 @@
 use std::borrow::Cow;
 
 use crate::{
-    frame_graph::{
-        FrameGraphContext, Ref, ResourceRead, ResourceView, ResourceWrite, TransientTexture,
-    },
+    frame_graph::{PassContext, Ref, ResourceRead, ResourceView, ResourceWrite, TransientTexture},
     gfx_base::{RawTextureView, TextureAspect, TextureFormat, TextureUsages, TextureViewDimension},
 };
 
-use super::TransientResourceBinding;
+pub type TextureViewInfoRead = TextureViewInfo<ResourceRead>;
 
-pub type TextureViewRead = TextureView<ResourceRead>;
-
-pub type TextureViewWrite = TextureView<ResourceWrite>;
+pub type TextureViewInfoWrite = TextureViewInfo<ResourceWrite>;
 
 #[derive(Default, Clone, Debug)]
-pub struct TextureViewInfo {
+pub struct TextureViewDescriptor {
     pub label: Option<Cow<'static, str>>,
     pub format: Option<TextureFormat>,
     pub dimension: Option<TextureViewDimension>,
@@ -26,9 +22,9 @@ pub struct TextureViewInfo {
     pub array_layer_count: Option<u32>,
 }
 
-impl From<wgpu::TextureViewDescriptor<'_>> for TextureViewInfo {
+impl From<wgpu::TextureViewDescriptor<'_>> for TextureViewDescriptor {
     fn from(value: wgpu::TextureViewDescriptor) -> Self {
-        TextureViewInfo {
+        TextureViewDescriptor {
             label: value
                 .label
                 .map(|label| label.to_string())
@@ -45,7 +41,7 @@ impl From<wgpu::TextureViewDescriptor<'_>> for TextureViewInfo {
     }
 }
 
-impl TextureViewInfo {
+impl TextureViewDescriptor {
     pub fn get_texture_view_desc(&self) -> wgpu::TextureViewDescriptor {
         wgpu::TextureViewDescriptor {
             label: self.label.as_deref(),
@@ -61,12 +57,12 @@ impl TextureViewInfo {
     }
 }
 
-pub struct TextureView<ViewType: ResourceView> {
+pub struct TextureViewInfo<ViewType: ResourceView> {
     pub texture: Ref<TransientTexture, ViewType>,
-    pub desc: TextureViewInfo,
+    pub desc: TextureViewDescriptor,
 }
 
-impl<ViewType: ResourceView> Clone for TextureView<ViewType> {
+impl<ViewType: ResourceView> Clone for TextureViewInfo<ViewType> {
     fn clone(&self) -> Self {
         Self {
             texture: self.texture.clone(),
@@ -75,13 +71,28 @@ impl<ViewType: ResourceView> Clone for TextureView<ViewType> {
     }
 }
 
-impl<ViewType: ResourceView> TransientResourceBinding for TextureView<ViewType> {
-    type Resource = RawTextureView;
+#[derive(Clone)]
+pub struct TextureView(RawTextureView);
 
-    fn make_resource(&self, frame_graph_context: &FrameGraphContext<'_>) -> Self::Resource {
-        frame_graph_context
-            .get_resource(&self.texture)
-            .resource
-            .create_view(&self.desc.get_texture_view_desc())
+impl TextureView {
+    pub fn new(texture_view: RawTextureView) -> Self {
+        Self(texture_view)
+    }
+
+    pub fn get_gpu_texture_view(&self) -> &RawTextureView {
+        &self.0
+    }
+
+    pub fn from_info<View: ResourceView>(
+        context: &PassContext<'_>,
+        info: &TextureViewInfo<View>,
+    ) -> Self {
+        TextureView::new(
+            context
+                .resource_table
+                .get_resource(&info.texture)
+                .resource
+                .create_view(&info.desc.get_texture_view_desc()),
+        )
     }
 }

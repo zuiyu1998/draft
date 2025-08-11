@@ -18,10 +18,11 @@ impl ResourceTable {
     pub fn get_resource<ResourceType: TransientResource, ViewType: ResourceView>(
         &self,
         resource_ref: &Ref<ResourceType, ViewType>,
-    ) -> Option<&ResourceType> {
+    ) -> &ResourceType {
         self.resources
             .get(&resource_ref.raw.index)
             .map(|res| TransientResource::borrow_resource(res))
+            .expect("must have resource")
     }
 
     pub fn request_resource(

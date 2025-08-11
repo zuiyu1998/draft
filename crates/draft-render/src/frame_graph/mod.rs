@@ -1,5 +1,4 @@
 mod common;
-mod context;
 mod device_pass;
 mod graph;
 mod index;
@@ -12,7 +11,6 @@ mod resource_table;
 mod transient_resource;
 
 pub use common::*;
-pub use context::*;
 pub use device_pass::*;
 pub use graph::*;
 pub use index::*;
