@@ -1,9 +1,11 @@
 mod buffer_allocator;
 
+use std::sync::Arc;
+
 pub use buffer_allocator::*;
 
 use crate::{
-    TemporaryCache,
+    FrameworkError, TemporaryCache,
     frame_graph::BufferInfo,
     gfx_base::{RawBuffer, RenderDevice, RenderQueue},
     render_resource::RenderBuffer,
@@ -13,7 +15,7 @@ use fyrox_core::sparse::AtomicIndex;
 
 pub struct BufferKey {
     desc: BufferInfo,
-    index: AtomicIndex,
+    index: Arc<AtomicIndex>,
 }
 
 impl BufferKey {
@@ -38,6 +40,10 @@ impl Default for BufferSet {
     fn default() -> Self {
         Self::new()
     }
+}
+
+fn create_buffer(device: &RenderDevice, desc: &BufferInfo) -> Result<RawBuffer, FrameworkError> {
+    Ok(device.wgpu_device().create_buffer(&desc.get_buffer_desc()))
 }
 
 impl BufferSet {
@@ -65,24 +71,15 @@ impl BufferSet {
     }
 
     fn get_or_create(&mut self, device: &RenderDevice, desc: &BufferInfo) -> BufferKey {
-        let index = if self.free < self.cache.buffer.len() {
-            let last_free = self.free;
-            self.free += 1;
+        let last_free = self.free;
+        let index: Arc<AtomicIndex> = Default::default();
+        index.set(last_free);
 
-            let index: AtomicIndex = Default::default();
-            index.set(last_free);
+        let _ = self
+            .cache
+            .get_or_insert_with(&index, Default::default(), || create_buffer(device, desc));
 
-            index
-        } else {
-            let buffer = device.wgpu_device().create_buffer(&desc.get_buffer_desc());
-
-            let index = self
-                .cache
-                .spawn(buffer, Default::default(), Default::default());
-
-            self.free = self.cache.buffer.len();
-            index
-        };
+        self.free += 1;
 
         BufferKey {
             desc: desc.clone(),
