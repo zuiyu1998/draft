@@ -1,7 +1,9 @@
 use std::borrow::Cow;
 use std::sync::Arc;
 
-use crate::gfx_base::{BufferAddress, BufferUsages, COPY_BUFFER_ALIGNMENT};
+use crate::gfx_base::{
+    BufferAddress, BufferDescriptor, BufferUsages, COPY_BUFFER_ALIGNMENT, GpuBuffer,
+};
 
 use super::{
     AnyTransientResource, AnyTransientResourceDescriptor, ArcTransientResource,
@@ -14,8 +16,9 @@ impl IntoArcTransientResource for TransientBuffer {
     }
 }
 
+#[derive(Clone)]
 pub struct TransientBuffer {
-    pub resource: wgpu::Buffer,
+    pub resource: GpuBuffer,
     pub desc: BufferInfo,
 }
 
@@ -73,18 +76,18 @@ impl BufferInfo {
         }
     }
 
-    pub fn from_buffer_desc(desc: &wgpu::BufferDescriptor) -> Self {
+    pub fn from_buffer_desc(desc: &BufferDescriptor) -> Self {
         Self {
-            label: desc.label.map(|label| label.to_string().into()),
+            label: desc.label.clone(),
             size: desc.size,
             usage: desc.usage,
             mapped_at_creation: desc.mapped_at_creation,
         }
     }
 
-    pub fn get_buffer_desc(&self) -> wgpu::BufferDescriptor {
-        wgpu::BufferDescriptor {
-            label: self.label.as_deref(),
+    pub fn to_buffer_desc(&self) -> BufferDescriptor {
+        BufferDescriptor {
+            label: self.label.clone(),
             size: self.size,
             usage: self.usage,
             mapped_at_creation: self.mapped_at_creation,

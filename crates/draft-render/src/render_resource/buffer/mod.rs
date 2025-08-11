@@ -3,14 +3,14 @@ use std::{
     sync::Arc,
 };
 
-use crate::gfx_base::{BufferAddress, RawBuffer};
+use crate::gfx_base::{BufferAddress, GpuBuffer};
 
 use crate::frame_graph::{BufferInfo, FrameGraph, Handle, ResourceMaterial, TransientBuffer};
 
 #[derive(Clone)]
 pub struct RenderBuffer {
     pub key: String,
-    pub value: RawBuffer,
+    pub value: GpuBuffer,
     pub desc: BufferInfo,
 }
 
@@ -24,12 +24,12 @@ impl RenderBuffer {
         let size = match bounds.end_bound() {
             Bound::Included(&bound) => bound + 1,
             Bound::Excluded(&bound) => bound,
-            Bound::Unbounded => self.value.size(),
+            Bound::Unbounded => self.value.get_buffer().size(),
         } - offset;
         BufferSlice {
             offset,
             size,
-            value: self.value.slice(bounds),
+            value: self.value.get_buffer().slice(bounds),
         }
     }
 }

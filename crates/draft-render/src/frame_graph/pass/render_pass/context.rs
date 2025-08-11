@@ -334,7 +334,7 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
                 aspect: source.aspect,
             },
             wgpu::TexelCopyBufferInfoBase {
-                buffer: &destination_buffer.resource,
+                buffer: destination_buffer.resource.get_buffer(),
                 layout: destination.layout,
             },
             copy_size,
@@ -351,7 +351,7 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
 
         self.pass_context
             .command_encoder
-            .clear_buffer(&buffer.resource, offset, size);
+            .clear_buffer(buffer.resource.get_buffer(), offset, size);
     }
 
     pub fn clear_texture(
@@ -484,9 +484,9 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
         self.render_pass
             .get_render_pass_mut()
             .multi_draw_indexed_indirect_count(
-                &indirect_buffer.resource,
+                indirect_buffer.resource.get_buffer(),
                 indirect_offset,
-                &count_buffer.resource,
+                count_buffer.resource.get_buffer(),
                 count_offset,
                 max_count,
             );
@@ -505,7 +505,11 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
 
         self.render_pass
             .get_render_pass_mut()
-            .multi_draw_indexed_indirect(&indirect_buffer.resource, indirect_offset, count);
+            .multi_draw_indexed_indirect(
+                indirect_buffer.resource.get_buffer(),
+                indirect_offset,
+                count,
+            );
     }
 
     pub fn multi_draw_indirect_count(
@@ -528,9 +532,9 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
         self.render_pass
             .get_render_pass_mut()
             .multi_draw_indirect_count(
-                &indirect_buffer.resource,
+                indirect_buffer.resource.get_buffer(),
                 indirect_offset,
-                &count_buffer.resource,
+                count_buffer.resource.get_buffer(),
                 count_offset,
                 max_count,
             );
@@ -548,7 +552,7 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
             .get_resource(indirect_buffer_ref);
 
         self.render_pass.get_render_pass_mut().multi_draw_indirect(
-            &indirect_buffer.resource,
+            indirect_buffer.resource.get_buffer(),
             indirect_offset,
             count,
         );
@@ -566,7 +570,7 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
 
         self.render_pass
             .get_render_pass_mut()
-            .draw_indexed_indirect(&indirect_buffer.resource, indirect_offset);
+            .draw_indexed_indirect(indirect_buffer.resource.get_buffer(), indirect_offset);
     }
 
     pub fn draw_indirect(
@@ -581,7 +585,7 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
 
         self.render_pass
             .get_render_pass_mut()
-            .draw_indirect(&indirect_buffer.resource, indirect_offset);
+            .draw_indirect(indirect_buffer.resource.get_buffer(), indirect_offset);
     }
 
     pub fn set_scissor_rect(&mut self, x: u32, y: u32, width: u32, height: u32) {
@@ -626,9 +630,10 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
         size: u64,
     ) {
         let buffer = self.pass_context.resource_table.get_resource(buffer_ref);
-        self.render_pass
-            .get_render_pass_mut()
-            .set_vertex_buffer(slot, buffer.resource.slice(offset..(offset + size)));
+        self.render_pass.get_render_pass_mut().set_vertex_buffer(
+            slot,
+            buffer.resource.get_buffer().slice(offset..(offset + size)),
+        );
     }
 
     pub fn set_index_buffer(
@@ -640,8 +645,9 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
     ) {
         let buffer = self.pass_context.resource_table.get_resource(buffer_ref);
 
-        self.render_pass
-            .get_render_pass_mut()
-            .set_index_buffer(buffer.resource.slice(offset..(offset + size)), index_format);
+        self.render_pass.get_render_pass_mut().set_index_buffer(
+            buffer.resource.get_buffer().slice(offset..(offset + size)),
+            index_format,
+        );
     }
 }

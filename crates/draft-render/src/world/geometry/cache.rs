@@ -1,22 +1,52 @@
+use std::sync::Arc;
+
 use crate::{
     Indices, Vertex,
-    frame_graph::BufferInfo,
-    gfx_base::{RawIndexFormat, RenderDevice, VertexBufferLayout},
+    frame_graph::{BufferInfo, TransientBuffer},
+    gfx_base::{BufferInitDescriptor, RawIndexFormat, RenderDevice, VertexBufferLayout},
+    render_resource::RenderBuffer,
 };
+use fyrox_core::sparse::AtomicIndex;
+use wgpu::BufferUsages;
 
-use wgpu::{
-    BufferUsages,
-    util::{BufferInitDescriptor, DeviceExt},
-};
-
-use crate::{
-    FrameworkError, Geometry, GeometryResource, TemporaryCache, render_resource::RenderBuffer,
-};
+use crate::{FrameworkError, Geometry, GeometryResource, TemporaryCache};
 
 pub struct GeometryData {
-    pub vertex_buffer: RenderBuffer,
-    pub index_buffer: Option<IndexRenderBuffer>,
     pub layout: VertexBufferLayout,
+    vertex_buffer: TransientBuffer,
+    index_buffer: Option<IndexBuffer>,
+    cache_index: Arc<AtomicIndex>,
+}
+
+impl GeometryData {
+    pub fn get_vertex_buffer(&self) -> RenderBuffer {
+        RenderBuffer {
+            key: get_vertex_buffer_key(self.cache_index.get()),
+            value: self.vertex_buffer.resource.clone(),
+            desc: self.vertex_buffer.desc.clone(),
+        }
+    }
+
+    pub fn get_index_buffer(&self) -> Option<IndexRenderBuffer> {
+        self.index_buffer
+            .as_ref()
+            .map(|index_buffer| IndexRenderBuffer {
+                num_indices: index_buffer.num_indices,
+                index_format: index_buffer.index_format,
+                buffer: RenderBuffer {
+                    key: get_index_buffer_key(self.cache_index.get()),
+                    value: index_buffer.buffer.resource.clone(),
+                    desc: index_buffer.buffer.desc.clone(),
+                },
+            })
+    }
+}
+
+#[derive(Clone)]
+pub struct IndexBuffer {
+    pub buffer: TransientBuffer,
+    pub num_indices: u32,
+    pub index_format: RawIndexFormat,
 }
 
 #[derive(Clone)]
@@ -34,93 +64,68 @@ fn get_index_buffer_key(index: usize) -> String {
     format!("index_buffer_{index}")
 }
 
-fn create_index_render_buffer(
-    device: &RenderDevice,
-    index: usize,
-    indices: &Indices,
-) -> IndexRenderBuffer {
+fn create_index_render_buffer(device: &RenderDevice, indices: &Indices) -> IndexBuffer {
     let bytes = indices.create_buffer();
 
-    let buffer = device
-        .wgpu_device()
-        .create_buffer_init(&BufferInitDescriptor {
-            label: None,
-            contents: &bytes,
-            usage: BufferUsages::INDEX,
-        });
-
-    let buffer_info = BufferInfo {
+    let init_desc = BufferInitDescriptor {
         label: None,
-        size: bytes.len() as u64,
-        mapped_at_creation: false,
+        contents: &bytes,
         usage: BufferUsages::INDEX,
     };
 
-    let key = get_index_buffer_key(index);
+    let buffer = device.create_buffer_init(&BufferInitDescriptor {
+        label: None,
+        contents: &bytes,
+        usage: BufferUsages::INDEX,
+    });
 
-    let buffer = RenderBuffer {
-        key,
-        value: buffer,
-        desc: buffer_info,
+    let buffer_desc = init_desc.to_buffer_desc();
+
+    let buffer = TransientBuffer {
+        resource: buffer,
+        desc: BufferInfo::from_buffer_desc(&buffer_desc),
     };
 
-    IndexRenderBuffer {
+    IndexBuffer {
         buffer,
         num_indices: indices.len() as u32,
         index_format: indices.index_format(),
     }
 }
 
-fn create_vertex_render_buffer(
-    device: &RenderDevice,
-    index: usize,
-    vertex: &Vertex,
-) -> RenderBuffer {
+fn create_vertex_render_buffer(device: &RenderDevice, vertex: &Vertex) -> TransientBuffer {
     let bytes = vertex.create_buffer();
-    let buffer = device
-        .wgpu_device()
-        .create_buffer_init(&BufferInitDescriptor {
-            label: None,
-            contents: &bytes,
-            usage: BufferUsages::VERTEX,
-        });
 
-    let buffer_info = BufferInfo {
+    let init_desc = BufferInitDescriptor {
         label: None,
-        size: bytes.len() as u64,
-        mapped_at_creation: false,
+        contents: &bytes,
         usage: BufferUsages::VERTEX,
     };
 
-    let key = get_vertex_buffer_key(index);
+    let buffer = device.create_buffer_init(&init_desc);
+    let buffer_desc = init_desc.to_buffer_desc();
 
-    RenderBuffer {
-        key,
-        value: buffer,
-        desc: buffer_info,
+    TransientBuffer {
+        resource: buffer,
+        desc: BufferInfo::from_buffer_desc(&buffer_desc),
     }
 }
 
 impl GeometryData {
-    pub fn update(&mut self, geometry: &Geometry) {
-        let index = geometry.cache_index.get();
-        self.vertex_buffer.key = get_vertex_buffer_key(index);
-    }
-
     pub fn new(device: &RenderDevice, geometry: &Geometry) -> Result<Self, FrameworkError> {
-        let index = geometry.cache_index.get();
-        let vertex_buffer = create_vertex_render_buffer(device, index, &geometry.vertex);
+        let vertex_buffer = create_vertex_render_buffer(device, &geometry.vertex);
 
         let index_buffer = geometry
             .index
             .indices
             .as_ref()
-            .map(|indices| create_index_render_buffer(device, index, indices));
+            .map(|indices| create_index_render_buffer(device, indices));
 
         Ok(GeometryData {
             vertex_buffer,
             index_buffer,
             layout: geometry.vertex.get_vertex_layout(),
+            cache_index: geometry.cache_index.clone(),
         })
     }
 }
@@ -139,15 +144,12 @@ impl GeometryCache {
         let mut geometry_state = geometry.state();
 
         if let Some(geometry_state) = geometry_state.data() {
-            match self.geometry_cache.get_mut_or_insert_with(
+            match self.geometry_cache.get_or_insert_with(
                 &geometry_state.cache_index,
                 Default::default(),
                 || GeometryData::new(device, geometry_state),
             ) {
-                Ok(data) => {
-                    data.update(geometry_state);
-                    Ok(data)
-                }
+                Ok(data) => Ok(data),
                 Err(error) => Err(error),
             }
         } else {

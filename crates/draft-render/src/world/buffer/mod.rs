@@ -7,7 +7,7 @@ pub use buffer_allocator::*;
 use crate::{
     FrameworkError, TemporaryCache,
     frame_graph::BufferInfo,
-    gfx_base::{RawBuffer, RenderDevice, RenderQueue},
+    gfx_base::{GpuBuffer, RenderDevice, RenderQueue},
     render_resource::RenderBuffer,
 };
 use fxhash::FxHashMap;
@@ -32,7 +32,7 @@ impl BufferKey {
 }
 
 pub struct BufferSet {
-    cache: TemporaryCache<RawBuffer>,
+    cache: TemporaryCache<GpuBuffer>,
     free: usize,
 }
 
@@ -42,8 +42,8 @@ impl Default for BufferSet {
     }
 }
 
-fn create_buffer(device: &RenderDevice, desc: &BufferInfo) -> Result<RawBuffer, FrameworkError> {
-    Ok(device.wgpu_device().create_buffer(&desc.get_buffer_desc()))
+fn create_buffer(device: &RenderDevice, desc: &BufferInfo) -> Result<GpuBuffer, FrameworkError> {
+    Ok(device.create_buffer(&desc.to_buffer_desc()))
 }
 
 impl BufferSet {
@@ -118,7 +118,7 @@ impl BufferCache {
             if let Some(render_buffer) = set.get_render_buffer(key) {
                 self.queue
                     .wgpu_queue()
-                    .write_buffer(&render_buffer.value, 0, bytes);
+                    .write_buffer(render_buffer.value.get_buffer(), 0, bytes);
             }
         }
     }

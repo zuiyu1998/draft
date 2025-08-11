@@ -132,7 +132,7 @@ impl BindingResourceTemp<'_> {
                 size,
                 offset,
             } => wgpu::BindingResource::Buffer(RawBufferBinding {
-                buffer: &buffer.resource,
+                buffer: buffer.resource.get_buffer(),
                 offset: *offset,
                 size: *size,
             }),

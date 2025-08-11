@@ -41,7 +41,7 @@ impl TransientResourceCreator for RenderDevice {
                 .into()
             }
             AnyTransientResourceDescriptor::Buffer(desc) => {
-                let resource = self.wgpu_device().create_buffer(&desc.get_buffer_desc());
+                let resource = self.create_buffer(&desc.to_buffer_desc());
                 TransientBuffer {
                     resource,
                     desc: desc.clone(),

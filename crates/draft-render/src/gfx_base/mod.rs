@@ -1,6 +1,8 @@
 mod bind_group_layout;
+mod buffer;
 mod color_target_state;
 mod depth_stencil;
+mod device;
 mod multisample_state;
 mod pipeline;
 mod pipeline_cache;
@@ -10,8 +12,10 @@ mod texture;
 mod vertex_buffer_layout;
 
 pub use bind_group_layout::*;
+pub use buffer::*;
 pub use color_target_state::*;
 pub use depth_stencil::*;
+pub use device::*;
 pub use multisample_state::*;
 pub use pipeline::*;
 pub use pipeline_cache::*;
@@ -27,13 +31,13 @@ pub use wgpu::{
     BlendComponent as RawBlendComponent, BlendFactor as RawBlendFactor,
     BlendOperation as RawBlendOperation, BlendState as RawBlendState, Buffer as RawBuffer,
     BufferAddress, BufferBinding as RawBufferBinding, BufferBindingType as RawBufferBindingType,
-    BufferUsages, COPY_BUFFER_ALIGNMENT, Color, ColorTargetState as RawColorTargetState,
-    ColorWrites as RawColorWrites, CommandBuffer as RawCommandBuffer, CommandEncoder,
-    CompareFunction as RawCompareFunction, DepthBiasState as RawDepthBiasState,
-    DepthStencilState as RawDepthStencilState, Device as RawDevice, Extent3d as RawExtent3d,
-    Face as RawFace, FilterMode as RawFilterMode, FragmentState as RawFragmentState,
-    FrontFace as RawFrontFace, IndexFormat as RawIndexFormat, LoadOp,
-    MultisampleState as RawMultisampleState, Operations,
+    BufferDescriptor as RawBufferDescriptor, BufferUsages, COPY_BUFFER_ALIGNMENT, Color,
+    ColorTargetState as RawColorTargetState, ColorWrites as RawColorWrites,
+    CommandBuffer as RawCommandBuffer, CommandEncoder, CompareFunction as RawCompareFunction,
+    DepthBiasState as RawDepthBiasState, DepthStencilState as RawDepthStencilState,
+    Device as RawDevice, Extent3d as RawExtent3d, Face as RawFace, FilterMode as RawFilterMode,
+    FragmentState as RawFragmentState, FrontFace as RawFrontFace, IndexFormat as RawIndexFormat,
+    LoadOp, MultisampleState as RawMultisampleState, Operations,
     PipelineCompilationOptions as RawPipelineCompilationOptions,
     PipelineLayout as RawPipelineLayout, PipelineLayoutDescriptor as RawPipelineLayoutDescriptor,
     PolygonMode as RawPolygonMode, PrimitiveState as RawPrimitiveState,
@@ -51,23 +55,13 @@ pub use wgpu::{
     TextureViewDimension as RawTextureViewDimension, VertexAttribute as RawVertexAttribute,
     VertexBufferLayout as RawVertexBufferLayout, VertexFormat as RawVertexFormat,
     VertexState as RawVertexState, VertexStepMode as RawVertexStepMode,
+    util::BufferInitDescriptor as RawBufferInitDescriptor,
 };
 
 use std::sync::Arc;
 use tracing::info;
 
 use wgpu::{Instance, RequestAdapterOptions};
-
-#[derive(Clone)]
-pub struct RenderDevice {
-    device: wgpu::Device,
-}
-
-impl RenderDevice {
-    pub fn wgpu_device(&self) -> &RawDevice {
-        &self.device
-    }
-}
 
 #[derive(Clone)]
 pub struct RenderQueue(Arc<RawQueue>);
@@ -116,7 +110,7 @@ pub async fn initialize_resources(
         .unwrap();
 
     (
-        RenderDevice { device },
+        RenderDevice::new(device),
         RenderQueue(Arc::new(queue)),
         RenderAdapter(Arc::new(adapter)),
         RenderAdapterInfo(Arc::new(adapter_info)),

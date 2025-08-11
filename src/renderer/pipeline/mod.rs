@@ -34,8 +34,8 @@ impl MeshPhaseExtractor for Batch {
             .get_or_create(&world.server.device, &self.geometry)?;
 
         let vertex_layout = geometry_data.layout.clone();
-        let vertex_buffer = geometry_data.vertex_buffer.clone();
-        let index_buffer = geometry_data.index_buffer.clone();
+        let vertex_buffer = geometry_data.get_vertex_buffer();
+        let index_buffer = geometry_data.get_index_buffer();
 
         let material_state = self.material.state();
         let Some(material_state) = material_state.data_ref() else {
