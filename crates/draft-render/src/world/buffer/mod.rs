@@ -3,35 +3,47 @@ mod buffer_allocator;
 pub use buffer_allocator::*;
 
 use crate::{
+    TemporaryCache,
     frame_graph::BufferInfo,
-    gfx_base::{RenderDevice, RenderQueue},
+    gfx_base::{RawBuffer, RenderDevice, RenderQueue},
     render_resource::RenderBuffer,
 };
 use fxhash::FxHashMap;
+use fyrox_core::sparse::AtomicIndex;
 
 pub struct BufferKey {
     desc: BufferInfo,
-    index: usize,
+    index: AtomicIndex,
+}
+
+impl BufferKey {
+    pub fn get_render_buffer_key(&self) -> String {
+        match &self.desc.label {
+            Some(label) => {
+                format!("buffer_{}_{}_{}", label, self.desc.size, self.index.get())
+            }
+            _ => {
+                format!("buffer_{}_{}", self.desc.size, self.index.get())
+            }
+        }
+    }
 }
 
 pub struct BufferSet {
-    desc: BufferInfo,
-    buffers: Vec<RenderBuffer>,
+    cache: TemporaryCache<RawBuffer>,
     free: usize,
 }
 
-fn get_buffer_key(desc: &BufferInfo, index: usize) -> String {
-    match &desc.label {
-        Some(label) => format!("Buffer_{}_{}_{}", label, desc.size, index),
-        None => format!("Buffer_{}_{}", desc.size, index),
+impl Default for BufferSet {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
 impl BufferSet {
-    pub fn new(desc: BufferInfo) -> Self {
+    pub fn new() -> Self {
         BufferSet {
-            desc,
-            buffers: vec![],
+            cache: Default::default(),
             free: 0,
         }
     }
@@ -40,30 +52,40 @@ impl BufferSet {
         self.free = 0;
     }
 
-    fn get_or_create(&mut self, device: &RenderDevice) -> BufferKey {
-        let index = if self.free < self.buffers.len() {
-            let index = self.free;
+    pub fn update(&mut self, dt: f32) {
+        self.cache.update(dt)
+    }
+
+    pub fn get_render_buffer(&self, key: &BufferKey) -> Option<RenderBuffer> {
+        self.cache.buffer.get(&key.index).map(|entry| RenderBuffer {
+            key: key.get_render_buffer_key(),
+            value: entry.value.clone(),
+            desc: key.desc.clone(),
+        })
+    }
+
+    fn get_or_create(&mut self, device: &RenderDevice, desc: &BufferInfo) -> BufferKey {
+        let index = if self.free < self.cache.buffer.len() {
+            let last_free = self.free;
             self.free += 1;
+
+            let index: AtomicIndex = Default::default();
+            index.set(last_free);
+
             index
         } else {
-            let buffer = device
-                .wgpu_device()
-                .create_buffer(&self.desc.get_buffer_desc());
+            let buffer = device.wgpu_device().create_buffer(&desc.get_buffer_desc());
 
-            let key = get_buffer_key(&self.desc, self.buffers.len());
-            let index = self.buffers.len();
-            self.buffers.push(RenderBuffer {
-                key,
-                value: buffer,
-                desc: self.desc.clone(),
-            });
+            let index = self
+                .cache
+                .spawn(buffer, Default::default(), Default::default());
 
-            self.free = self.buffers.len();
+            self.free = self.cache.buffer.len();
             index
         };
 
         BufferKey {
-            desc: self.desc.clone(),
+            desc: desc.clone(),
             index,
         }
     }
@@ -84,20 +106,19 @@ impl BufferCache {
         }
     }
 
-    pub fn get_render_buffer(&self, key: &BufferKey) -> &RenderBuffer {
-        self.try_get_render_buffer(key)
-            .expect("must have uniform buffer")
+    pub fn get_render_buffer(&self, key: &BufferKey) -> RenderBuffer {
+        self.try_get_render_buffer(key).expect("must have  buffer")
     }
 
-    pub fn try_get_render_buffer(&self, key: &BufferKey) -> Option<&RenderBuffer> {
+    pub fn try_get_render_buffer(&self, key: &BufferKey) -> Option<RenderBuffer> {
         self.cache
             .get(&key.desc)
-            .and_then(|set| set.buffers.get(key.index))
+            .and_then(|set| set.get_render_buffer(key))
     }
 
     pub fn upload_bytes(&mut self, key: &BufferKey, bytes: &[u8]) {
         if let Some(set) = self.cache.get_mut(&key.desc) {
-            if let Some(render_buffer) = set.buffers.get_mut(key.index) {
+            if let Some(render_buffer) = set.get_render_buffer(key) {
                 self.queue
                     .wgpu_queue()
                     .write_buffer(&render_buffer.value, 0, bytes);
@@ -105,17 +126,20 @@ impl BufferCache {
         }
     }
 
-    pub fn get_or_create(&mut self, desc: BufferInfo) -> BufferKey {
-        let set = self
-            .cache
-            .entry(desc.clone())
-            .or_insert(BufferSet::new(desc));
-        set.get_or_create(&self.device)
+    pub fn get_or_create(&mut self, desc: &BufferInfo) -> BufferKey {
+        let set = self.cache.entry(desc.clone()).or_default();
+        set.get_or_create(&self.device, desc)
     }
 
     pub fn mark_all_unused(&mut self) {
         for set in self.cache.values_mut() {
             set.mark_unused();
+        }
+    }
+
+    pub fn update(&mut self, dt: f32) {
+        for set in self.cache.values_mut() {
+            set.update(dt);
         }
     }
 }

@@ -57,7 +57,7 @@ impl MaterialBufferHandleCache {
             .or_insert_with(|| {
                 let buffer_info = buffer_allocator
                     .get_buffer_info(&material_property_group_handle.property_group_key, usage);
-                let buffer_key = buffer_cache.get_or_create(buffer_info);
+                let buffer_key = buffer_cache.get_or_create(&buffer_info);
 
                 buffer_cache.upload_bytes(
                     &buffer_key,
