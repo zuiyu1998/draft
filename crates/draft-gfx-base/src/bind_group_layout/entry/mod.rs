@@ -1,3 +1,7 @@
+mod builder;
+
+pub use builder::*;
+
 use std::{
     collections::HashMap,
     num::{NonZeroU32, NonZeroU64},
@@ -542,6 +546,26 @@ pub struct BindGroupLayoutEntry {
     ///
     /// If this value is Some and `ty` is any other variant, bind group creation will fail.
     pub count: Option<u32>,
+}
+
+pub enum BindingTypeKind {
+    Texture,
+    Buffer,
+    Sampler,
+    AccelerationStructure,
+    StorageTexture,
+}
+
+impl BindingType {
+    pub fn get_binding_type_kind(&self) -> BindingTypeKind {
+        match self {
+            BindingType::AccelerationStructure => BindingTypeKind::AccelerationStructure,
+            BindingType::Buffer { .. } => BindingTypeKind::Buffer,
+            BindingType::Sampler(_) => BindingTypeKind::Sampler,
+            BindingType::Texture { .. } => BindingTypeKind::Texture,
+            BindingType::StorageTexture { .. } => BindingTypeKind::StorageTexture,
+        }
+    }
 }
 
 impl From<BindingType> for RawBindingType {

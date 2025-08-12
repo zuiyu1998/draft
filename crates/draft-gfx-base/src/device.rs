@@ -1,6 +1,6 @@
 use wgpu::util::DeviceExt;
 
-use crate::BufferInitDescriptor;
+use crate::{BindGroupLayoutDescriptor, BufferInitDescriptor, GpuBindGroupLayout};
 
 use super::{BufferDescriptor, GpuBuffer, RawDevice};
 
@@ -26,5 +26,22 @@ impl RenderDevice {
     pub fn create_buffer_init(&self, desc: &BufferInitDescriptor) -> GpuBuffer {
         let buffer = self.device.create_buffer_init(&desc.to_buffer_init_desc());
         GpuBuffer::new(buffer)
+    }
+
+    pub fn create_bind_group_layout(&self, desc: &BindGroupLayoutDescriptor) -> GpuBindGroupLayout {
+        let entries = desc
+            .entries
+            .clone()
+            .into_iter()
+            .map(|v| v.into())
+            .collect::<Vec<_>>();
+
+        let bind_group_layout =
+            self.wgpu_device()
+                .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                    label: None,
+                    entries: &entries,
+                });
+        GpuBindGroupLayout::new(bind_group_layout)
     }
 }

@@ -1,6 +1,5 @@
 use draft_render::{
-    FrameworkError, GeometryResource, MaterialResource, MeshRenderPhase, RenderPhasesContainer,
-    RenderWorld,
+    FrameworkError, GeometryResource, MaterialResource, RenderPhasesContainer, RenderWorld,
     frame_graph::{FrameGraph, TextureView},
 };
 
@@ -27,15 +26,15 @@ impl MeshPhaseExtractor for Batch {
     fn extra(
         &self,
         world: &mut RenderWorld,
-        render_phases_container: &mut RenderPhasesContainer,
+        _render_phases_container: &mut RenderPhasesContainer,
     ) -> Result<(), FrameworkError> {
         let geometry_data = world
             .geometry_cache
             .get_or_create(&world.server.device, &self.geometry)?;
 
         let vertex_layout = geometry_data.layout.clone();
-        let vertex_buffer = geometry_data.get_vertex_buffer();
-        let index_buffer = geometry_data.get_index_buffer();
+        let _vertex_buffer = geometry_data.get_vertex_buffer();
+        let _index_buffer = geometry_data.get_index_buffer();
 
         let material_state = self.material.state();
         let Some(material_state) = material_state.data_ref() else {
@@ -56,19 +55,9 @@ impl MeshPhaseExtractor for Batch {
             render_pipeline_desc.vertex.buffers.push(vertex_layout);
         }
 
-        let desc = desc.render_pipeline_descriptor().unwrap();
+        let _desc = desc.render_pipeline_descriptor().unwrap();
 
-        let material_render_data = material_state.resource_bindings().extra(desc, world)?;
-
-        let phase = MeshRenderPhase {
-            material_render_data,
-            vertex_buffer,
-            index_buffer,
-        };
-
-        render_phases_container.push(phase);
-
-        Ok(())
+        todo!()
     }
 }
 

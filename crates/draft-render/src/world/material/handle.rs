@@ -5,13 +5,11 @@ use fyrox_core::ImmutableString;
 use wgpu::BufferUsages;
 
 use crate::{
-    BufferAllocator, BufferCache, FrameworkError, RenderWorld, ResourceKeyContainer,
+    BufferAllocator, BufferCache,
     frame_graph::{FrameGraph, Handle, ResourceMaterial, TransientBuffer},
     gfx_base::RawSampler,
     render_resource::RenderTexture,
 };
-
-use super::{MaterialResourceBinding, ResourceBindings};
 
 pub enum MaterialResourceHandle {
     Texture(MaterialTextureHandle),
@@ -85,52 +83,5 @@ impl Deref for MaterialResourceHandleContainer {
 impl DerefMut for MaterialResourceHandleContainer {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
-    }
-}
-
-impl MaterialResourceHandleContainer {
-    pub fn extra(
-        key_container: &ResourceKeyContainer,
-        resource_bindings: &ResourceBindings,
-        render_world: &mut RenderWorld,
-    ) -> Result<Self, FrameworkError> {
-        let mut target = vec![];
-
-        for key in key_container.keys.iter() {
-            match resource_bindings.get(key).unwrap() {
-                MaterialResourceBinding::Texture(v) => {
-                    let resource = v.value.clone().unwrap();
-                    let texture_data = render_world.get_or_create_texture(&resource)?;
-
-                    target.push(MaterialResourceHandle::Texture(MaterialTextureHandle {
-                        texture: texture_data.render_data.texture.clone(),
-                    }));
-
-                    target.push(MaterialResourceHandle::Sampler(MaterialSamplerHandle {
-                        sampler: texture_data.render_data.sampler.sampler().clone(),
-                    }));
-                }
-                MaterialResourceBinding::PropertyGroup(v) => {
-                    let named_values_container = v.get_named_values_container();
-                    let (offset, size) = render_world
-                        .buffer_allocator
-                        .write(key, named_values_container);
-
-                    target.push(MaterialResourceHandle::PropertyGroup(
-                        MaterialPropertyGroupHandle {
-                            offset,
-                            property_group_key: key.clone(),
-                            size,
-                        },
-                    ));
-                }
-
-                MaterialResourceBinding::BuiltIn => {
-                    todo!()
-                }
-            }
-        }
-
-        Ok(MaterialResourceHandleContainer(target))
     }
 }

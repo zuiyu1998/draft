@@ -4,14 +4,15 @@ use std::{
     mem,
 };
 
-use super::{BindGroupLayoutDescriptor, PipelineLayoutCache, RenderPipelineDescriptor};
+use super::{PipelineLayoutCache, RenderPipelineDescriptor};
 
 use crate::{
     BindGroupLayout, FrameworkError, PipelineDescriptor, ShaderCache,
     gfx_base::{
-        CachedPipelineId, GetPipelineContainer, Pipeline, PipelineContainer, RawFragmentState,
-        RawPipelineCompilationOptions, RawRenderPipelineDescriptor, RawVertexAttribute,
-        RawVertexBufferLayout, RawVertexState, RenderDevice, RenderPipeline,
+        BindGroupLayoutDescriptor, CachedPipelineId, GetPipelineContainer, Pipeline,
+        PipelineContainer, RawFragmentState, RawPipelineCompilationOptions,
+        RawRenderPipelineDescriptor, RawVertexAttribute, RawVertexBufferLayout, RawVertexState,
+        RenderDevice, RenderPipeline,
     },
 };
 
@@ -77,7 +78,7 @@ impl PipelineCache {
     pub fn get_or_create_bind_group_layout(
         &mut self,
         desc: &BindGroupLayoutDescriptor,
-    ) -> Result<&BindGroupLayout, FrameworkError> {
+    ) -> &BindGroupLayout {
         self.pipeline_layout_cache
             .get_or_create_bind_group_layout(&self.device, desc)
     }

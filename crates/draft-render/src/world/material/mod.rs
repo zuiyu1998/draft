@@ -1,10 +1,11 @@
 mod binding;
+mod effect;
 mod handle;
-mod resource_bindings;
 
 pub use binding::*;
+pub use effect::*;
+use fxhash::FxHashMap;
 pub use handle::*;
-pub use resource_bindings::*;
 
 use crate::{BindGroupLayout, PipelineDescriptorResource};
 use fyrox_core::{ImmutableString, TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
@@ -22,7 +23,7 @@ pub struct MaterialBindGroupHandle {
 #[type_uuid(id = "3cee68e7-ef0a-463b-a2f5-68f90586b654")]
 pub struct Material {
     pipeline_descriptor: PipelineDescriptorResource,
-    resource_bindings: ResourceBindings,
+    effects: FxHashMap<ImmutableString, MaterialEffect>,
 }
 
 impl Material {
@@ -34,21 +35,21 @@ impl Material {
         &self.pipeline_descriptor
     }
 
-    pub fn resource_bindings(&self) -> &ResourceBindings {
-        &self.resource_bindings
+    pub fn effect(&self, name: &ImmutableString) -> Option<&MaterialEffect> {
+        self.effects.get(name)
     }
 
-    pub fn insert(&mut self, key: ImmutableString, binding: MaterialResourceBinding) {
-        self.resource_bindings.insert(key, binding);
+    pub fn effect_mut(&mut self, name: &ImmutableString) -> Option<&mut MaterialEffect> {
+        self.effects.get_mut(name)
     }
 
     pub fn new(
         pipeline_descriptor: PipelineDescriptorResource,
-        resource_bindings: ResourceBindings,
+        effects: FxHashMap<ImmutableString, MaterialEffect>,
     ) -> Self {
         Self {
             pipeline_descriptor,
-            resource_bindings,
+            effects,
         }
     }
 }

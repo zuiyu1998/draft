@@ -1,16 +1,15 @@
 use std::{collections::HashMap, sync::Arc};
 
 use draft_render::{
-    BindGroupLayoutDescriptorBuilder, FragmentState, Geometry, GeometryResource, Material,
-    MaterialResource, MaterialResourceBinding, MaterialTextureBinding, MeshRenderPhase,
+    FragmentState, Geometry, GeometryResource, Material, MaterialResource, MeshRenderPhase,
     PipelineDescriptor, PipelineDescriptorResource, RenderPhasesContainer,
     RenderPipelineDescriptor, RenderServer, RenderWorld, Shader, ShaderResource, Texture,
     TextureResource, Vertex, VertexAttributeDescriptor,
     frame_graph::{ColorAttachment, FrameGraph, TextureView},
     gfx_base::{
-        BlendComponent, BlendState, ColorTargetState, ColorWrites, RawTextureFormat,
-        RawTextureView, SamplerBindingType, ShaderStages, TextureFormat, TextureSampleType,
-        VertexFormat,
+        BindGroupLayoutDescriptorBuilder, BlendComponent, BlendState, ColorTargetState,
+        ColorWrites, RawTextureFormat, RawTextureView, SamplerBindingType, ShaderStages,
+        TextureFormat, TextureSampleType, VertexFormat,
         binding_types::{sampler, texture_2d},
         initialize_resources,
     },
@@ -23,7 +22,7 @@ use draft_render::{
 
 use draft::renderer::{Batch, PipelineContext, PipelineNode, WorldRenderer};
 
-use fyrox_core::{ImmutableString, futures, task::TaskPool, uuid};
+use fyrox_core::{futures, task::TaskPool, uuid};
 use fyrox_resource::{
     embedded_data_source,
     io::FsResourceIo,
@@ -318,7 +317,7 @@ impl State {
     }
 }
 
-fn new_batch(image: &TextureResource) -> Batch {
+fn new_batch(_image: &TextureResource) -> Batch {
     let mut vertex = Vertex::default();
     let mut modifier = vertex.modify();
     modifier.insert_attribute(
@@ -348,16 +347,7 @@ fn new_batch(image: &TextureResource) -> Batch {
     let indexes: Vec<u16> = vec![0, 1, 4, 1, 2, 4, 2, 3, 4];
     let geometry = Geometry::new(vertex, indexes.into());
 
-    let mut material = new_material();
-
-    let name = "diffuse".into();
-
-    material.insert(
-        name,
-        MaterialResourceBinding::Texture(MaterialTextureBinding {
-            value: Some(image.clone()),
-        }),
-    );
+    let material = new_material();
 
     Batch::new(
         GeometryResource::new_embedded(geometry),
@@ -383,15 +373,9 @@ fn new_material() -> Material {
         })],
     });
 
-    let name: ImmutableString = "diffuse".into();
-
     let mut builder = BindGroupLayoutDescriptorBuilder::new(ShaderStages::FRAGMENT);
-    builder.add_bind_group_layout(
-        name.clone(),
-        0,
-        texture_2d(TextureSampleType::Float { filterable: true }),
-    );
-    builder.add_bind_group_layout(name, 1, sampler(SamplerBindingType::Filtering));
+    builder.add_bind_group_layout(0, texture_2d(TextureSampleType::Float { filterable: true }));
+    builder.add_bind_group_layout(1, sampler(SamplerBindingType::Filtering));
 
     desc.push_bind_group_layout(builder.build());
 

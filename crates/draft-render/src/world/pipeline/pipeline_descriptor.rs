@@ -1,8 +1,10 @@
 use fyrox_resource::{Resource, ResourceData};
 use std::{error::Error, fmt::Debug, path::Path};
 
-use super::{BindGroupLayoutDescriptor, FragmentState, PipelineLayoutDescriptor, VertexState};
-use crate::gfx_base::{DepthStencilState, MultisampleState, PrimitiveState};
+use super::{FragmentState, PipelineLayoutDescriptor, VertexState};
+use crate::gfx_base::{
+    BindGroupLayoutDescriptor, DepthStencilState, MultisampleState, PrimitiveState,
+};
 use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
 use strum_macros::{AsRefStr, EnumString, VariantNames};
 

@@ -5,15 +5,13 @@ pub use mesh::*;
 use fxhash::FxHashMap;
 use fyrox_core::ImmutableString;
 
-use crate::{MaterialRenderData, RenderWorld, frame_graph::RenderPassBuilder};
+use crate::{RenderWorld, frame_graph::RenderPassBuilder};
 
 pub trait PhaseName {
     fn name() -> ImmutableString;
 }
 
 pub trait RenderPhase: 'static + PhaseName {
-    fn get_material_render_data_mut(&mut self) -> &mut MaterialRenderData;
-
     fn render(&self, render_pass_builder: &mut RenderPassBuilder, world: &mut RenderWorld);
 }
 
