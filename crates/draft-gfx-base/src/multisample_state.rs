@@ -1,6 +1,6 @@
 use fyrox_core::{reflect::*, visitor::*};
 
-use crate::gfx_base::RawMultisampleState;
+use crate::RawMultisampleState;
 
 /// Describes the multi-sampling state of a render pipeline.
 ///

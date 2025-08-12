@@ -3,7 +3,7 @@ use std::{
     num::{NonZeroU32, NonZeroU64},
 };
 
-use crate::gfx_base::{
+use crate::{
     RawBindGroupLayoutEntry, RawBindingType, RawBufferBindingType, RawPipelineCompilationOptions,
     RawSamplerBindingType, RawShaderStages, RawStorageTextureAccess, RawTextureSampleType,
     RawTextureViewDimension, TextureFormat,

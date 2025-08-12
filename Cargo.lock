@@ -568,6 +568,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "draft-gfx-base"
+version = "0.1.0"
+dependencies = [
+ "bitflags 2.9.1",
+ "fyrox-core",
+ "serde",
+ "tracing",
+ "wgpu",
+]
+
+[[package]]
 name = "draft-render"
 version = "0.1.0"
 dependencies = [
@@ -575,6 +586,7 @@ dependencies = [
  "bytemuck",
  "bytes",
  "downcast-rs 2.0.1",
+ "draft-gfx-base",
  "fxhash",
  "fyrox-core",
  "fyrox-resource",

@@ -1,0 +1,12 @@
+[package]
+name = "draft-gfx-base"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+fyrox-core = { git = "https://github.com/zuiyu1998/Fyrox.git" }
+
+wgpu = { version = "24", features = ["wgsl", "dx12", "metal", "naga-ir"] }
+tracing = { version = "0.1" }
+bitflags = { version = "2.9" }
+serde = { version = "1.0", features = ["derive"] }

@@ -1,4 +1,4 @@
-use crate::gfx_base::{
+use crate::{
     RawFace, RawFrontFace, RawIndexFormat, RawPolygonMode, RawPrimitiveState, RawPrimitiveTopology,
 };
 use fyrox_core::{reflect::*, visitor::*};

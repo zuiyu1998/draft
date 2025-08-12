@@ -1,8 +1,6 @@
 use std::borrow::Cow;
 
-use crate::gfx_base::{
-    BufferAddress, BufferUsages, RawBuffer, RawBufferDescriptor, RawBufferInitDescriptor,
-};
+use crate::{BufferAddress, BufferUsages, RawBuffer, RawBufferDescriptor, RawBufferInitDescriptor};
 
 #[derive(Clone)]
 pub struct GpuBuffer(RawBuffer);

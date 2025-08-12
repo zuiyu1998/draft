@@ -1,4 +1,4 @@
-use crate::gfx_base::{
+use crate::{
     BufferAddress, RawVertexAttribute, RawVertexFormat, RawVertexStepMode, ShaderLocation,
 };
 

@@ -63,7 +63,7 @@ impl IntoBindGroupLayoutEntryBuilder for BindGroupLayoutEntryBuilder {
 }
 
 pub mod binding_types {
-    use crate::gfx_base::{
+    use crate::{
         BindingType, BufferBindingType, SamplerBindingType, StorageTextureAccess, TextureFormat,
         TextureSampleType, TextureViewDimension,
     };

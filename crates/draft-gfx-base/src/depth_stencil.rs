@@ -1,6 +1,6 @@
 use std::hash::{Hash, Hasher};
 
-use crate::gfx_base::{
+use crate::{
     RawCompareFunction, RawDepthBiasState, RawDepthStencilState, RawStencilFaceState,
     RawStencilOperation, RawStencilState, TextureFormat,
 };

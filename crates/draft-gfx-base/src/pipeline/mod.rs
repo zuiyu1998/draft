@@ -1,3 +1,7 @@
+mod container;
+
+pub use container::*;
+
 #[derive(Clone, Debug)]
 pub struct RenderPipeline(wgpu::RenderPipeline);
 
