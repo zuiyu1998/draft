@@ -39,7 +39,7 @@ fn extra_texture(
     let texture_data = texture_cache.get_or_create(device, queue, texture)?;
 
     Ok(MaterialTextureHandle {
-        texture: texture_data.render_data.texture.clone(),
+        texture: texture_data.get_texture(),
     })
 }
 

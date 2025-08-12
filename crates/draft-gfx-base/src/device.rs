@@ -1,6 +1,9 @@
 use wgpu::util::DeviceExt;
 
-use crate::{BindGroupLayoutDescriptor, BufferInitDescriptor, GpuBindGroupLayout};
+use crate::{
+    BindGroupLayoutDescriptor, BufferInitDescriptor, GpuBindGroupLayout, GpuSampler,
+    SamplerDescriptor,
+};
 
 use super::{BufferDescriptor, GpuBuffer, RawDevice};
 
@@ -16,6 +19,11 @@ impl RenderDevice {
 
     pub fn wgpu_device(&self) -> &RawDevice {
         &self.device
+    }
+
+    pub fn create_sampler(&self, desc: &SamplerDescriptor) -> GpuSampler {
+        let sampler = self.device.create_sampler(&desc.get_desc());
+        GpuSampler::new(sampler)
     }
 
     pub fn create_buffer(&self, desc: &BufferDescriptor) -> GpuBuffer {

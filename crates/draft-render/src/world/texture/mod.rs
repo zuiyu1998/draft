@@ -22,8 +22,8 @@ use thiserror::Error;
 use crate::{
     frame_graph::TextureInfo,
     gfx_base::{
-        Extent3d, RawSamplerDescriptor, SamplerInfo, TextureDimension, TextureFormat,
-        TextureFormatPixelInfo, TextureUsages, Volume,
+        Extent3d, SamplerDescriptor, TextureDimension, TextureFormat, TextureFormatPixelInfo,
+        TextureUsages, Volume,
     },
 };
 
@@ -31,7 +31,7 @@ pub type TextureResource = Resource<Texture>;
 
 #[derive(Clone, Deserialize, Serialize, Debug, Reflect)]
 pub struct TextureImportOptions {
-    sampler_info: SamplerInfo,
+    sampler_info: SamplerDescriptor,
     is_srgb: bool,
 }
 
@@ -48,15 +48,9 @@ impl ImportOptions for TextureImportOptions {}
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
 pub struct TextureSamplerInfo {
-    info: SamplerInfo,
+    pub desc: SamplerDescriptor,
     #[visit(optional)]
-    modifications_counter: u64,
-}
-
-impl TextureSamplerInfo {
-    pub fn as_desc(&self) -> RawSamplerDescriptor {
-        self.info.as_desc()
-    }
+    pub modifications_counter: u64,
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
@@ -99,26 +93,26 @@ impl Texture {
         dimension: TextureDimension,
         data: Vec<u8>,
         format: TextureFormat,
-        sampler_info: SamplerInfo,
+        sampler_desc: SamplerDescriptor,
     ) -> Self {
         debug_assert_eq!(
             size.volume() * format.pixel_size(),
             data.len(),
             "Pixel data, size and format have to match",
         );
-        Texture::new_uninit(size, dimension, format, sampler_info, data)
+        Texture::new_uninit(size, dimension, format, sampler_desc, data)
     }
 
     pub fn new_uninit(
         size: Extent3d,
         dimension: TextureDimension,
         format: TextureFormat,
-        sampler_info: SamplerInfo,
+        sampler_desc: SamplerDescriptor,
         data: Vec<u8>,
     ) -> Self {
         Texture {
             sampler_info: TextureSamplerInfo {
-                info: sampler_info,
+                desc: sampler_desc,
                 modifications_counter: 0,
             },
             image: Image {

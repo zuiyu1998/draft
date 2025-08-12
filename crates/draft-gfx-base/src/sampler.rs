@@ -99,7 +99,7 @@ impl From<RawAddressMode> for AddressMode {
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize)]
-pub struct SamplerInfo {
+pub struct SamplerDescriptor {
     pub label: Option<String>,
     pub address_mode_u: AddressMode,
     pub address_mode_v: AddressMode,
@@ -114,8 +114,8 @@ pub struct SamplerInfo {
     pub border_color: Option<SamplerBorderColor>,
 }
 
-impl SamplerInfo {
-    pub fn as_desc(&self) -> RawSamplerDescriptor {
+impl SamplerDescriptor {
+    pub fn get_desc(&self) -> RawSamplerDescriptor {
         RawSamplerDescriptor {
             label: self.label.as_deref(),
             address_mode_u: self.address_mode_u.into(),
@@ -133,9 +133,9 @@ impl SamplerInfo {
     }
 }
 
-impl Default for SamplerInfo {
+impl Default for SamplerDescriptor {
     fn default() -> Self {
-        SamplerInfo {
+        SamplerDescriptor {
             label: Default::default(),
             address_mode_u: Default::default(),
             address_mode_v: Default::default(),
@@ -153,21 +153,14 @@ impl Default for SamplerInfo {
 }
 
 #[derive(Clone)]
-pub struct Sampler {
-    sampler: RawSampler,
-    info: SamplerInfo,
-}
+pub struct GpuSampler(RawSampler);
 
-impl Sampler {
-    pub fn new(sampler: RawSampler, info: SamplerInfo) -> Self {
-        Sampler { sampler, info }
+impl GpuSampler {
+    pub fn new(sampler: RawSampler) -> Self {
+        GpuSampler(sampler)
     }
 
-    pub fn sampler(&self) -> &RawSampler {
-        &self.sampler
-    }
-
-    pub fn info(&self) -> &SamplerInfo {
-        &self.info
+    pub fn get_sampler(&self) -> &RawSampler {
+        &self.0
     }
 }

@@ -1,8 +1,12 @@
+use std::sync::Arc;
+
+use fyrox_core::sparse::AtomicIndex;
 use wgpu::util::DeviceExt;
 
 use crate::{
     FrameworkError, TemporaryCache, Texture, TextureResource,
-    gfx_base::{RawTextureDescriptor, RenderDevice, RenderQueue, Sampler},
+    frame_graph::TransientTexture,
+    gfx_base::{GpuSampler, RawTextureDescriptor, RenderDevice, RenderQueue},
     render_resource::RenderTexture,
 };
 
@@ -32,16 +36,12 @@ impl TextureCache {
         let mut texture_state = texture.state();
 
         if let Some(texture_state) = texture_state.data() {
-            match self.cache.get_mut_or_insert_with(
+            match self.cache.get_or_insert_with(
                 &texture_state.cache_index,
                 Default::default(),
                 || TextureData::new(device, queue, texture_state),
             ) {
-                Ok(data) => {
-                    data.update(texture_state);
-
-                    Ok(data)
-                }
+                Ok(data) => Ok(data),
                 Err(error) => Err(error),
             }
         } else {
@@ -53,24 +53,26 @@ impl TextureCache {
 }
 
 pub struct TextureData {
-    pub render_data: TextureRenderData,
-}
-
-#[derive(Clone)]
-pub struct TextureRenderData {
-    pub sampler: Sampler,
-    pub texture: RenderTexture,
-}
-
-fn get_texture_key(texture: &Texture) -> String {
-    format!("texture_{}", texture.cache_index.get())
+    pub sampler: GpuSampler,
+    texture: TransientTexture,
+    cache_index: Arc<AtomicIndex>,
 }
 
 impl TextureData {
-    pub fn update(&mut self, texture: &Texture) {
-        self.render_data.texture.key = get_texture_key(texture);
+    pub fn get_texture(&self) -> RenderTexture {
+        RenderTexture {
+            key: get_texture_key(self.cache_index.get()),
+            value: self.texture.resource.clone(),
+            desc: self.texture.desc.clone(),
+        }
     }
+}
 
+fn get_texture_key(index: usize) -> String {
+    format!("texture_{index}")
+}
+
+impl TextureData {
     pub fn new(
         device: &RenderDevice,
         queue: &RenderQueue,
@@ -100,25 +102,17 @@ impl TextureData {
             texture.as_bytes(),
         );
 
-        let key = get_texture_key(texture);
-
-        let render_texture = RenderTexture {
-            key,
-            value: raw_texture,
+        let transient_texture = TransientTexture {
+            resource: raw_texture,
             desc: texture.image.texture_info.clone(),
         };
 
-        let raw_sampler = device
-            .wgpu_device()
-            .create_sampler(&texture.sampler_info.as_desc());
-
-        let sampler = Sampler::new(raw_sampler, texture.sampler_info.info.clone());
+        let sampler = device.create_sampler(&texture.sampler_info.desc);
 
         Ok(TextureData {
-            render_data: TextureRenderData {
-                sampler,
-                texture: render_texture,
-            },
+            texture: transient_texture,
+            sampler,
+            cache_index: texture.cache_index.clone(),
         })
     }
 }
