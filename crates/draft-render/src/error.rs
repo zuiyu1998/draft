@@ -7,6 +7,8 @@ use fyrox_resource::{
     state::{LoadError, ResourceState},
 };
 
+use crate::MaterialError;
+
 #[derive(Debug, Error)]
 pub enum FrameworkError {
     #[error(transparent)]
@@ -15,6 +17,8 @@ pub enum FrameworkError {
     ResourceNotLoaded { path: PathBuf, error: LoadError },
     #[error("Resource is loading, path: {path:?}")]
     ResourcePending { path: PathBuf },
+    #[error(transparent)]
+    MaterialError(#[from] MaterialError),
 }
 
 impl From<naga_oil::compose::ComposerError> for FrameworkError {

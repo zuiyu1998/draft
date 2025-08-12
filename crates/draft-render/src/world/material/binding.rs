@@ -1,4 +1,5 @@
 use bytes::BufMut;
+use draft_gfx_base::BindingTypeKind;
 use fxhash::FxHashMap;
 use fyrox_core::{
     ImmutableString,
@@ -238,6 +239,16 @@ pub enum MaterialResourceBinding {
     PropertyGroup(MaterialPropertyGroup),
     /// BuiltIn
     BuiltIn,
+}
+
+impl MaterialResourceBinding {
+    pub fn get_binding_type_kind(&self) -> BindingTypeKind {
+        match self {
+            MaterialResourceBinding::BuiltIn => BindingTypeKind::Buffer,
+            MaterialResourceBinding::Texture(_) => BindingTypeKind::Texture,
+            MaterialResourceBinding::PropertyGroup(_) => BindingTypeKind::Buffer,
+        }
+    }
 }
 
 impl Default for MaterialResourceBinding {

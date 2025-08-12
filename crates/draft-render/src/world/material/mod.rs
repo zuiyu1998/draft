@@ -3,6 +3,7 @@ mod effect;
 mod handle;
 
 pub use binding::*;
+use draft_gfx_base::BindingTypeKind;
 pub use effect::*;
 use fxhash::FxHashMap;
 pub use handle::*;
@@ -11,8 +12,21 @@ use crate::{BindGroupLayout, PipelineDescriptorResource};
 use fyrox_core::{ImmutableString, TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
 use fyrox_resource::{Resource, ResourceData};
 use std::{error::Error, fmt::Debug, path::Path};
+use thiserror::Error;
 
 pub type MaterialResource = Resource<Material>;
+
+#[derive(Debug, Error)]
+pub enum MaterialError {
+    #[error("ResourceBindingDefinition not found. name: {name}")]
+    ResourceBindingDefinitionNotFound { name: String },
+    #[error("ResourceBindingDefinition not match. name: {name}, source: {source_kind}")]
+    ResourceBindingDefinitionNotMatch {
+        name: String,
+        target_kind: BindingTypeKind,
+        source_kind: BindingTypeKind,
+    },
+}
 
 pub struct MaterialBindGroupHandle {
     pub bind_group_layout: BindGroupLayout,
