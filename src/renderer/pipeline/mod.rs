@@ -1,18 +1,21 @@
 use std::ops::{Deref, DerefMut};
 
 use draft_render::{
-    FrameworkError, GeometryResource, MaterialResource, RenderPhasesContainer, RenderWorld,
+    BufferAllocator, FrameworkError, GeometryResource, MaterialResource, RenderPhasesContainer,
+    RenderWorld,
     frame_graph::{FrameGraph, TextureView},
 };
 use fxhash::FxHashMap;
 use fyrox_core::ImmutableString;
 
+pub struct PhaseContext<'a> {
+    pub world: &'a mut RenderWorld,
+    pub render_phases_container: &'a mut RenderPhasesContainer,
+    pub buffer_allocator: &'a mut BufferAllocator,
+}
+
 pub trait MeshPhaseExtractor {
-    fn extra(
-        &self,
-        world: &mut RenderWorld,
-        render_phases_container: &mut RenderPhasesContainer,
-    ) -> Result<(), FrameworkError>;
+    fn extra(&self, context: &mut PhaseContext) -> Result<(), FrameworkError>;
 }
 
 pub struct Batch {
@@ -27,14 +30,11 @@ impl Batch {
 }
 
 impl MeshPhaseExtractor for Batch {
-    fn extra(
-        &self,
-        world: &mut RenderWorld,
-        _render_phases_container: &mut RenderPhasesContainer,
-    ) -> Result<(), FrameworkError> {
-        let geometry_data = world
+    fn extra(&self, context: &mut PhaseContext) -> Result<(), FrameworkError> {
+        let geometry_data = context
+            .world
             .geometry_cache
-            .get_or_create(&world.server.device, &self.geometry)?;
+            .get_or_create(&context.world.server.device, &self.geometry)?;
 
         let _vertex_layout = geometry_data.layout.clone();
         let _vertex_buffer = geometry_data.get_vertex_buffer();

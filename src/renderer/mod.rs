@@ -5,7 +5,7 @@ pub use observer::*;
 pub use pipeline::*;
 
 use draft_render::{
-    RenderPhasesContainer, RenderServer, RenderWorld, Texture, TextureLoader,
+    BufferAllocator, RenderPhasesContainer, RenderServer, RenderWorld, Texture, TextureLoader,
     frame_graph::{FrameGraph, FrameGraphContext, TransientResourceCache},
 };
 use fyrox_resource::{event::ResourceEvent, manager::ResourceManager};
@@ -57,9 +57,14 @@ impl WorldRenderer {
         pipeline_context: &PipelineContext,
         render_phases_container: &mut RenderPhasesContainer,
     ) {
-        let _ = pipeline_context
-            .batch
-            .extra(&mut self.world, render_phases_container);
+        let mut buffer_allocator = BufferAllocator::default();
+        let mut context = PhaseContext {
+            world: &mut self.world,
+            render_phases_container,
+            buffer_allocator: &mut buffer_allocator,
+        };
+
+        let _ = pipeline_context.batch.extra(&mut context);
 
         //todo
     }

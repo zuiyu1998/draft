@@ -1,8 +1,8 @@
 use wgpu::util::DeviceExt;
 
 use crate::{
-    BindGroupLayoutDescriptor, BufferInitDescriptor, GpuBindGroupLayout, GpuSampler,
-    SamplerDescriptor,
+    BindGroupLayoutDescriptor, BufferInitDescriptor, GpuBindGroupLayout, GpuPipelineLayout,
+    GpuSampler, PipelineLayoutDescriptor, SamplerDescriptor,
 };
 
 use super::{BufferDescriptor, GpuBuffer, RawDevice};
@@ -34,6 +34,23 @@ impl RenderDevice {
     pub fn create_buffer_init(&self, desc: &BufferInitDescriptor) -> GpuBuffer {
         let buffer = self.device.create_buffer_init(&desc.to_buffer_init_desc());
         GpuBuffer::new(buffer)
+    }
+
+    pub fn create_pipeline_layout(&self, desc: &PipelineLayoutDescriptor) -> GpuPipelineLayout {
+        let bind_group_layouts = desc
+            .bind_group_layouts
+            .iter()
+            .map(|v| v.get_bind_group_layout())
+            .collect::<Vec<_>>();
+
+        let pipeline_layout =
+            self.wgpu_device()
+                .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                    label: None,
+                    bind_group_layouts: &bind_group_layouts,
+                    push_constant_ranges: &[],
+                });
+        GpuPipelineLayout::new(pipeline_layout)
     }
 
     pub fn create_bind_group_layout(&self, desc: &BindGroupLayoutDescriptor) -> GpuBindGroupLayout {

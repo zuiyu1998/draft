@@ -9,8 +9,7 @@ use draft_gfx_base::PrimitiveState;
 use super::PipelineLayoutCache;
 
 use crate::{
-    BindGroupLayout, FragmentState, FrameworkError, PipelineLayoutDescriptor, ShaderCache,
-    VertexState,
+    BindGroupLayout, FragmentState, FrameworkError, ShaderCache, VertexState,
     gfx_base::{
         BindGroupLayoutDescriptor, CachedPipelineId, DepthStencilState, GetPipelineContainer,
         MultisampleState, Pipeline, PipelineContainer, RawFragmentState,
@@ -27,7 +26,7 @@ pub struct RenderPipelineDescriptor {
     pub primitive: PrimitiveState,
     pub depth_stencil: Option<DepthStencilState>,
     pub multisample: MultisampleState,
-    pub layout: PipelineLayoutDescriptor,
+    pub layout: Vec<BindGroupLayoutDescriptor>,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
@@ -265,7 +264,7 @@ fn create_pipeline_with_render_pipeline_descriptor(
             .as_ref()
             .map(|depth_stencil| depth_stencil.into()),
         label: Some(&desc.label),
-        layout: Some(pipeline_layout),
+        layout: Some(pipeline_layout.get_pipeline_layout()),
         multisample: desc.multisample.into(),
         primitive: desc.primitive.into(),
         vertex: RawVertexState {
