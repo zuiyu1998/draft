@@ -8,7 +8,7 @@ pub use effect::*;
 use fxhash::FxHashMap;
 pub use handle::*;
 
-use crate::{BindGroupLayout, PipelineDescriptorResource};
+use crate::{BindGroupLayout, PipelineInfoResource};
 use fyrox_core::{ImmutableString, TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
 use fyrox_resource::{Resource, ResourceData};
 use std::{error::Error, fmt::Debug, path::Path};
@@ -36,17 +36,17 @@ pub struct MaterialBindGroupHandle {
 #[derive(Debug, Clone, Reflect, Visit, Default, TypeUuidProvider)]
 #[type_uuid(id = "3cee68e7-ef0a-463b-a2f5-68f90586b654")]
 pub struct Material {
-    pipeline_descriptor: PipelineDescriptorResource,
+    pipeline_info: PipelineInfoResource,
     effects: FxHashMap<ImmutableString, MaterialEffect>,
 }
 
 impl Material {
-    pub fn from_specializer(pipeline_descriptor: PipelineDescriptorResource) -> Self {
-        Material::new(pipeline_descriptor, Default::default())
+    pub fn from_specializer(pipeline_info: PipelineInfoResource) -> Self {
+        Material::new(pipeline_info, Default::default())
     }
 
-    pub fn pipeline_descriptor(&self) -> &PipelineDescriptorResource {
-        &self.pipeline_descriptor
+    pub fn pipeline_info(&self) -> &PipelineInfoResource {
+        &self.pipeline_info
     }
 
     pub fn effect(&self, name: &ImmutableString) -> Option<&MaterialEffect> {
@@ -58,11 +58,11 @@ impl Material {
     }
 
     pub fn new(
-        pipeline_descriptor: PipelineDescriptorResource,
+        pipeline_info: PipelineInfoResource,
         effects: FxHashMap<ImmutableString, MaterialEffect>,
     ) -> Self {
         Self {
-            pipeline_descriptor,
+            pipeline_info,
             effects,
         }
     }

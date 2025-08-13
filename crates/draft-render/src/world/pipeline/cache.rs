@@ -4,17 +4,40 @@ use std::{
     mem,
 };
 
-use super::{PipelineLayoutCache, RenderPipelineDescriptor};
+use draft_gfx_base::PrimitiveState;
+
+use super::PipelineLayoutCache;
 
 use crate::{
-    BindGroupLayout, FrameworkError, PipelineDescriptor, ShaderCache,
+    BindGroupLayout, FragmentState, FrameworkError, PipelineLayoutDescriptor, ShaderCache,
+    VertexState,
     gfx_base::{
-        BindGroupLayoutDescriptor, CachedPipelineId, GetPipelineContainer, Pipeline,
-        PipelineContainer, RawFragmentState, RawPipelineCompilationOptions,
-        RawRenderPipelineDescriptor, RawVertexAttribute, RawVertexBufferLayout, RawVertexState,
-        RenderDevice, RenderPipeline,
+        BindGroupLayoutDescriptor, CachedPipelineId, DepthStencilState, GetPipelineContainer,
+        MultisampleState, Pipeline, PipelineContainer, RawFragmentState,
+        RawPipelineCompilationOptions, RawRenderPipelineDescriptor, RawVertexAttribute,
+        RawVertexBufferLayout, RawVertexState, RenderDevice, RenderPipeline,
     },
 };
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+pub struct RenderPipelineDescriptor {
+    pub label: String,
+    pub vertex: VertexState,
+    pub fragment: Option<FragmentState>,
+    pub primitive: PrimitiveState,
+    pub depth_stencil: Option<DepthStencilState>,
+    pub multisample: MultisampleState,
+    pub layout: PipelineLayoutDescriptor,
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+pub struct ComputePipelineDescriptor {}
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+pub enum PipelineDescriptor {
+    RenderPipelineDescriptor(Box<RenderPipelineDescriptor>),
+    ComputePipelineDescriptor(Box<ComputePipelineDescriptor>),
+}
 
 #[derive(Debug)]
 pub struct CachedPipeline {

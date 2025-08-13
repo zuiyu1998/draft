@@ -36,30 +36,14 @@ impl MeshPhaseExtractor for Batch {
             .geometry_cache
             .get_or_create(&world.server.device, &self.geometry)?;
 
-        let vertex_layout = geometry_data.layout.clone();
+        let _vertex_layout = geometry_data.layout.clone();
         let _vertex_buffer = geometry_data.get_vertex_buffer();
         let _index_buffer = geometry_data.get_index_buffer();
 
         let material_state = self.material.state();
-        let Some(material_state) = material_state.data_ref() else {
+        let Some(_material_state) = material_state.data_ref() else {
             return Err(self.material.clone().into());
         };
-
-        let pipeline_descriptor = material_state.pipeline_descriptor().state();
-
-        let Some(pipeline_descriptor) = pipeline_descriptor.data_ref() else {
-            drop(pipeline_descriptor);
-            return Err(material_state.pipeline_descriptor().clone().into());
-        };
-
-        let mut desc = pipeline_descriptor.clone();
-        {
-            let render_pipeline_desc = desc.render_pipeline_descriptor_mut().unwrap();
-
-            render_pipeline_desc.vertex.buffers.push(vertex_layout);
-        }
-
-        let _desc = desc.render_pipeline_descriptor().unwrap();
 
         todo!()
     }

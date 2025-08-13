@@ -2,16 +2,13 @@ use std::{collections::HashMap, sync::Arc};
 
 use draft_render::{
     FragmentState, Geometry, GeometryResource, Material, MaterialResource, MeshRenderPhase,
-    PipelineDescriptor, PipelineDescriptorResource, RenderPhasesContainer,
-    RenderPipelineDescriptor, RenderServer, RenderWorld, Shader, ShaderResource, Texture,
-    TextureResource, Vertex, VertexAttributeDescriptor,
+    PipelineInfo, PipelineInfoResource, RenderPhasesContainer, RenderPipelineInfo, RenderServer,
+    RenderWorld, Shader, ShaderResource, Texture, TextureResource, Vertex,
+    VertexAttributeDescriptor,
     frame_graph::{ColorAttachment, FrameGraph, TextureView},
     gfx_base::{
-        BindGroupLayoutDescriptorBuilder, BlendComponent, BlendState, ColorTargetState,
-        ColorWrites, RawTextureFormat, RawTextureView, SamplerBindingType, ShaderStages,
-        TextureFormat, TextureSampleType, VertexFormat,
-        binding_types::{sampler, texture_2d},
-        initialize_resources,
+        BlendComponent, BlendState, ColorTargetState, ColorWrites, RawTextureFormat,
+        RawTextureView, TextureFormat, VertexFormat, initialize_resources,
     },
     wgpu::{
         self, Color, CompositeAlphaMode, Instance, InstanceDescriptor, LoadOp, Operations,
@@ -363,7 +360,7 @@ fn new_batch(_image: &TextureResource) -> Batch {
 }
 
 fn new_material() -> Material {
-    let mut desc = RenderPipelineDescriptor::default();
+    let mut desc = RenderPipelineInfo::default();
 
     desc.vertex.shader = BUILT_IN_SHADER.resource().clone();
     desc.vertex.entry_point = Some("vs_main".into());
@@ -380,14 +377,8 @@ fn new_material() -> Material {
         })],
     });
 
-    let mut builder = BindGroupLayoutDescriptorBuilder::new(ShaderStages::FRAGMENT);
-    builder.add_bind_group_layout(0, texture_2d(TextureSampleType::Float { filterable: true }));
-    builder.add_bind_group_layout(1, sampler(SamplerBindingType::Filtering));
-
-    desc.push_bind_group_layout(builder.build());
-
-    Material::from_specializer(PipelineDescriptorResource::new_embedded(
-        PipelineDescriptor::new_render_specializer(desc),
+    Material::from_specializer(PipelineInfoResource::new_embedded(
+        PipelineInfo::RenderPipelineInfo(Box::new(desc)),
     ))
 }
 
