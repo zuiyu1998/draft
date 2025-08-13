@@ -21,10 +21,11 @@ pub struct RenderWorld {
     pub server: RenderServer,
     pub pipeline_cache: PipelineCache,
     pub geometry_cache: GeometryCache,
-    texture_cache: TextureCache,
+    pub texture_cache: TextureCache,
     pub buffer_cache: BufferCache,
     pub buffer_allocator: BufferAllocator,
     pub material_buffer_handle_cache: MaterialBufferHandleCache,
+    pub material_effect_processor_container: MaterialEffectProcessorContainer,
 }
 
 impl RenderWorld {
@@ -37,6 +38,7 @@ impl RenderWorld {
             texture_cache: Default::default(),
             buffer_allocator: Default::default(),
             material_buffer_handle_cache: Default::default(),
+            material_effect_processor_container: MaterialEffectProcessorContainer::default(),
         }
     }
 

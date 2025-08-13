@@ -5,11 +5,10 @@ mod handle;
 pub use binding::*;
 use draft_gfx_base::BindingTypeKind;
 pub use effect::*;
-use fxhash::FxHashMap;
 pub use handle::*;
 
 use crate::{BindGroupLayout, PipelineInfoResource};
-use fyrox_core::{ImmutableString, TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
+use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
 use fyrox_resource::{Resource, ResourceData};
 use std::{error::Error, fmt::Debug, path::Path};
 use thiserror::Error;
@@ -36,31 +35,16 @@ pub struct MaterialBindGroupHandle {
 #[derive(Debug, Clone, Reflect, Visit, Default, TypeUuidProvider)]
 #[type_uuid(id = "3cee68e7-ef0a-463b-a2f5-68f90586b654")]
 pub struct Material {
-    pipeline_info: PipelineInfoResource,
-    effects: FxHashMap<ImmutableString, MaterialEffect>,
+    pub pipeline_info: PipelineInfoResource,
+    pub effects: Vec<MaterialEffect>,
 }
 
 impl Material {
-    pub fn from_specializer(pipeline_info: PipelineInfoResource) -> Self {
+    pub fn from_pipeline_info(pipeline_info: PipelineInfoResource) -> Self {
         Material::new(pipeline_info, Default::default())
     }
 
-    pub fn pipeline_info(&self) -> &PipelineInfoResource {
-        &self.pipeline_info
-    }
-
-    pub fn effect(&self, name: &ImmutableString) -> Option<&MaterialEffect> {
-        self.effects.get(name)
-    }
-
-    pub fn effect_mut(&mut self, name: &ImmutableString) -> Option<&mut MaterialEffect> {
-        self.effects.get_mut(name)
-    }
-
-    pub fn new(
-        pipeline_info: PipelineInfoResource,
-        effects: FxHashMap<ImmutableString, MaterialEffect>,
-    ) -> Self {
+    pub fn new(pipeline_info: PipelineInfoResource, effects: Vec<MaterialEffect>) -> Self {
         Self {
             pipeline_info,
             effects,

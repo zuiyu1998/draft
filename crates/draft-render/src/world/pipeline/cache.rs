@@ -4,12 +4,12 @@ use std::{
     mem,
 };
 
-use draft_gfx_base::PrimitiveState;
+use draft_gfx_base::{PrimitiveState, VertexBufferLayout};
 
 use super::PipelineLayoutCache;
 
 use crate::{
-    BindGroupLayout, FragmentState, FrameworkError, ShaderCache, VertexState,
+    BindGroupLayout, FragmentState, FrameworkError, PipelineInfo, ShaderCache, VertexState,
     gfx_base::{
         BindGroupLayoutDescriptor, CachedPipelineId, DepthStencilState, GetPipelineContainer,
         MultisampleState, Pipeline, PipelineContainer, RawFragmentState,
@@ -26,7 +26,7 @@ pub struct RenderPipelineDescriptor {
     pub primitive: PrimitiveState,
     pub depth_stencil: Option<DepthStencilState>,
     pub multisample: MultisampleState,
-    pub layout: Vec<BindGroupLayoutDescriptor>,
+    pub layouts: Vec<BindGroupLayoutDescriptor>,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
@@ -36,6 +36,35 @@ pub struct ComputePipelineDescriptor {}
 pub enum PipelineDescriptor {
     RenderPipelineDescriptor(Box<RenderPipelineDescriptor>),
     ComputePipelineDescriptor(Box<ComputePipelineDescriptor>),
+}
+
+impl PipelineDescriptor {
+    pub fn new(
+        pipeline_info: &PipelineInfo,
+        layouts: &[BindGroupLayoutDescriptor],
+        buffers: &[VertexBufferLayout],
+    ) -> Self {
+        match pipeline_info {
+            PipelineInfo::RenderPipelineInfo(render_pipeline_info) => {
+                let mut desc: RenderPipelineDescriptor = RenderPipelineDescriptor {
+                    label: render_pipeline_info.label.to_string(),
+                    vertex: render_pipeline_info.vertex.clone(),
+                    fragment: render_pipeline_info.fragment.clone(),
+                    primitive: render_pipeline_info.primitive,
+                    depth_stencil: render_pipeline_info.depth_stencil.clone(),
+                    multisample: render_pipeline_info.multisample,
+                    layouts: layouts.to_vec(),
+                };
+
+                desc.vertex.buffers.append(&mut buffers.to_vec());
+
+                PipelineDescriptor::RenderPipelineDescriptor(Box::new(desc))
+            }
+            _ => {
+                unimplemented!()
+            }
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -103,15 +132,6 @@ impl PipelineCache {
     ) -> &BindGroupLayout {
         self.pipeline_layout_cache
             .get_or_create_bind_group_layout(&self.device, desc)
-    }
-
-    pub fn get_or_create_with_render_descriptor(
-        &mut self,
-        desc: &RenderPipelineDescriptor,
-    ) -> CachedPipelineId {
-        let desc = PipelineDescriptor::RenderPipelineDescriptor(Box::new(desc.clone()));
-
-        self.get_or_create(&desc)
     }
 
     pub fn get_or_create(&mut self, desc: &PipelineDescriptor) -> CachedPipelineId {
@@ -216,7 +236,7 @@ fn create_pipeline_with_render_pipeline_descriptor(
     };
 
     let pipeline_layout =
-        pipeline_layout_cache.get_or_create_pipeline_layout(device, &desc.layout)?;
+        pipeline_layout_cache.get_or_create_pipeline_layout(device, &desc.layouts);
 
     let vertex_buffer_layouts = desc
         .vertex

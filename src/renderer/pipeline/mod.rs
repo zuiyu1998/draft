@@ -1,8 +1,8 @@
 use std::ops::{Deref, DerefMut};
 
 use draft_render::{
-    BufferAllocator, FrameworkError, GeometryResource, MaterialResource, RenderPhasesContainer,
-    RenderWorld,
+    BufferAllocator, FrameworkError, GeometryResource, MaterialEffectContext, MaterialResource,
+    MeshRenderPhase, PipelineDescriptor, RenderPhasesContainer, RenderWorld,
     frame_graph::{FrameGraph, TextureView},
 };
 use fxhash::FxHashMap;
@@ -15,7 +15,7 @@ pub struct PhaseContext<'a> {
 }
 
 pub trait MeshPhaseExtractor {
-    fn extra(&self, context: &mut PhaseContext) -> Result<(), FrameworkError>;
+    fn extra(&self, context: &mut PhaseContext) -> Result<MeshRenderPhase, FrameworkError>;
 }
 
 pub struct Batch {
@@ -30,22 +30,58 @@ impl Batch {
 }
 
 impl MeshPhaseExtractor for Batch {
-    fn extra(&self, context: &mut PhaseContext) -> Result<(), FrameworkError> {
+    fn extra(&self, context: &mut PhaseContext) -> Result<MeshRenderPhase, FrameworkError> {
         let geometry_data = context
             .world
             .geometry_cache
             .get_or_create(&context.world.server.device, &self.geometry)?;
 
-        let _vertex_layout = geometry_data.layout.clone();
-        let _vertex_buffer = geometry_data.get_vertex_buffer();
-        let _index_buffer = geometry_data.get_index_buffer();
+        let vertex_layout = geometry_data.layout.clone();
+        let vertex_buffer = geometry_data.get_vertex_buffer();
+        let index_buffer = geometry_data.get_index_buffer();
 
-        let material_state = self.material.state();
-        let Some(_material_state) = material_state.data_ref() else {
+        let material = self.material.state();
+        let Some(material) = material.data_ref() else {
             return Err(self.material.clone().into());
         };
 
-        todo!()
+        let pipeline_info = material.pipeline_info.state();
+
+        let Some(pipeline_info) = pipeline_info.data_ref() else {
+            return Err(material.pipeline_info.clone().into());
+        };
+
+        let mut layouts = vec![];
+        let mut material_effect_data = vec![];
+
+        for effect in material.effects.iter() {
+            let effect_processor = context
+                .world
+                .material_effect_processor_container
+                .get(&effect.effect_name)
+                .unwrap();
+            layouts.push(effect_processor.to_bind_group_layout_descriptor());
+
+            let mut context = MaterialEffectContext {
+                pipeline_cache: &mut context.world.pipeline_cache,
+                device: &mut context.world.server.device,
+                queue: &mut context.world.server.queue,
+                texture_cache: &mut context.world.texture_cache,
+            };
+
+            material_effect_data.push(effect_processor.process(effect, &mut context)?);
+        }
+
+        let desc = PipelineDescriptor::new(pipeline_info, &layouts, &[vertex_layout]);
+
+        let pipeline_id = context.world.pipeline_cache.get_or_create(&desc);
+
+        Ok(MeshRenderPhase {
+            vertex_buffer,
+            index_buffer,
+            pipeline_id,
+            material_effect_data,
+        })
     }
 }
 

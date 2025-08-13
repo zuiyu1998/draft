@@ -1,13 +1,16 @@
+use draft_gfx_base::CachedPipelineId;
 use fyrox_core::ImmutableString;
 
 use crate::{
-    IndexRenderBuffer, PhaseName, RenderPhase, RenderWorld, frame_graph::RenderPassBuilder,
-    render_resource::RenderBuffer,
+    IndexRenderBuffer, MaterialEffectData, PhaseName, RenderPhase, RenderWorld,
+    frame_graph::RenderPassBuilder, render_resource::RenderBuffer,
 };
 
 pub struct MeshRenderPhase {
     pub vertex_buffer: RenderBuffer,
     pub index_buffer: Option<IndexRenderBuffer>,
+    pub pipeline_id: CachedPipelineId,
+    pub material_effect_data: Vec<MaterialEffectData>,
 }
 
 impl PhaseName for MeshRenderPhase {

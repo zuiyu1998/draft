@@ -2,9 +2,8 @@ use draft_gfx_base::{GpuBindGroupLayout, GpuPipelineLayout, PipelineLayoutDescri
 use fxhash::FxHashMap;
 use std::sync::Arc;
 
-use crate::{
-    FrameworkError,
-    gfx_base::{BindGroupLayoutDescriptor, RawBindGroupLayout, RawPipelineLayout, RenderDevice},
+use crate::gfx_base::{
+    BindGroupLayoutDescriptor, RawBindGroupLayout, RawPipelineLayout, RenderDevice,
 };
 
 #[derive(Default)]
@@ -30,16 +29,18 @@ impl PipelineLayoutCache {
         &mut self,
         device: &RenderDevice,
         descs: &[BindGroupLayoutDescriptor],
-    ) -> Result<&PipelineLayout, FrameworkError> {
+    ) -> &PipelineLayout {
         let pipeline_layout_key = descs.to_vec();
 
         self.pipeline_layout_cache
-            .entry(pipeline_layout_key)
+            .entry(pipeline_layout_key.clone())
             .or_insert_with(|| {
                 PipelineLayout::new(device, descs, &mut self.bind_group_layout_cache)
             });
 
-        todo!()
+        self.pipeline_layout_cache
+            .get(&pipeline_layout_key)
+            .unwrap()
     }
 }
 

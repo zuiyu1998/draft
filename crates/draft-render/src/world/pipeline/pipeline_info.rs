@@ -3,14 +3,14 @@ use std::{error::Error, fmt::Debug, path::Path};
 
 use super::{FragmentState, VertexState};
 use crate::gfx_base::{DepthStencilState, MultisampleState, PrimitiveState};
-use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
+use fyrox_core::{ImmutableString, TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
 use strum_macros::{AsRefStr, EnumString, VariantNames};
 
 pub type PipelineInfoResource = Resource<PipelineInfo>;
 
 #[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
 pub struct RenderPipelineInfo {
-    pub label: String,
+    pub label: ImmutableString,
     pub vertex: VertexState,
     pub fragment: Option<FragmentState>,
     pub primitive: PrimitiveState,

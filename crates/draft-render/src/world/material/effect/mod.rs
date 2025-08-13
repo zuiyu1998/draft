@@ -84,6 +84,7 @@ impl ResourceBindingDefinition {
     }
 }
 
+#[derive(Default)]
 pub struct MaterialEffectProcessorContainer(FxHashMap<ImmutableString, MaterialEffectProcessor>);
 
 impl Deref for MaterialEffectProcessorContainer {
@@ -118,9 +119,9 @@ impl MaterialEffectProcessor {
 
     pub fn process(
         &self,
-        _effct: &MaterialEffect,
+        effect: &MaterialEffect,
         context: &mut MaterialEffectContext,
-    ) -> MaterialEffectData {
+    ) -> Result<MaterialEffectData, FrameworkError> {
         let desc = self.to_bind_group_layout_descriptor();
 
         let bind_group_layout = context
@@ -128,12 +129,22 @@ impl MaterialEffectProcessor {
             .get_or_create_bind_group_layout(&desc)
             .clone();
 
-        MaterialEffectData { bind_group_layout }
+        let mut handles = vec![];
+
+        for resource_binding_definition in self.resource_binding_definitions.iter() {
+            handles.push(resource_binding_definition.extra(&effect.resource_bindings, context)?);
+        }
+
+        Ok(MaterialEffectData {
+            bind_group_layout,
+            handles,
+        })
     }
 }
 
 pub struct MaterialEffectData {
     pub bind_group_layout: BindGroupLayout,
+    pub handles: Vec<MaterialResourceHandle>,
 }
 
 pub struct MaterialEffectContext<'a> {

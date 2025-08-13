@@ -377,7 +377,7 @@ fn new_material() -> Material {
         })],
     });
 
-    Material::from_specializer(PipelineInfoResource::new_embedded(
+    Material::from_pipeline_info(PipelineInfoResource::new_embedded(
         PipelineInfo::RenderPipelineInfo(Box::new(desc)),
     ))
 }
