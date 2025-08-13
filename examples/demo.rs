@@ -1,14 +1,18 @@
 use std::{collections::HashMap, sync::Arc};
 
 use draft_render::{
-    FragmentState, Geometry, GeometryResource, Material, MaterialResource, MeshRenderPhase,
-    PipelineInfo, PipelineInfoResource, RenderPhasesContainer, RenderPipelineInfo, RenderServer,
-    RenderWorld, Shader, ShaderResource, Texture, TextureResource, Vertex,
-    VertexAttributeDescriptor,
+    ErasedMaterial, FragmentState, Geometry, GeometryResource, Material, MaterialEffectProcessor,
+    MaterialEffectProcessorContainer, MaterialInfo, MaterialResource, MeshRenderPhase,
+    PipelineInfo, RenderPhasesContainer, RenderPipelineInfo, RenderServer, RenderWorld,
+    ResourceBindingDefinition, ResourceBindingName, Shader, ShaderResource, Texture,
+    TextureResource, Vertex, VertexAttributeDescriptor,
     frame_graph::{ColorAttachment, FrameGraph, TextureView},
     gfx_base::{
         BlendComponent, BlendState, ColorTargetState, ColorWrites, RawTextureFormat,
-        RawTextureView, TextureFormat, VertexFormat, initialize_resources,
+        RawTextureView, SamplerBindingType, ShaderStages, TextureFormat, TextureSampleType,
+        VertexFormat,
+        binding_types::{sampler, texture_2d},
+        initialize_resources,
     },
     wgpu::{
         self, Color, CompositeAlphaMode, Instance, InstanceDescriptor, LoadOp, Operations,
@@ -50,6 +54,62 @@ lazy_static! {
             )
         }
     );
+}
+
+pub struct TestMaterial;
+
+impl ErasedMaterial for TestMaterial {
+    fn material_info() -> MaterialInfo {
+        let mut desc = RenderPipelineInfo::default();
+
+        desc.vertex.shader = BUILT_IN_SHADER.resource().clone();
+        desc.vertex.entry_point = Some("vs_main".into());
+        desc.fragment = Some(FragmentState {
+            shader: BUILT_IN_SHADER.resource().clone(),
+            entry_point: Some("fs_main".into()),
+            targets: vec![Some(ColorTargetState {
+                format: TextureFormat::Rgba8UnormSrgb,
+                blend: Some(BlendState {
+                    color: BlendComponent::REPLACE,
+                    alpha: BlendComponent::REPLACE,
+                }),
+                write_mask: ColorWrites::ALL,
+            })],
+        });
+
+        let pipeline_info = PipelineInfo::RenderPipelineInfo(Box::new(desc));
+
+        MaterialInfo {
+            pipeline_info,
+            effect_infos: vec![],
+        }
+    }
+
+    fn register_material_effects(
+        material_effect_processor_container: &mut MaterialEffectProcessorContainer,
+    ) {
+        let mut processor = MaterialEffectProcessor {
+            name: "test".into(),
+            ..Default::default()
+        };
+
+        processor
+            .resource_binding_definitions
+            .push(ResourceBindingDefinition {
+                name: ResourceBindingName::Local("t_diffuse".into()),
+                entry: texture_2d(TextureSampleType::Float { filterable: false })
+                    .build(0, ShaderStages::default()),
+            });
+
+        processor
+            .resource_binding_definitions
+            .push(ResourceBindingDefinition {
+                name: ResourceBindingName::Local("t_diffuse".into()),
+                entry: sampler(SamplerBindingType::Filtering).build(1, ShaderStages::default()),
+            });
+
+        material_effect_processor_container.register_material_effect_processor(processor);
+    }
 }
 
 pub struct TestNode;
@@ -377,9 +437,7 @@ fn new_material() -> Material {
         })],
     });
 
-    Material::from_pipeline_info(PipelineInfoResource::new_embedded(
-        PipelineInfo::RenderPipelineInfo(Box::new(desc)),
-    ))
+    Material::new(PipelineInfo::RenderPipelineInfo(Box::new(desc)), vec![])
 }
 
 #[derive(Default)]

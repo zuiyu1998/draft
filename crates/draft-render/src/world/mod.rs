@@ -42,6 +42,10 @@ impl RenderWorld {
         }
     }
 
+    pub fn register_material<T: ErasedMaterial>(&mut self) {
+        T::register_material_effects(&mut self.material_effect_processor_container);
+    }
+
     pub fn update(&mut self, dt: f32) {
         self.pipeline_cache.process();
         self.texture_cache.update(dt);

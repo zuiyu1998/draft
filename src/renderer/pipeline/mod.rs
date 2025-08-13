@@ -45,12 +45,6 @@ impl MeshPhaseExtractor for Batch {
             return Err(self.material.clone().into());
         };
 
-        let pipeline_info = material.pipeline_info.state();
-
-        let Some(pipeline_info) = pipeline_info.data_ref() else {
-            return Err(material.pipeline_info.clone().into());
-        };
-
         let mut layouts = vec![];
         let mut material_effect_data = vec![];
 
@@ -72,7 +66,7 @@ impl MeshPhaseExtractor for Batch {
             material_effect_data.push(effect_processor.process(effect, &mut context)?);
         }
 
-        let desc = PipelineDescriptor::new(pipeline_info, &layouts, &[vertex_layout]);
+        let desc = PipelineDescriptor::new(&material.pipeline_info, &layouts, &[vertex_layout]);
 
         let pipeline_id = context.world.pipeline_cache.get_or_create(&desc);
 

@@ -3,12 +3,11 @@ mod effect;
 mod handle;
 
 pub use binding::*;
-use draft_gfx_base::BindingTypeKind;
 pub use effect::*;
 pub use handle::*;
 
-use crate::{BindGroupLayout, PipelineInfoResource};
-use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
+use crate::{BindGroupLayout, PipelineInfo, gfx_base::BindingTypeKind};
+use fyrox_core::{ImmutableString, TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
 use fyrox_resource::{Resource, ResourceData};
 use std::{error::Error, fmt::Debug, path::Path};
 use thiserror::Error;
@@ -35,16 +34,16 @@ pub struct MaterialBindGroupHandle {
 #[derive(Debug, Clone, Reflect, Visit, Default, TypeUuidProvider)]
 #[type_uuid(id = "3cee68e7-ef0a-463b-a2f5-68f90586b654")]
 pub struct Material {
-    pub pipeline_info: PipelineInfoResource,
+    pub pipeline_info: PipelineInfo,
     pub effects: Vec<MaterialEffect>,
 }
 
 impl Material {
-    pub fn from_pipeline_info(pipeline_info: PipelineInfoResource) -> Self {
-        Material::new(pipeline_info, Default::default())
+    pub fn from_material<T: ErasedMaterial>() -> Material {
+        todo!()
     }
 
-    pub fn new(pipeline_info: PipelineInfoResource, effects: Vec<MaterialEffect>) -> Self {
+    pub fn new(pipeline_info: PipelineInfo, effects: Vec<MaterialEffect>) -> Self {
         Self {
             pipeline_info,
             effects,
@@ -71,4 +70,22 @@ impl ResourceData for Material {
     fn try_clone_box(&self) -> Option<Box<dyn ResourceData>> {
         Some(Box::new(self.clone()))
     }
+}
+
+pub struct MaterialEffectInfo {
+    pub effect_name: ImmutableString,
+    pub resource_bindings: ResourceBindingDefinition,
+}
+
+pub struct MaterialInfo {
+    pub pipeline_info: PipelineInfo,
+    pub effect_infos: Vec<MaterialEffectInfo>,
+}
+
+pub trait ErasedMaterial: 'static + Send + Sync {
+    fn material_info() -> MaterialInfo;
+
+    fn register_material_effects(
+        material_effect_processor_container: &mut MaterialEffectProcessorContainer,
+    );
 }

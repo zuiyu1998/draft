@@ -1,9 +1,6 @@
 mod resource_bindings;
 
-use std::{
-    fmt::Display,
-    ops::{Deref, DerefMut},
-};
+use std::fmt::Display;
 
 use draft_gfx_base::{
     BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingTypeKind, RenderDevice, RenderQueue,
@@ -87,20 +84,17 @@ impl ResourceBindingDefinition {
 #[derive(Default)]
 pub struct MaterialEffectProcessorContainer(FxHashMap<ImmutableString, MaterialEffectProcessor>);
 
-impl Deref for MaterialEffectProcessorContainer {
-    type Target = FxHashMap<ImmutableString, MaterialEffectProcessor>;
+impl MaterialEffectProcessorContainer {
+    pub fn get(&self, name: &ImmutableString) -> Option<&MaterialEffectProcessor> {
+        self.0.get(name)
+    }
 
-    fn deref(&self) -> &Self::Target {
-        &self.0
+    pub fn register_material_effect_processor(&mut self, processor: MaterialEffectProcessor) {
+        self.0.insert(processor.name.clone(), processor);
     }
 }
 
-impl DerefMut for MaterialEffectProcessorContainer {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
+#[derive(Default)]
 pub struct MaterialEffectProcessor {
     pub name: ImmutableString,
     pub resource_binding_definitions: Vec<ResourceBindingDefinition>,
