@@ -1,9 +1,9 @@
 use std::{collections::HashMap, sync::Arc};
 
 use draft_render::{
-    ErasedMaterial, FragmentState, Geometry, GeometryResource, Material, MaterialEffectProcessor,
-    MaterialEffectProcessorContainer, MaterialInfo, MaterialResource, MeshRenderPhase,
-    PipelineInfo, RenderPhasesContainer, RenderPipelineInfo, RenderServer, RenderWorld,
+    ErasedMaterial, FragmentState, Geometry, GeometryResource, Material, MaterialEffectInfo,
+    MaterialInfo, MaterialResource, MaterialTextureBinding, MeshRenderPhase, PipelineInfo,
+    RenderPhasesContainer, RenderPipelineInfo, RenderServer, RenderWorld,
     ResourceBindingDefinition, ResourceBindingName, Shader, ShaderResource, Texture,
     TextureResource, Vertex, VertexAttributeDescriptor,
     frame_graph::{ColorAttachment, FrameGraph, TextureView},
@@ -25,7 +25,7 @@ use draft::renderer::{
     Batch, ObserversCollection, Pipeline, PipelineContext, PipelineNode, WorldRenderer,
 };
 
-use fyrox_core::{futures, task::TaskPool, uuid};
+use fyrox_core::{ImmutableString, futures, task::TaskPool, uuid};
 use fyrox_resource::{
     embedded_data_source,
     io::FsResourceIo,
@@ -58,6 +58,12 @@ lazy_static! {
 
 pub struct TestMaterial;
 
+impl TestMaterial {
+    pub fn get_test_effct_name() -> ImmutableString {
+        "test".into()
+    }
+}
+
 impl ErasedMaterial for TestMaterial {
     fn material_info() -> MaterialInfo {
         let mut desc = RenderPipelineInfo::default();
@@ -79,36 +85,32 @@ impl ErasedMaterial for TestMaterial {
 
         let pipeline_info = PipelineInfo::RenderPipelineInfo(Box::new(desc));
 
-        MaterialInfo {
-            pipeline_info,
-            effect_infos: vec![],
-        }
-    }
+        let test_effct_name = TestMaterial::get_test_effct_name();
 
-    fn register_material_effects(
-        material_effect_processor_container: &mut MaterialEffectProcessorContainer,
-    ) {
-        let mut processor = MaterialEffectProcessor {
-            name: "test".into(),
+        let mut test_effect_info = MaterialEffectInfo {
+            effect_name: test_effct_name,
             ..Default::default()
         };
 
-        processor
+        test_effect_info
             .resource_binding_definitions
             .push(ResourceBindingDefinition {
                 name: ResourceBindingName::Local("t_diffuse".into()),
-                entry: texture_2d(TextureSampleType::Float { filterable: false })
+                entry: texture_2d(TextureSampleType::Float { filterable: true })
                     .build(0, ShaderStages::default()),
             });
 
-        processor
+        test_effect_info
             .resource_binding_definitions
             .push(ResourceBindingDefinition {
                 name: ResourceBindingName::Local("t_diffuse".into()),
                 entry: sampler(SamplerBindingType::Filtering).build(1, ShaderStages::default()),
             });
 
-        material_effect_processor_container.register_material_effect_processor(processor);
+        MaterialInfo {
+            pipeline_info,
+            effect_infos: vec![test_effect_info],
+        }
     }
 }
 
@@ -333,6 +335,8 @@ impl State {
 
         let mut renderer = WorldRenderer::new(render_server, &resource_manager);
 
+        renderer.world.register_material::<TestMaterial>();
+
         let mut pipeline = Pipeline::empty();
         pipeline.push_node(TestNode);
 
@@ -381,7 +385,7 @@ impl State {
     }
 }
 
-fn new_batch(_image: &TextureResource) -> Batch {
+fn new_batch(image: &TextureResource) -> Batch {
     let mut vertex = Vertex::default();
     let mut modifier = vertex.modify();
     modifier.insert_attribute(
@@ -411,33 +415,24 @@ fn new_batch(_image: &TextureResource) -> Batch {
     let indexes: Vec<u16> = vec![0, 1, 4, 1, 2, 4, 2, 3, 4];
     let geometry = Geometry::new(vertex, indexes.into());
 
-    let material = new_material();
+    let mut material = Material::from_material::<TestMaterial>();
+
+    let test_effct_name = TestMaterial::get_test_effct_name();
+
+    if let Some(effect) = material.effect_mut(&test_effct_name) {
+        effect.resource_bindings.insert(
+            ResourceBindingName::Local("t_diffuse".into()),
+            MaterialTextureBinding {
+                value: Some(image.clone()),
+            }
+            .into(),
+        );
+    }
 
     Batch::new(
         GeometryResource::new_embedded(geometry),
         MaterialResource::new_embedded(material),
     )
-}
-
-fn new_material() -> Material {
-    let mut desc = RenderPipelineInfo::default();
-
-    desc.vertex.shader = BUILT_IN_SHADER.resource().clone();
-    desc.vertex.entry_point = Some("vs_main".into());
-    desc.fragment = Some(FragmentState {
-        shader: BUILT_IN_SHADER.resource().clone(),
-        entry_point: Some("fs_main".into()),
-        targets: vec![Some(ColorTargetState {
-            format: TextureFormat::Rgba8UnormSrgb,
-            blend: Some(BlendState {
-                color: BlendComponent::REPLACE,
-                alpha: BlendComponent::REPLACE,
-            }),
-            write_mask: ColorWrites::ALL,
-        })],
-    });
-
-    Material::new(PipelineInfo::RenderPipelineInfo(Box::new(desc)), vec![])
 }
 
 #[derive(Default)]

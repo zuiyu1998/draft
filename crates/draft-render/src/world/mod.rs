@@ -25,7 +25,7 @@ pub struct RenderWorld {
     pub buffer_cache: BufferCache,
     pub buffer_allocator: BufferAllocator,
     pub material_buffer_handle_cache: MaterialBufferHandleCache,
-    pub material_effect_processor_container: MaterialEffectProcessorContainer,
+    pub material_effect_info_container: MaterialEffectInfoContainer,
 }
 
 impl RenderWorld {
@@ -38,12 +38,12 @@ impl RenderWorld {
             texture_cache: Default::default(),
             buffer_allocator: Default::default(),
             material_buffer_handle_cache: Default::default(),
-            material_effect_processor_container: MaterialEffectProcessorContainer::default(),
+            material_effect_info_container: MaterialEffectInfoContainer::default(),
         }
     }
 
     pub fn register_material<T: ErasedMaterial>(&mut self) {
-        T::register_material_effects(&mut self.material_effect_processor_container);
+        T::register_material_effects(&mut self.material_effect_info_container);
     }
 
     pub fn update(&mut self, dt: f32) {

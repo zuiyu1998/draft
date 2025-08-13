@@ -241,6 +241,12 @@ pub enum MaterialResourceBinding {
     BuiltIn,
 }
 
+impl From<MaterialTextureBinding> for MaterialResourceBinding {
+    fn from(value: MaterialTextureBinding) -> Self {
+        MaterialResourceBinding::Texture(value)
+    }
+}
+
 impl MaterialResourceBinding {
     pub fn get_binding_type_kind(&self) -> BindingTypeKind {
         match self {

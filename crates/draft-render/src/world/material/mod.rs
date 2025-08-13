@@ -35,12 +35,39 @@ pub struct MaterialBindGroupHandle {
 #[type_uuid(id = "3cee68e7-ef0a-463b-a2f5-68f90586b654")]
 pub struct Material {
     pub pipeline_info: PipelineInfo,
-    pub effects: Vec<MaterialEffect>,
+    effects: Vec<MaterialEffect>,
 }
 
 impl Material {
+    pub fn effects(&self) -> &[MaterialEffect] {
+        &self.effects
+    }
+
+    pub fn effect_mut(&mut self, effect_name: &ImmutableString) -> Option<&mut MaterialEffect> {
+        let position = self
+            .effects
+            .iter()
+            .position(|effect| effect.effect_name == *effect_name);
+        position.map(|position| &mut self.effects[position])
+    }
+
+    pub fn from_material_info(info: &MaterialInfo) -> Self {
+        let mut effects = vec![];
+
+        for effect_info in info.effect_infos.iter() {
+            effects.push(MaterialEffect::new(effect_info));
+        }
+
+        Self {
+            pipeline_info: info.pipeline_info.clone(),
+            effects,
+        }
+    }
+
     pub fn from_material<T: ErasedMaterial>() -> Material {
-        todo!()
+        let info = T::material_info();
+
+        Material::from_material_info(&info)
     }
 
     pub fn new(pipeline_info: PipelineInfo, effects: Vec<MaterialEffect>) -> Self {
@@ -72,11 +99,6 @@ impl ResourceData for Material {
     }
 }
 
-pub struct MaterialEffectInfo {
-    pub effect_name: ImmutableString,
-    pub resource_bindings: ResourceBindingDefinition,
-}
-
 pub struct MaterialInfo {
     pub pipeline_info: PipelineInfo,
     pub effect_infos: Vec<MaterialEffectInfo>,
@@ -85,7 +107,11 @@ pub struct MaterialInfo {
 pub trait ErasedMaterial: 'static + Send + Sync {
     fn material_info() -> MaterialInfo;
 
-    fn register_material_effects(
-        material_effect_processor_container: &mut MaterialEffectProcessorContainer,
-    );
+    fn register_material_effects(material_effect_info_container: &mut MaterialEffectInfoContainer) {
+        let info = Self::material_info();
+
+        for effect_info in info.effect_infos.into_iter() {
+            material_effect_info_container.register_material_effect_info(effect_info);
+        }
+    }
 }
