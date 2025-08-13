@@ -15,7 +15,7 @@ pub struct PhaseContext<'a> {
 }
 
 pub trait MeshPhaseExtractor {
-    fn extra(&self, context: &mut PhaseContext) -> Result<MeshRenderPhase, FrameworkError>;
+    fn extra(&self, context: &mut PhaseContext) -> Result<(), FrameworkError>;
 }
 
 pub struct Batch {
@@ -30,7 +30,7 @@ impl Batch {
 }
 
 impl MeshPhaseExtractor for Batch {
-    fn extra(&self, context: &mut PhaseContext) -> Result<MeshRenderPhase, FrameworkError> {
+    fn extra(&self, context: &mut PhaseContext) -> Result<(), FrameworkError> {
         let geometry_data = context
             .world
             .geometry_cache
@@ -70,12 +70,16 @@ impl MeshPhaseExtractor for Batch {
 
         let pipeline_id = context.world.pipeline_cache.get_or_create(&desc);
 
-        Ok(MeshRenderPhase {
+        let mesh_phase = MeshRenderPhase {
             vertex_buffer,
             index_buffer,
             pipeline_id,
             material_effect_data,
-        })
+        };
+
+        context.render_phases_container.push(mesh_phase);
+
+        Ok(())
     }
 }
 
@@ -94,7 +98,16 @@ pub trait PipelineNode: 'static {
     );
 }
 
-pub struct PipelineContainer(FxHashMap<ImmutableString, Pipeline>);
+pub struct PipelineContainer(FxHashMap<PipelineName, Pipeline>);
+
+#[derive(Debug, PartialEq, Eq, Hash, Default)]
+pub struct PipelineName(ImmutableString);
+
+impl From<&'static str> for PipelineName {
+    fn from(value: &'static str) -> Self {
+        PipelineName(value.into())
+    }
+}
 
 impl Default for PipelineContainer {
     fn default() -> Self {
@@ -113,7 +126,7 @@ impl PipelineContainer {
 }
 
 impl Deref for PipelineContainer {
-    type Target = FxHashMap<ImmutableString, Pipeline>;
+    type Target = FxHashMap<PipelineName, Pipeline>;
 
     fn deref(&self) -> &Self::Target {
         &self.0

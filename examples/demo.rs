@@ -22,7 +22,7 @@ use draft_render::{
 };
 
 use draft::renderer::{
-    Batch, ObserversCollection, Pipeline, PipelineContext, PipelineNode, WorldRenderer,
+    Batch, Observer, ObserversCollection, Pipeline, PipelineContext, PipelineNode, WorldRenderer,
 };
 
 use fyrox_core::{ImmutableString, futures, task::TaskPool, uuid};
@@ -365,7 +365,13 @@ impl State {
 
         self.windows.set_swapchain_texture();
 
-        let observers: ObserversCollection = ObserversCollection::default();
+        let mut observers: ObserversCollection = ObserversCollection::default();
+        let observer = Observer {
+            pipeline_name: "test".into(),
+            ..Default::default()
+        };
+
+        observers.cameras.push(observer);
 
         if let Some(texture_view) = self
             .windows

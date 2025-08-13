@@ -1,10 +1,11 @@
 use fyrox_core::{
-    ImmutableString,
     algebra::{Matrix4, Vector3},
     reflect::*,
     visitor::*,
 };
 use serde::{Deserialize, Serialize};
+
+use crate::renderer::PipelineName;
 
 #[derive(Default)]
 pub struct ObserversCollection {
@@ -56,10 +57,17 @@ pub enum Projection {
     Orthographic(OrthographicProjection),
 }
 
+impl Default for Projection {
+    fn default() -> Self {
+        Self::Perspective(PerspectiveProjection::default())
+    }
+}
+
+#[derive(Default)]
 pub struct Observer {
     pub projection: Projection,
     pub position: ObserverPosition,
-    pub pipeline_name: ImmutableString,
+    pub pipeline_name: PipelineName,
 }
 
 #[derive(Clone, Default)]

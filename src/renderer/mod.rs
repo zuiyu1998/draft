@@ -89,6 +89,7 @@ impl WorldRenderer {
                 );
 
                 frame_graph.compile();
+
                 let mut context = FrameGraphContext::new(
                     &self.world.pipeline_cache,
                     &self.world.server.device,
