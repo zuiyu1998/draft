@@ -560,9 +560,11 @@ name = "draft"
 version = "0.1.0"
 dependencies = [
  "draft-render",
+ "fxhash",
  "fyrox-core",
  "fyrox-resource",
  "lazy_static",
+ "serde",
  "tracing-subscriber",
  "winit",
 ]

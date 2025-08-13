@@ -1,5 +1,7 @@
+mod observer;
 mod pipeline;
 
+pub use observer::*;
 pub use pipeline::*;
 
 use draft_render::{
@@ -11,7 +13,7 @@ use std::sync::mpsc::Receiver;
 
 pub struct WorldRenderer {
     pub world: RenderWorld,
-    pub pipeline: Pipeline,
+    pub pipeline_container: PipelineContainer,
     pub transient_resource_cache: TransientResourceCache,
     texture_event_receiver: Receiver<ResourceEvent>,
 }
@@ -29,7 +31,7 @@ impl WorldRenderer {
 
         WorldRenderer {
             world: RenderWorld::new(server),
-            pipeline: Pipeline::empty(),
+            pipeline_container: Default::default(),
             transient_resource_cache: Default::default(),
             texture_event_receiver,
         }
@@ -66,36 +68,44 @@ impl WorldRenderer {
         &mut self,
         pipeline_context: &PipelineContext,
         render_phases_container: &RenderPhasesContainer,
+        observers: &ObserversCollection,
     ) {
-        let mut frame_graph = FrameGraph::default();
+        let mut command_buffers = vec![];
 
-        self.pipeline.run(
-            &mut frame_graph,
-            &mut self.world,
-            pipeline_context,
-            render_phases_container,
-        );
+        for observer in observers.cameras.iter() {
+            if let Some(pipeline) = self.pipeline_container.get_mut(&observer.pipeline_name) {
+                let mut frame_graph = FrameGraph::default();
 
-        frame_graph.compile();
+                pipeline.run(
+                    &mut frame_graph,
+                    &mut self.world,
+                    pipeline_context,
+                    render_phases_container,
+                );
 
-        let mut render_context = FrameGraphContext::new(
-            &self.world.pipeline_cache,
-            &self.world.server.device,
-            &mut self.transient_resource_cache,
-        );
+                frame_graph.compile();
+                let mut context = FrameGraphContext::new(
+                    &self.world.pipeline_cache,
+                    &self.world.server.device,
+                    &mut self.transient_resource_cache,
+                );
 
-        frame_graph.execute(&mut render_context);
+                frame_graph.execute(&mut context);
 
-        let command_buffers = render_context.finish();
+                let mut frame_command_buffers = context.finish();
+
+                command_buffers.append(&mut frame_command_buffers);
+            }
+        }
 
         self.world.server.queue.wgpu_queue().submit(command_buffers);
     }
 
-    pub fn render(&mut self, pipeline_context: &PipelineContext) {
+    pub fn render(&mut self, pipeline_context: &PipelineContext, observers: &ObserversCollection) {
         let mut phases_container = RenderPhasesContainer::default();
 
         self.prepare(pipeline_context, &mut phases_container);
 
-        self.render_frame(pipeline_context, &phases_container);
+        self.render_frame(pipeline_context, &phases_container, observers);
     }
 }

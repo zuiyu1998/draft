@@ -1,7 +1,11 @@
+use std::ops::{Deref, DerefMut};
+
 use draft_render::{
     FrameworkError, GeometryResource, MaterialResource, RenderPhasesContainer, RenderWorld,
     frame_graph::{FrameGraph, TextureView},
 };
+use fxhash::FxHashMap;
+use fyrox_core::ImmutableString;
 
 pub trait MeshPhaseExtractor {
     fn extra(
@@ -74,6 +78,38 @@ pub trait PipelineNode: 'static {
         context: &PipelineContext,
         render_phases_container: &RenderPhasesContainer,
     );
+}
+
+pub struct PipelineContainer(FxHashMap<ImmutableString, Pipeline>);
+
+impl Default for PipelineContainer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl PipelineContainer {
+    pub fn empty() -> Self {
+        Self(Default::default())
+    }
+
+    pub fn new() -> Self {
+        PipelineContainer::empty()
+    }
+}
+
+impl Deref for PipelineContainer {
+    type Target = FxHashMap<ImmutableString, Pipeline>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for PipelineContainer {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
 }
 
 pub struct Pipeline {

@@ -20,7 +20,9 @@ use draft_render::{
     },
 };
 
-use draft::renderer::{Batch, PipelineContext, PipelineNode, WorldRenderer};
+use draft::renderer::{
+    Batch, ObserversCollection, Pipeline, PipelineContext, PipelineNode, WorldRenderer,
+};
 
 use fyrox_core::{futures, task::TaskPool, uuid};
 use fyrox_resource::{
@@ -274,7 +276,10 @@ impl State {
 
         let mut renderer = WorldRenderer::new(render_server, &resource_manager);
 
-        renderer.pipeline.push_node(TestNode);
+        let mut pipeline = Pipeline::empty();
+        pipeline.push_node(TestNode);
+
+        renderer.pipeline_container.insert("test".into(), pipeline);
 
         resource_manager.update_or_load_registry();
 
@@ -299,6 +304,8 @@ impl State {
 
         self.windows.set_swapchain_texture();
 
+        let observers: ObserversCollection = ObserversCollection::default();
+
         if let Some(texture_view) = self
             .windows
             .get_primary_window()
@@ -310,7 +317,7 @@ impl State {
                 batch: &self.batch,
             };
 
-            self.renderer.render(&pipeline_context);
+            self.renderer.render(&pipeline_context, &observers);
         }
 
         self.windows.present();
