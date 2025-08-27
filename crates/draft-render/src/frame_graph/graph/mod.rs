@@ -1,6 +1,7 @@
 use std::{borrow::Cow, sync::Arc};
 
-use wgpu::{BindGroupLayout, CommandBuffer};
+use draft_gfx_base::GpuBindGroupLayout;
+use wgpu::CommandBuffer;
 
 use crate::{
     frame_graph::{
@@ -169,7 +170,7 @@ impl FrameGraph {
     pub fn create_bind_group_handle_builder<'a>(
         &'a mut self,
         label: Option<Cow<'static, str>>,
-        layout: BindGroupLayout,
+        layout: GpuBindGroupLayout,
     ) -> BindGroupHandleBuilder<'a> {
         BindGroupHandleBuilder::new(label, layout, self)
     }

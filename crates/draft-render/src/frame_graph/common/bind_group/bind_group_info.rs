@@ -2,7 +2,7 @@ use std::{borrow::Cow, collections::HashMap, num::NonZero};
 
 use crate::{
     frame_graph::{BindGroupResourceBinding, PassContext, TransientBuffer},
-    gfx_base::{RawBindGroupLayout, RawBufferBinding},
+    gfx_base::{GpuBindGroupLayout, RawBufferBinding},
 };
 
 use super::BindGroupEntryInfo;
@@ -10,7 +10,7 @@ use super::BindGroupEntryInfo;
 #[derive(Clone)]
 pub struct BindGroupInfo {
     pub label: Option<Cow<'static, str>>,
-    pub layout: RawBindGroupLayout,
+    pub layout: GpuBindGroupLayout,
     pub entries: Vec<BindGroupEntryInfo>,
 }
 
@@ -85,7 +85,7 @@ impl BindGroup {
                 .wgpu_device()
                 .create_bind_group(&wgpu::BindGroupDescriptor {
                     label: info.label.as_deref(),
-                    layout: &info.layout,
+                    layout: info.layout.get_bind_group_layout(),
                     entries: &temp
                         .iter()
                         .map(|(binding, resource)| wgpu::BindGroupEntry {

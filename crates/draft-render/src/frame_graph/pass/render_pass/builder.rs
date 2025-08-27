@@ -72,7 +72,7 @@ impl<'a, 'b> RenderPassBuilder<'a, 'b> {
         bind_group: &BindGroupHandle,
         offsets: &[u32],
     ) -> &mut Self {
-        let bind_group = bind_group.make_binding(&mut self.pass_builder.pass_node_builder);
+        let bind_group = bind_group.get_bind_group_info(&mut self.pass_builder.pass_node_builder);
         self.render_pass.set_bind_group(index, &bind_group, offsets);
 
         self

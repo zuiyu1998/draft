@@ -1,3 +1,4 @@
+mod bind_group;
 mod bind_group_layout;
 mod buffer;
 mod color_target_state;
@@ -11,6 +12,7 @@ mod sampler;
 mod texture;
 mod vertex_buffer_layout;
 
+pub use bind_group::*;
 pub use bind_group_layout::*;
 pub use buffer::*;
 pub use color_target_state::*;
@@ -26,7 +28,8 @@ pub use vertex_buffer_layout::*;
 
 pub use wgpu::{
     AddressMode as RawAddressMode, AstcBlock as RawAstcBlock, AstcChannel as RawAstcChannel,
-    BindGroupEntry, BindGroupLayout as RawBindGroupLayout,
+    BindGroup as WgpuBindGroup, BindGroupDescriptor as WgpuBindGroupDescriptor, BindGroupEntry,
+    BindGroupLayout as WgpuBindGroupLayout,
     BindGroupLayoutDescriptor as RawBindGroupLayoutDescriptor,
     BindGroupLayoutEntry as RawBindGroupLayoutEntry, BindingType as RawBindingType,
     BlendComponent as RawBlendComponent, BlendFactor as RawBlendFactor,

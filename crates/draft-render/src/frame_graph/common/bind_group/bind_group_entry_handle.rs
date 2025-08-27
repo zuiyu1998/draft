@@ -1,6 +1,6 @@
 use std::{borrow::Cow, num::NonZero};
 
-use wgpu::BindGroupLayout;
+use draft_gfx_base::GpuBindGroupLayout;
 
 use crate::{
     frame_graph::{
@@ -17,12 +17,12 @@ use super::BindGroupEntryInfo;
 #[derive(Clone)]
 pub struct BindGroupHandle {
     pub label: Option<Cow<'static, str>>,
-    pub layout: BindGroupLayout,
+    pub layout: GpuBindGroupLayout,
     pub entries: Vec<BindGroupEntryHandle>,
 }
 
 impl BindGroupHandle {
-    pub fn make_binding(&self, pass_node_builder: &mut PassNodeBuilder) -> BindGroupInfo {
+    pub fn get_bind_group_info(&self, pass_node_builder: &mut PassNodeBuilder) -> BindGroupInfo {
         let entries = self
             .entries
             .iter()

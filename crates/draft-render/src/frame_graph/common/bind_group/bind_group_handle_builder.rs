@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use wgpu::BindGroupLayout;
+use draft_gfx_base::GpuBindGroupLayout;
 
 use crate::frame_graph::{
     BindGroupEntryHandle, BindGroupHandle, BindGroupResourceHandleHelper,
@@ -9,7 +9,7 @@ use crate::frame_graph::{
 
 pub struct BindGroupHandleBuilder<'a> {
     pub label: Option<Cow<'static, str>>,
-    pub layout: BindGroupLayout,
+    pub layout: GpuBindGroupLayout,
     pub entries: Vec<BindGroupEntryHandle>,
     frame_graph: &'a mut FrameGraph,
 }
@@ -17,7 +17,7 @@ pub struct BindGroupHandleBuilder<'a> {
 impl<'a> BindGroupHandleBuilder<'a> {
     pub fn new(
         label: Option<Cow<'static, str>>,
-        layout: BindGroupLayout,
+        layout: GpuBindGroupLayout,
         frame_graph: &'a mut FrameGraph,
     ) -> Self {
         Self {

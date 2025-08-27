@@ -3,7 +3,7 @@ use fxhash::FxHashMap;
 use std::sync::Arc;
 
 use crate::gfx_base::{
-    BindGroupLayoutDescriptor, RawBindGroupLayout, RawPipelineLayout, RenderDevice,
+    BindGroupLayoutDescriptor, RawPipelineLayout, RenderDevice, WgpuBindGroupLayout,
 };
 
 #[derive(Default)]
@@ -58,7 +58,7 @@ impl BindGroupLayout {
         &self.0
     }
 
-    pub fn get_bind_group_layout(&self) -> &RawBindGroupLayout {
+    pub fn get_bind_group_layout(&self) -> &WgpuBindGroupLayout {
         self.0.get_bind_group_layout()
     }
 }

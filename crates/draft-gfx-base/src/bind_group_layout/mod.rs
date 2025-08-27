@@ -2,7 +2,7 @@ mod entry;
 
 pub use entry::*;
 
-use crate::RawBindGroupLayout;
+use crate::WgpuBindGroupLayout;
 use fyrox_core::{reflect::*, visitor::*};
 use std::collections::HashMap;
 
@@ -50,14 +50,14 @@ pub struct BindGroupLayoutDescriptor {
 }
 
 #[derive(Clone)]
-pub struct GpuBindGroupLayout(RawBindGroupLayout);
+pub struct GpuBindGroupLayout(WgpuBindGroupLayout);
 
 impl GpuBindGroupLayout {
-    pub fn new(bind_group_layout: RawBindGroupLayout) -> Self {
+    pub fn new(bind_group_layout: WgpuBindGroupLayout) -> Self {
         GpuBindGroupLayout(bind_group_layout)
     }
 
-    pub fn get_bind_group_layout(&self) -> &RawBindGroupLayout {
+    pub fn get_bind_group_layout(&self) -> &WgpuBindGroupLayout {
         &self.0
     }
 }

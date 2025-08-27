@@ -34,7 +34,7 @@ impl RenderPhase for MeshRenderPhase {
                     None,
                     material_effect_data
                         .bind_group_layout
-                        .get_bind_group_layout()
+                        .get_gpu_bind_group_layout()
                         .clone(),
                 );
 
