@@ -1,6 +1,6 @@
 use super::{
-    CompareFunction, RawAddressMode, RawFilterMode, RawSampler, RawSamplerBorderColor,
-    RawSamplerDescriptor,
+    CompareFunction, RawAddressMode, RawFilterMode, RawSamplerBorderColor, RawSamplerDescriptor,
+    WgpuSampler,
 };
 use fyrox_core::{reflect::*, visitor::*};
 use serde::{Deserialize, Serialize};
@@ -153,14 +153,14 @@ impl Default for SamplerDescriptor {
 }
 
 #[derive(Clone)]
-pub struct GpuSampler(RawSampler);
+pub struct GpuSampler(WgpuSampler);
 
 impl GpuSampler {
-    pub fn new(sampler: RawSampler) -> Self {
+    pub fn new(sampler: WgpuSampler) -> Self {
         GpuSampler(sampler)
     }
 
-    pub fn get_sampler(&self) -> &RawSampler {
+    pub fn get_sampler(&self) -> &WgpuSampler {
         &self.0
     }
 }
