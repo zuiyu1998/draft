@@ -1,12 +1,11 @@
 use std::sync::Arc;
 
 use fyrox_core::sparse::AtomicIndex;
-use wgpu::util::DeviceExt;
 
 use crate::{
     FrameworkError, TemporaryCache, Texture, TextureResource,
     frame_graph::TransientTexture,
-    gfx_base::{GpuSampler, RawTextureDescriptor, RenderDevice, RenderQueue},
+    gfx_base::{GpuSampler, RenderDevice, RenderQueue},
     render_resource::RenderTexture,
 };
 
@@ -80,24 +79,9 @@ impl TextureData {
     ) -> Result<Self, FrameworkError> {
         let texture_info = &texture.image.texture_info;
 
-        let view_formats: Vec<_> = texture_info
-            .view_formats
-            .iter()
-            .map(|format| (*format).into())
-            .collect();
-
-        let raw_texture = device.wgpu_device().create_texture_with_data(
-            queue.wgpu_queue(),
-            &RawTextureDescriptor {
-                label: texture_info.label.as_deref(),
-                size: texture_info.size.into(),
-                mip_level_count: texture_info.mip_level_count,
-                sample_count: texture_info.sample_count,
-                dimension: texture_info.dimension.into(),
-                format: texture_info.format.into(),
-                usage: texture_info.usage.into(),
-                view_formats: &view_formats,
-            },
+        let raw_texture = device.create_texture_with_data(
+            queue,
+            &texture_info.get_desc(),
             Default::default(),
             texture.as_bytes(),
         );

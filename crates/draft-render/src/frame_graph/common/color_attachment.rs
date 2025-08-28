@@ -1,9 +1,9 @@
 use crate::{
-    frame_graph::PassContext,
+    frame_graph::{PassContext, TextureView},
     gfx_base::{Color, Operations},
 };
 
-use super::{TextureView, TextureViewInfoRead, TextureViewInfoWrite};
+use super::{TextureViewInfoRead, TextureViewInfoWrite};
 
 #[derive(Clone)]
 pub struct ColorAttachmentInfo {
@@ -22,11 +22,11 @@ pub struct ColorAttachment {
 impl ColorAttachment {
     pub fn get_render_pass_color_attachment(&self) -> wgpu::RenderPassColorAttachment {
         wgpu::RenderPassColorAttachment {
-            view: self.view.get_gpu_texture_view(),
+            view: self.view.get_gpu_texture_view().get_texture_view(),
             resolve_target: self
                 .resolve_target
                 .as_ref()
-                .map(|view| view.get_gpu_texture_view()),
+                .map(|view| view.get_gpu_texture_view().get_texture_view()),
             ops: self.ops,
         }
     }

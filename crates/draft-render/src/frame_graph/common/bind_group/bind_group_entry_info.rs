@@ -1,8 +1,8 @@
 use std::num::NonZero;
 
 use crate::{
-    frame_graph::{Ref, ResourceRead, TextureViewDescriptor, TransientBuffer, TransientTexture},
-    gfx_base::RawSampler,
+    frame_graph::{Ref, ResourceRead, TransientBuffer, TransientTexture},
+    gfx_base::{GpuSampler, TextureViewDescriptor},
 };
 
 #[derive(Clone)]
@@ -14,7 +14,7 @@ pub struct BindGroupEntryInfo {
 #[derive(Clone)]
 pub enum BindGroupResourceBinding {
     Buffer(BindGroupBufferBinding),
-    Sampler(RawSampler),
+    Sampler(GpuSampler),
     TextureView(BindGroupTextureViewBinding),
     TextureViewArray(Vec<BindGroupTextureViewBinding>),
 }
@@ -42,7 +42,7 @@ impl IntoBindGroupResourceBinding for BindGroupBufferBinding {
     }
 }
 
-impl IntoBindGroupResourceBinding for &RawSampler {
+impl IntoBindGroupResourceBinding for &GpuSampler {
     fn into_binding(self) -> BindGroupResourceBinding {
         BindGroupResourceBinding::Sampler(self.clone())
     }

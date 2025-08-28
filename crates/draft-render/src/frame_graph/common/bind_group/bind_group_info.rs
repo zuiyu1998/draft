@@ -1,8 +1,8 @@
-use std::{borrow::Cow, collections::HashMap, num::NonZero};
+use std::{borrow::Cow, num::NonZero};
 
 use crate::{
-    frame_graph::{BindGroupResourceBinding, PassContext, TransientBuffer},
-    gfx_base::{GpuBindGroupLayout, RawBufferBinding},
+    frame_graph::{PassContext, TransientBuffer},
+    gfx_base::{BindGroupDescriptor, GpuBindGroup, GpuBindGroupLayout, RawBufferBinding},
 };
 
 use super::BindGroupEntryInfo;
@@ -14,87 +14,23 @@ pub struct BindGroupInfo {
     pub entries: Vec<BindGroupEntryInfo>,
 }
 
-pub struct BindGroup(wgpu::BindGroup);
+pub struct BindGroup(GpuBindGroup);
 
 impl BindGroup {
-    pub fn get_bind_group(&self) -> &wgpu::BindGroup {
+    pub fn get_gpu_bind_group(&self) -> &GpuBindGroup {
         &self.0
     }
 
     pub fn new(context: &PassContext<'_>, info: &BindGroupInfo) -> Self {
-        let mut resources = HashMap::new();
+        let entries = vec![];
 
-        for entry in info.entries.iter() {
-            if let BindGroupResourceBinding::TextureViewArray(texture_view_refs) = &entry.resource {
-                let mut texture_views = vec![];
+        let desc = BindGroupDescriptor {
+            label: info.label.clone(),
+            layout: info.layout.clone(),
+            entries,
+        };
 
-                for texture_view_ref in texture_view_refs.iter() {
-                    let texture = context
-                        .resource_table
-                        .get_resource(&texture_view_ref.texture);
-
-                    texture_views.push(
-                        texture.resource.create_view(
-                            &texture_view_ref.texture_view_desc.get_texture_view_desc(),
-                        ),
-                    );
-                }
-                resources.insert(entry.binding, texture_views);
-            }
-        }
-
-        let mut temp = vec![];
-
-        for entry in info.entries.iter() {
-            let resource = match &entry.resource {
-                BindGroupResourceBinding::Sampler(sampler) => {
-                    BindingResourceTemp::Sampler(sampler.clone())
-                }
-                BindGroupResourceBinding::TextureView(binding) => {
-                    let texture = context.resource_table.get_resource(&binding.texture);
-                    BindingResourceTemp::TextureView(
-                        texture
-                            .resource
-                            .create_view(&binding.texture_view_desc.get_texture_view_desc()),
-                    )
-                }
-                BindGroupResourceBinding::Buffer(buffer_ref) => BindingResourceTemp::Buffer {
-                    buffer: context.resource_table.get_resource(&buffer_ref.buffer),
-                    size: buffer_ref.size,
-                    offset: buffer_ref.offset,
-                },
-                BindGroupResourceBinding::TextureViewArray(_) => {
-                    let mut temp_texture_views = vec![];
-
-                    let texture_views = resources.get(&entry.binding).unwrap();
-
-                    for texture_view in texture_views {
-                        temp_texture_views.push(texture_view);
-                    }
-
-                    BindingResourceTemp::TextureViewArray(temp_texture_views)
-                }
-            };
-
-            temp.push((entry.binding, resource));
-        }
-
-        BindGroup(
-            context
-                .render_device
-                .wgpu_device()
-                .create_bind_group(&wgpu::BindGroupDescriptor {
-                    label: info.label.as_deref(),
-                    layout: info.layout.get_bind_group_layout(),
-                    entries: &temp
-                        .iter()
-                        .map(|(binding, resource)| wgpu::BindGroupEntry {
-                            binding: *binding,
-                            resource: resource.get_resource_binding(),
-                        })
-                        .collect::<Vec<_>>(),
-                }),
-        )
+        BindGroup(context.render_device.create_bind_group(&desc))
     }
 }
 

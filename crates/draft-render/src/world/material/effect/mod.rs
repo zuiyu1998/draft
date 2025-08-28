@@ -135,7 +135,7 @@ fn extra_sampler(
     let texture_data = texture_cache.get_or_create(device, queue, texture)?;
 
     Ok(MaterialSamplerHandle {
-        sampler: texture_data.sampler.get_sampler().clone(),
+        sampler: texture_data.sampler.clone(),
     })
 }
 

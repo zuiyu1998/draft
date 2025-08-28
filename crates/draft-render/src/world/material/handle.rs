@@ -7,7 +7,7 @@ use wgpu::BufferUsages;
 use crate::{
     BufferAllocator, BufferCache,
     frame_graph::{FrameGraph, Handle, ResourceMaterial, TransientBuffer},
-    gfx_base::RawSampler,
+    gfx_base::GpuSampler,
     render_resource::RenderTexture,
 };
 
@@ -29,7 +29,7 @@ pub struct MaterialTextureHandle {
 }
 
 pub struct MaterialSamplerHandle {
-    pub sampler: RawSampler,
+    pub sampler: GpuSampler,
 }
 
 pub struct MaterialPropertyGroupHandle {

@@ -1,6 +1,8 @@
 use std::borrow::Cow;
 
-use crate::{GpuBindGroupLayout, GpuSampler, WgpuBindGroup, WgpuBindGroupDescriptor};
+use crate::{
+    GpuBindGroupLayout, GpuSampler, GpuTextureView, WgpuBindGroup, WgpuBindGroupDescriptor,
+};
 
 pub struct BindGroupDescriptor {
     pub label: Option<Cow<'static, str>>,
@@ -15,6 +17,8 @@ pub enum BindingResource {
     BufferArray(Vec<BufferBinding>),
     Sampler(GpuSampler),
     SamplerArray(Vec<GpuSampler>),
+    TextureView(GpuTextureView),
+    TextureViewArray(Vec<GpuTextureView>),
 }
 
 pub struct BindGroupEntry {

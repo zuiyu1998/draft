@@ -3,15 +3,15 @@ use std::sync::Arc;
 use crate::{
     frame_graph::{
         BindGroupTextureViewHandle, BindGroupTextureViewHandleHelper, FrameGraph, Handle,
-        ResourceMaterial, TextureInfo, TextureViewDescriptor, TransientTexture,
+        ResourceMaterial, TextureInfo, TransientTexture,
     },
-    gfx_base::RawTexture,
+    gfx_base::{GpuTexture, TextureViewDescriptor},
 };
 
 #[derive(Clone)]
 pub struct RenderTexture {
     pub key: String,
-    pub value: RawTexture,
+    pub value: GpuTexture,
     pub desc: TextureInfo,
 }
 

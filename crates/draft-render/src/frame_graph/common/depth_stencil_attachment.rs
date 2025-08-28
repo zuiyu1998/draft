@@ -18,7 +18,7 @@ impl DepthStencilAttachment {
         &self,
     ) -> wgpu::RenderPassDepthStencilAttachment {
         wgpu::RenderPassDepthStencilAttachment {
-            view: self.view.get_gpu_texture_view(),
+            view: self.view.get_gpu_texture_view().get_texture_view(),
             depth_ops: self.depth_ops,
             stencil_ops: self.stencil_ops,
         }

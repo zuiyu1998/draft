@@ -2,7 +2,8 @@ use wgpu::util::DeviceExt;
 
 use crate::{
     BindGroupLayoutDescriptor, BufferInitDescriptor, GpuBindGroup, GpuBindGroupLayout,
-    GpuPipelineLayout, GpuSampler, PipelineLayoutDescriptor, SamplerDescriptor,
+    GpuPipelineLayout, GpuSampler, GpuTexture, PipelineLayoutDescriptor, RenderQueue,
+    SamplerDescriptor, TextureDataOrder, TextureDescriptor,
 };
 
 use super::{BindGroupDescriptor, BufferDescriptor, GpuBuffer, RawDevice};
@@ -27,9 +28,28 @@ impl RenderDevice {
         GpuBindGroup::new(bind_group)
     }
 
+    pub fn create_texture_with_data(
+        &self,
+        queue: &RenderQueue,
+        desc: &TextureDescriptor,
+        order: TextureDataOrder,
+        data: &[u8],
+    ) -> GpuTexture {
+        let texture =
+            self.device
+                .create_texture_with_data(queue.wgpu_queue(), &desc.get_desc(), order, data);
+
+        GpuTexture::new(texture)
+    }
+
     pub fn create_sampler(&self, desc: &SamplerDescriptor) -> GpuSampler {
         let sampler = self.device.create_sampler(&desc.get_desc());
         GpuSampler::new(sampler)
+    }
+
+    pub fn create_texture(&self, desc: &TextureDescriptor) -> GpuTexture {
+        let buffer = self.device.create_texture(&desc.get_desc());
+        GpuTexture::new(buffer)
     }
 
     pub fn create_buffer(&self, desc: &BufferDescriptor) -> GpuBuffer {

@@ -328,7 +328,7 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
 
         self.pass_context.command_encoder.copy_texture_to_buffer(
             wgpu::TexelCopyTextureInfoBase {
-                texture: &source_texture.resource,
+                texture: source_texture.resource.get_texture(),
                 mip_level: source.mip_level,
                 origin: source.origin,
                 aspect: source.aspect,
@@ -363,7 +363,7 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
 
         self.pass_context
             .command_encoder
-            .clear_texture(&texture.resource, subresource_range);
+            .clear_texture(texture.resource.get_texture(), subresource_range);
     }
 
     pub fn copy_texture_to_texture(
@@ -383,13 +383,13 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
 
         self.pass_context.command_encoder.copy_texture_to_texture(
             wgpu::TexelCopyTextureInfoBase {
-                texture: &source_texture.resource,
+                texture: source_texture.resource.get_texture(),
                 mip_level: source.mip_level,
                 origin: source.origin,
                 aspect: source.aspect,
             },
             wgpu::TexelCopyTextureInfoBase {
-                texture: &destination_texture.resource,
+                texture: destination_texture.resource.get_texture(),
                 mip_level: destination.mip_level,
                 origin: destination.origin,
                 aspect: destination.aspect,
@@ -598,7 +598,7 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
         let bind_group = BindGroup::new(self.pass_context, bind_group);
         self.render_pass.get_render_pass_mut().set_bind_group(
             index,
-            bind_group.get_bind_group(),
+            bind_group.get_gpu_bind_group().get_bind_group(),
             offsets,
         );
     }

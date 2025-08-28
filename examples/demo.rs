@@ -8,8 +8,8 @@ use draft_render::{
     TextureResource, Vertex, VertexAttributeDescriptor,
     frame_graph::{ColorAttachment, FrameGraph, TextureView},
     gfx_base::{
-        BlendComponent, BlendState, ColorTargetState, ColorWrites, RawTextureFormat,
-        RawTextureView, SamplerBindingType, ShaderStages, TextureFormat, TextureSampleType,
+        BlendComponent, BlendState, ColorTargetState, ColorWrites, GpuTextureView,
+        RawTextureFormat, SamplerBindingType, ShaderStages, TextureFormat, TextureSampleType,
         VertexFormat,
         binding_types::{sampler, texture_2d},
         initialize_resources,
@@ -199,7 +199,7 @@ pub struct WindowData {
     window: Arc<Window>,
     surface: Surface<'static>,
 
-    pub swap_chain_texture_view: Option<RawTextureView>,
+    pub swap_chain_texture_view: Option<GpuTextureView>,
     pub swap_chain_texture: Option<SurfaceTexture>,
     pub swap_chain_texture_format: RawTextureFormat,
 }
@@ -228,7 +228,7 @@ impl WindowData {
         };
         let texture_view = frame.texture.create_view(&texture_view_descriptor);
 
-        self.swap_chain_texture_view = Some(texture_view);
+        self.swap_chain_texture_view = Some(GpuTextureView::new(texture_view));
 
         self.swap_chain_texture = Some(frame);
     }

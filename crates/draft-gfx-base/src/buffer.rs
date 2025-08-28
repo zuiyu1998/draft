@@ -1,16 +1,18 @@
 use std::borrow::Cow;
 
-use crate::{BufferAddress, BufferUsages, RawBuffer, RawBufferDescriptor, RawBufferInitDescriptor};
+use crate::{
+    BufferAddress, BufferUsages, RawBufferDescriptor, RawBufferInitDescriptor, WgpuBuffer,
+};
 
 #[derive(Clone)]
-pub struct GpuBuffer(RawBuffer);
+pub struct GpuBuffer(WgpuBuffer);
 
 impl GpuBuffer {
-    pub fn get_buffer(&self) -> &RawBuffer {
+    pub fn get_buffer(&self) -> &WgpuBuffer {
         &self.0
     }
 
-    pub fn new(buffer: RawBuffer) -> Self {
+    pub fn new(buffer: WgpuBuffer) -> Self {
         Self(buffer)
     }
 }

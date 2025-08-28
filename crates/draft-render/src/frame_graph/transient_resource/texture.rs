@@ -5,6 +5,7 @@ use super::{
 use crate::gfx_base::{
     Extent3d, RawTextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
 };
+use draft_gfx_base::{GpuTexture, TextureDescriptor};
 use fyrox_core::{reflect::*, visitor::*};
 use std::sync::Arc;
 
@@ -15,7 +16,7 @@ impl IntoArcTransientResource for TransientTexture {
 }
 
 pub struct TransientTexture {
-    pub resource: wgpu::Texture,
+    pub resource: GpuTexture,
     pub desc: TextureInfo,
 }
 
@@ -65,6 +66,10 @@ impl TextureInfo {
                 .map(|format| (*format).into())
                 .collect(),
         }
+    }
+
+    pub fn get_desc(&self) -> TextureDescriptor {
+        todo!()
     }
 }
 

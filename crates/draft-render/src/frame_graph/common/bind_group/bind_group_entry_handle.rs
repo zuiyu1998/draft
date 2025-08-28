@@ -1,15 +1,12 @@
 use std::{borrow::Cow, num::NonZero};
 
-use draft_gfx_base::GpuBindGroupLayout;
-
 use crate::{
     frame_graph::{
         BindGroupBufferBinding, BindGroupInfo, BindGroupResourceBinding,
         BindGroupResourceBindingHelper, BindGroupTextureViewBinding, Handle,
-        IntoBindGroupResourceBinding, PassNodeBuilder, TextureViewDescriptor, TransientBuffer,
-        TransientTexture,
+        IntoBindGroupResourceBinding, PassNodeBuilder, TransientBuffer, TransientTexture,
     },
-    gfx_base::RawSampler,
+    gfx_base::{GpuBindGroupLayout, GpuSampler, TextureViewDescriptor},
 };
 
 use super::BindGroupEntryInfo;
@@ -59,7 +56,7 @@ impl BindGroupEntryHandle {
 #[derive(Clone)]
 pub enum BindGroupResourceHandle {
     Buffer(BindGroupBufferHandle),
-    Sampler(RawSampler),
+    Sampler(GpuSampler),
     TextureView(BindGroupTextureViewHandle),
     TextureViewArray(Vec<BindGroupTextureViewHandle>),
 }
@@ -189,13 +186,13 @@ impl IntoBindGroupResourceHandle for BindGroupBufferHandle {
     }
 }
 
-impl IntoBindGroupResourceHandle for RawSampler {
+impl IntoBindGroupResourceHandle for GpuSampler {
     fn into_binding(self) -> BindGroupResourceHandle {
         BindGroupResourceHandle::Sampler(self)
     }
 }
 
-impl IntoBindGroupResourceHandle for &RawSampler {
+impl IntoBindGroupResourceHandle for &GpuSampler {
     fn into_binding(self) -> BindGroupResourceHandle {
         BindGroupResourceHandle::Sampler(self.clone())
     }

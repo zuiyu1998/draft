@@ -2,6 +2,7 @@ mod bind_group;
 mod bind_group_layout;
 mod buffer;
 mod color_target_state;
+mod common;
 mod depth_stencil;
 mod device;
 mod multisample_state;
@@ -16,6 +17,7 @@ pub use bind_group::*;
 pub use bind_group_layout::*;
 pub use buffer::*;
 pub use color_target_state::*;
+pub use common::*;
 pub use depth_stencil::*;
 pub use device::*;
 pub use multisample_state::*;
@@ -33,7 +35,7 @@ pub use wgpu::{
     BindGroupLayoutDescriptor as RawBindGroupLayoutDescriptor,
     BindGroupLayoutEntry as RawBindGroupLayoutEntry, BindingType as RawBindingType,
     BlendComponent as RawBlendComponent, BlendFactor as RawBlendFactor,
-    BlendOperation as RawBlendOperation, BlendState as RawBlendState, Buffer as RawBuffer,
+    BlendOperation as RawBlendOperation, BlendState as RawBlendState, Buffer as WgpuBuffer,
     BufferAddress, BufferBinding as RawBufferBinding, BufferBindingType as RawBufferBindingType,
     BufferDescriptor as RawBufferDescriptor, BufferUsages, COPY_BUFFER_ALIGNMENT, Color,
     ColorTargetState as RawColorTargetState, ColorWrites as RawColorWrites,
@@ -52,14 +54,15 @@ pub use wgpu::{
     ShaderModuleDescriptor as RawShaderModuleDescriptor, ShaderSource as RawShaderSource,
     ShaderStages as RawShaderStages, StencilFaceState as RawStencilFaceState,
     StencilOperation as RawStencilOperation, StencilState as RawStencilState,
-    StorageTextureAccess as RawStorageTextureAccess, StoreOp, Texture as RawTexture, TextureAspect,
-    TextureDescriptor as RawTextureDescriptor, TextureDimension as RawTextureDimension,
-    TextureFormat as RawTextureFormat, TextureSampleType as RawTextureSampleType,
-    TextureUsages as RawTextureUsages, TextureView as RawTextureView,
-    TextureViewDimension as RawTextureViewDimension, VertexAttribute as RawVertexAttribute,
-    VertexBufferLayout as RawVertexBufferLayout, VertexFormat as RawVertexFormat,
-    VertexState as RawVertexState, VertexStepMode as RawVertexStepMode,
-    util::BufferInitDescriptor as RawBufferInitDescriptor,
+    StorageTextureAccess as RawStorageTextureAccess, StoreOp, Texture as WgpuTexture,
+    TextureAspect, TextureDescriptor as RawTextureDescriptor,
+    TextureDimension as RawTextureDimension, TextureFormat as RawTextureFormat,
+    TextureSampleType as RawTextureSampleType, TextureUsages as RawTextureUsages,
+    TextureView as WgpuTextureView, TextureViewDimension as RawTextureViewDimension,
+    VertexAttribute as RawVertexAttribute, VertexBufferLayout as RawVertexBufferLayout,
+    VertexFormat as RawVertexFormat, VertexState as RawVertexState,
+    VertexStepMode as RawVertexStepMode,
+    util::{BufferInitDescriptor as RawBufferInitDescriptor, TextureDataOrder},
 };
 
 use std::sync::Arc;
