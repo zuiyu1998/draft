@@ -1,17 +1,17 @@
 use fxhash::FxHashMap;
-use fyrox_core::{reflect::*, visitor::*};
+use fyrox_core::{ImmutableString, reflect::*, visitor::*};
 
-use crate::{MaterialResourceBinding, ResourceBindingName};
+use crate::MaterialResourceBinding;
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
-pub struct ResourceBindings(FxHashMap<ResourceBindingName, MaterialResourceBinding>);
+pub struct ResourceBindings(FxHashMap<ImmutableString, MaterialResourceBinding>);
 
 impl ResourceBindings {
-    pub fn get(&self, key: &ResourceBindingName) -> Option<&MaterialResourceBinding> {
+    pub fn get(&self, key: &ImmutableString) -> Option<&MaterialResourceBinding> {
         self.0.get(key)
     }
 
-    pub fn insert(&mut self, key: ResourceBindingName, binding: MaterialResourceBinding) {
+    pub fn insert(&mut self, key: ImmutableString, binding: MaterialResourceBinding) {
         self.0.insert(key, binding);
     }
 }

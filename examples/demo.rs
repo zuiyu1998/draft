@@ -3,16 +3,12 @@ use std::{collections::HashMap, sync::Arc};
 use draft_render::{
     ErasedMaterial, FragmentState, Geometry, GeometryResource, Material, MaterialEffectInfo,
     MaterialInfo, MaterialResource, MaterialTextureBinding, MeshRenderPhase, PipelineInfo,
-    RenderPhasesContainer, RenderPipelineInfo, RenderServer, RenderWorld,
-    ResourceBindingDefinition, ResourceBindingName, Shader, ShaderResource, Texture,
-    TextureResource, Vertex, VertexAttributeDescriptor,
+    RenderPhasesContainer, RenderPipelineInfo, RenderServer, RenderWorld, Shader, ShaderResource,
+    Texture, TextureResource, Vertex, VertexAttributeDescriptor,
     frame_graph::{ColorAttachment, FrameGraph, TextureView},
     gfx_base::{
         BlendComponent, BlendState, ColorTargetState, ColorWrites, GpuTextureView,
-        RawTextureFormat, SamplerBindingType, ShaderStages, TextureFormat, TextureSampleType,
-        VertexFormat,
-        binding_types::{sampler, texture_2d},
-        initialize_resources,
+        RawTextureFormat, TextureFormat, VertexFormat, initialize_resources,
     },
     wgpu::{
         self, Color, CompositeAlphaMode, Instance, InstanceDescriptor, LoadOp, Operations,
@@ -87,25 +83,24 @@ impl ErasedMaterial for TestMaterial {
 
         let test_effct_name = TestMaterial::get_test_effct_name();
 
-        let mut test_effect_info = MaterialEffectInfo {
+        let test_effect_info = MaterialEffectInfo {
             effect_name: test_effct_name,
-            ..Default::default()
         };
 
-        test_effect_info
-            .resource_binding_definitions
-            .push(ResourceBindingDefinition {
-                name: ResourceBindingName::Local("t_diffuse".into()),
-                entry: texture_2d(TextureSampleType::Float { filterable: true })
-                    .build(0, ShaderStages::default()),
-            });
+        // test_effect_info
+        //     .resource_binding_definitions
+        //     .push(ResourceBindingDefinition {
+        //         name: "t_diffuse".into(),
+        //         entry: texture_2d(TextureSampleType::Float { filterable: true })
+        //             .build(0, ShaderStages::default()),
+        //     });
 
-        test_effect_info
-            .resource_binding_definitions
-            .push(ResourceBindingDefinition {
-                name: ResourceBindingName::Local("t_diffuse".into()),
-                entry: sampler(SamplerBindingType::Filtering).build(1, ShaderStages::default()),
-            });
+        // test_effect_info
+        //     .resource_binding_definitions
+        //     .push(ResourceBindingDefinition {
+        //         name: ResourceBindingName::Local("t_diffuse".into()),
+        //         entry: sampler(SamplerBindingType::Filtering).build(1, ShaderStages::default()),
+        //     });
 
         MaterialInfo {
             pipeline_info,
@@ -335,8 +330,6 @@ impl State {
 
         let mut renderer = WorldRenderer::new(render_server, &resource_manager);
 
-        renderer.world.register_material::<TestMaterial>();
-
         let mut pipeline = Pipeline::empty();
         pipeline.push_node(TestNode);
 
@@ -427,7 +420,7 @@ fn new_batch(image: &TextureResource) -> Batch {
 
     if let Some(effect) = material.effect_mut(&test_effct_name) {
         effect.resource_bindings.insert(
-            ResourceBindingName::Local("t_diffuse".into()),
+            "t_diffuse".into(),
             MaterialTextureBinding {
                 value: Some(image.clone()),
             }

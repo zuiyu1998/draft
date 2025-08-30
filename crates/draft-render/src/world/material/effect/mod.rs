@@ -1,27 +1,58 @@
+mod container;
 mod resource_bindings;
 
-use std::fmt::Display;
+pub use container::*;
+pub use resource_bindings::*;
+
+use std::{error::Error, path::Path};
 
 use draft_gfx_base::{
     BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingTypeKind, RenderDevice, RenderQueue,
 };
-pub use resource_bindings::*;
 
 use crate::{
     BindGroupLayout, FrameworkError, MaterialError, MaterialPropertyGroup, MaterialResourceBinding,
     MaterialResourceHandle, MaterialSamplerHandle, MaterialTextureBinding, MaterialTextureHandle,
     PipelineCache, TextureCache,
 };
-use fxhash::FxHashMap;
-use fyrox_core::{ImmutableString, reflect::*, visitor::*};
+use fyrox_core::{ImmutableString, TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
+use fyrox_resource::{Resource, ResourceData};
 
-#[derive(Default)]
-pub struct MaterialEffectInfo {
+pub type MaterialEffectResource = Resource<MaterialEffect>;
+
+#[derive(Default, Reflect, Visit, Clone, Debug, TypeUuidProvider)]
+#[type_uuid(id = "3cee68e7-ef0a-463b-a2f5-68f90586b654")]
+pub struct MaterialEffect {
     pub effect_name: ImmutableString,
     pub resource_binding_definitions: Vec<ResourceBindingDefinition>,
 }
 
-impl MaterialEffectInfo {
+pub struct MaterialEffectInfo {
+    pub effect_name: ImmutableString,
+}
+
+impl ResourceData for MaterialEffect {
+    fn type_uuid(&self) -> Uuid {
+        <Self as TypeUuidProvider>::type_uuid()
+    }
+
+    fn save(&mut self, path: &Path) -> Result<(), Box<dyn Error>> {
+        let mut visitor = Visitor::new();
+        self.visit("MaterialEffect", &mut visitor)?;
+        visitor.save_binary_to_file(path)?;
+        Ok(())
+    }
+
+    fn can_be_saved(&self) -> bool {
+        true
+    }
+
+    fn try_clone_box(&self) -> Option<Box<dyn ResourceData>> {
+        Some(Box::new(self.clone()))
+    }
+}
+
+impl MaterialEffect {
     pub fn to_bind_group_layout_descriptor(&self) -> BindGroupLayoutDescriptor {
         BindGroupLayoutDescriptor {
             entries: self
@@ -31,76 +62,45 @@ impl MaterialEffectInfo {
                 .collect(),
         }
     }
-
-    pub fn process(
-        &self,
-        effect: &MaterialEffect,
-        context: &mut MaterialEffectContext,
-    ) -> Result<MaterialEffectData, FrameworkError> {
-        let desc = self.to_bind_group_layout_descriptor();
-
-        let bind_group_layout = context
-            .pipeline_cache
-            .get_or_create_bind_group_layout(&desc)
-            .clone();
-
-        let mut handles = vec![];
-
-        for resource_binding_definition in self.resource_binding_definitions.iter() {
-            handles.push(resource_binding_definition.extra(&effect.resource_bindings, context)?);
-        }
-
-        Ok(MaterialEffectData {
-            bind_group_layout,
-            handles,
-        })
-    }
 }
 
+#[derive(Default, Reflect, Visit, Debug, Clone)]
 pub struct ResourceBindingDefinition {
-    pub name: ResourceBindingName,
+    pub name: ImmutableString,
     pub entry: BindGroupLayoutEntry,
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
-pub struct MaterialEffect {
+pub struct MaterialEffectInstance {
     pub effect_name: ImmutableString,
     pub resource_bindings: ResourceBindings,
 }
 
-impl MaterialEffect {
-    pub fn new(info: &MaterialEffectInfo) -> Self {
+impl MaterialEffectInstance {
+    pub fn new(info: &MaterialEffectInfo, container: &MaterialEffectContainer) -> Self {
+        let effect = container
+            .get(&info.effect_name)
+            .expect("material_effect mut have");
+
         let mut resource_bindings = ResourceBindings::default();
 
-        for resource_binding_definition in info.resource_binding_definitions.iter() {
-            match &resource_binding_definition.name {
-                ResourceBindingName::Global(name) => {
+        for resource_binding_definition in effect.resource_binding_definitions.iter() {
+            let kind = resource_binding_definition.entry.ty.get_binding_type_kind();
+
+            match kind {
+                BindingTypeKind::Sampler | BindingTypeKind::Texture => {
                     resource_bindings.insert(
-                        ResourceBindingName::Global(name.clone()),
-                        MaterialResourceBinding::BuiltIn,
+                        resource_binding_definition.name.clone(),
+                        MaterialResourceBinding::Texture(MaterialTextureBinding::default()),
                     );
                 }
-                ResourceBindingName::Local(name) => {
-                    let kind = resource_binding_definition.entry.ty.get_binding_type_kind();
-
-                    match kind {
-                        BindingTypeKind::Sampler | BindingTypeKind::Texture => {
-                            resource_bindings.insert(
-                                ResourceBindingName::Local(name.clone()),
-                                MaterialResourceBinding::Texture(MaterialTextureBinding::default()),
-                            );
-                        }
-                        BindingTypeKind::Buffer => {
-                            resource_bindings.insert(
-                                ResourceBindingName::Local(name.clone()),
-                                MaterialResourceBinding::PropertyGroup(
-                                    MaterialPropertyGroup::default(),
-                                ),
-                            );
-                        }
-                        _ => {}
-                    }
+                BindingTypeKind::Buffer => {
+                    resource_bindings.insert(
+                        resource_binding_definition.name.clone(),
+                        MaterialResourceBinding::PropertyGroup(MaterialPropertyGroup::default()),
+                    );
                 }
+                _ => {}
             }
         }
 
@@ -205,19 +205,6 @@ impl ResourceBindingDefinition {
     }
 }
 
-#[derive(Default)]
-pub struct MaterialEffectInfoContainer(FxHashMap<ImmutableString, MaterialEffectInfo>);
-
-impl MaterialEffectInfoContainer {
-    pub fn get(&self, name: &ImmutableString) -> Option<&MaterialEffectInfo> {
-        self.0.get(name)
-    }
-
-    pub fn register_material_effect_info(&mut self, effect_info: MaterialEffectInfo) {
-        self.0.insert(effect_info.effect_name.clone(), effect_info);
-    }
-}
-
 pub struct MaterialEffectData {
     pub bind_group_layout: BindGroupLayout,
     pub handles: Vec<MaterialResourceHandle>,
@@ -230,23 +217,28 @@ pub struct MaterialEffectContext<'a> {
     pub texture_cache: &'a mut TextureCache,
 }
 
-#[derive(Debug, Clone, Reflect, Visit, PartialEq, Eq, Hash)]
-pub enum ResourceBindingName {
-    Global(ImmutableString),
-    Local(ImmutableString),
-}
+impl MaterialEffectContext<'_> {
+    pub fn process(
+        &mut self,
+        effect: &MaterialEffect,
+        instance: &MaterialEffectInstance,
+    ) -> Result<MaterialEffectData, FrameworkError> {
+        let desc = effect.to_bind_group_layout_descriptor();
 
-impl Display for ResourceBindingName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ResourceBindingName::Global(name) => f.write_fmt(format_args!("global:{name}")),
-            ResourceBindingName::Local(name) => f.write_fmt(format_args!("local:{name}")),
+        let bind_group_layout = self
+            .pipeline_cache
+            .get_or_create_bind_group_layout(&desc)
+            .clone();
+
+        let mut handles = vec![];
+
+        for resource_binding_definition in effect.resource_binding_definitions.iter() {
+            handles.push(resource_binding_definition.extra(&instance.resource_bindings, self)?);
         }
-    }
-}
 
-impl Default for ResourceBindingName {
-    fn default() -> Self {
-        ResourceBindingName::Local("".into())
+        Ok(MaterialEffectData {
+            bind_group_layout,
+            handles,
+        })
     }
 }

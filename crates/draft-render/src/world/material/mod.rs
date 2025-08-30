@@ -35,45 +35,51 @@ pub struct MaterialBindGroupHandle {
 #[type_uuid(id = "3cee68e7-ef0a-463b-a2f5-68f90586b654")]
 pub struct Material {
     pub pipeline_info: PipelineInfo,
-    effects: Vec<MaterialEffect>,
+    effect_instances: Vec<MaterialEffectInstance>,
 }
 
 impl Material {
-    pub fn effects(&self) -> &[MaterialEffect] {
-        &self.effects
+    pub fn effects(&self) -> &[MaterialEffectInstance] {
+        &self.effect_instances
     }
 
-    pub fn effect_mut(&mut self, effect_name: &ImmutableString) -> Option<&mut MaterialEffect> {
+    pub fn effect_mut(
+        &mut self,
+        effect_name: &ImmutableString,
+    ) -> Option<&mut MaterialEffectInstance> {
         let position = self
-            .effects
+            .effect_instances
             .iter()
             .position(|effect| effect.effect_name == *effect_name);
-        position.map(|position| &mut self.effects[position])
+        position.map(|position| &mut self.effect_instances[position])
     }
 
-    pub fn from_material_info(info: &MaterialInfo) -> Self {
-        let mut effects = vec![];
+    pub fn from_material<T: ErasedMaterial>() -> Self {
+        let info = T::material_info();
+        let container = MaterialEffectContainer::get_singleton();
+
+        let mut material = Material::default();
+
+        material.initialize(&info, &container);
+
+        material
+    }
+
+    pub fn initialize(&mut self, info: &MaterialInfo, container: &MaterialEffectContainer) {
+        let mut effect_instances = vec![];
 
         for effect_info in info.effect_infos.iter() {
-            effects.push(MaterialEffect::new(effect_info));
+            effect_instances.push(MaterialEffectInstance::new(effect_info, container));
         }
 
-        Self {
-            pipeline_info: info.pipeline_info.clone(),
-            effects,
-        }
+        self.pipeline_info = info.pipeline_info.clone();
+        self.effect_instances = effect_instances;
     }
 
-    pub fn from_material<T: ErasedMaterial>() -> Material {
-        let info = T::material_info();
-
-        Material::from_material_info(&info)
-    }
-
-    pub fn new(pipeline_info: PipelineInfo, effects: Vec<MaterialEffect>) -> Self {
+    pub fn new(pipeline_info: PipelineInfo, effect_instances: Vec<MaterialEffectInstance>) -> Self {
         Self {
             pipeline_info,
-            effects,
+            effect_instances,
         }
     }
 }
@@ -104,14 +110,6 @@ pub struct MaterialInfo {
     pub effect_infos: Vec<MaterialEffectInfo>,
 }
 
-pub trait ErasedMaterial: 'static + Send + Sync {
+pub trait ErasedMaterial {
     fn material_info() -> MaterialInfo;
-
-    fn register_material_effects(material_effect_info_container: &mut MaterialEffectInfoContainer) {
-        let info = Self::material_info();
-
-        for effect_info in info.effect_infos.into_iter() {
-            material_effect_info_container.register_material_effect_info(effect_info);
-        }
-    }
 }
