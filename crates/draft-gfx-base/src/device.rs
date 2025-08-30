@@ -92,9 +92,26 @@ impl RenderDevice {
         order: TextureDataOrder,
         data: &[u8],
     ) -> GpuTexture {
-        let texture =
-            self.device
-                .create_texture_with_data(queue.wgpu_queue(), &desc.get_desc(), order, data);
+        let view_formats = desc
+            .view_formats
+            .iter()
+            .map(|format| (*format).into())
+            .collect::<Vec<_>>();
+
+        let desc = wgpu::TextureDescriptor {
+            label: desc.label.as_deref(),
+            size: desc.size.into(),
+            mip_level_count: desc.mip_level_count,
+            sample_count: desc.sample_count,
+            dimension: desc.dimension.into(),
+            format: desc.format.into(),
+            usage: desc.usage.into(),
+            view_formats: &view_formats,
+        };
+
+        let texture = self
+            .device
+            .create_texture_with_data(queue.wgpu_queue(), &desc, order, data);
 
         GpuTexture::new(texture)
     }
@@ -105,7 +122,24 @@ impl RenderDevice {
     }
 
     pub fn create_texture(&self, desc: &TextureDescriptor) -> GpuTexture {
-        let buffer = self.device.create_texture(&desc.get_desc());
+        let view_formats = desc
+            .view_formats
+            .iter()
+            .map(|format| (*format).into())
+            .collect::<Vec<_>>();
+
+        let desc = wgpu::TextureDescriptor {
+            label: desc.label.as_deref(),
+            size: desc.size.into(),
+            mip_level_count: desc.mip_level_count,
+            sample_count: desc.sample_count,
+            dimension: desc.dimension.into(),
+            format: desc.format.into(),
+            usage: desc.usage.into(),
+            view_formats: &view_formats,
+        };
+
+        let buffer = self.device.create_texture(&desc);
         GpuTexture::new(buffer)
     }
 

@@ -1,8 +1,8 @@
-use std::{borrow::Cow, num::NonZero};
+use std::borrow::Cow;
 
 use crate::{
-    frame_graph::{PassContext, TransientBuffer},
-    gfx_base::{BindGroupDescriptor, GpuBindGroup, GpuBindGroupLayout, RawBufferBinding},
+    frame_graph::PassContext,
+    gfx_base::{BindGroupDescriptor, GpuBindGroup, GpuBindGroupLayout},
 };
 
 use super::BindGroupEntryInfo;
@@ -22,7 +22,11 @@ impl BindGroup {
     }
 
     pub fn new(context: &PassContext<'_>, info: &BindGroupInfo) -> Self {
-        let entries = vec![];
+        let entries = info
+            .entries
+            .iter()
+            .map(|entry| entry.get_gpu_bind_group_entry(context))
+            .collect();
 
         let desc = BindGroupDescriptor {
             label: info.label.clone(),
@@ -31,50 +35,5 @@ impl BindGroup {
         };
 
         BindGroup(context.render_device.create_bind_group(&desc))
-    }
-}
-
-pub enum BindingResource {
-    Buffer {
-        buffer: TransientBuffer,
-        size: Option<NonZero<u64>>,
-        offset: u64,
-    },
-    Sampler(wgpu::Sampler),
-    TextureView(wgpu::TextureView),
-    TextureViewArray(Vec<wgpu::TextureView>),
-}
-
-pub enum BindingResourceTemp<'a> {
-    Buffer {
-        buffer: &'a TransientBuffer,
-        size: Option<NonZero<u64>>,
-        offset: u64,
-    },
-    Sampler(wgpu::Sampler),
-    TextureView(wgpu::TextureView),
-    TextureViewArray(Vec<&'a wgpu::TextureView>),
-}
-
-impl BindingResourceTemp<'_> {
-    pub fn get_resource_binding(&self) -> wgpu::BindingResource {
-        match self {
-            BindingResourceTemp::Sampler(sampler) => wgpu::BindingResource::Sampler(sampler),
-            BindingResourceTemp::TextureView(texture_view) => {
-                wgpu::BindingResource::TextureView(texture_view)
-            }
-            BindingResourceTemp::Buffer {
-                buffer,
-                size,
-                offset,
-            } => wgpu::BindingResource::Buffer(RawBufferBinding {
-                buffer: buffer.resource.get_buffer(),
-                offset: *offset,
-                size: *size,
-            }),
-            BindingResourceTemp::TextureViewArray(texture_views) => {
-                wgpu::BindingResource::TextureViewArray(texture_views.as_slice())
-            }
-        }
     }
 }

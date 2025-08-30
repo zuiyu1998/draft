@@ -74,7 +74,7 @@ impl ErasedMaterial for TestMaterial {
             shader: BUILT_IN_SHADER.resource().clone(),
             entry_point: Some("fs_main".into()),
             targets: vec![Some(ColorTargetState {
-                format: TextureFormat::Rgba8UnormSrgb,
+                format: TextureFormat::Bgra8UnormSrgb,
                 blend: Some(BlendState {
                     color: BlendComponent::REPLACE,
                     alpha: BlendComponent::REPLACE,

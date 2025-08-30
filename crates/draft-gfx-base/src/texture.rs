@@ -99,9 +99,3 @@ pub struct TextureDescriptor {
     pub usage: TextureUsages,
     pub view_formats: Vec<TextureFormat>,
 }
-
-impl TextureDescriptor {
-    pub fn get_desc(&self) -> WgpuTextureDescriptor {
-        todo!()
-    }
-}
