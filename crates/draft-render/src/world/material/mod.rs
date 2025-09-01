@@ -7,7 +7,7 @@ pub use effect::*;
 pub use handle::*;
 
 use crate::{BindGroupLayout, PipelineInfo, gfx_base::BindingTypeKind};
-use fyrox_core::{ImmutableString, TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
+use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
 use fyrox_resource::{Resource, ResourceData};
 use std::{error::Error, fmt::Debug, path::Path};
 use thiserror::Error;
@@ -35,51 +35,26 @@ pub struct MaterialBindGroupHandle {
 #[type_uuid(id = "3cee68e7-ef0a-463b-a2f5-68f90586b654")]
 pub struct Material {
     pub pipeline_info: PipelineInfo,
-    effect_instances: Vec<MaterialEffectInstance>,
+    effect_infos: Vec<MaterialEffectInfo>,
+    pub resource_bindings: ResourceBindings,
 }
 
 impl Material {
-    pub fn effects(&self) -> &[MaterialEffectInstance] {
-        &self.effect_instances
-    }
-
-    pub fn effect_mut(
-        &mut self,
-        effect_name: &ImmutableString,
-    ) -> Option<&mut MaterialEffectInstance> {
-        let position = self
-            .effect_instances
-            .iter()
-            .position(|effect| effect.effect_name == *effect_name);
-        position.map(|position| &mut self.effect_instances[position])
+    pub fn effect_infos(&self) -> &[MaterialEffectInfo] {
+        &self.effect_infos
     }
 
     pub fn from_material<T: ErasedMaterial>() -> Self {
         let info = T::material_info();
-        let container = MaterialEffectContainer::get_singleton();
 
-        let mut material = Material::default();
-
-        material.initialize(&info, &container);
-
-        material
+        Material::new(info.pipeline_info, info.effect_infos)
     }
 
-    pub fn initialize(&mut self, info: &MaterialInfo, container: &MaterialEffectContainer) {
-        let mut effect_instances = vec![];
-
-        for effect_info in info.effect_infos.iter() {
-            effect_instances.push(MaterialEffectInstance::new(effect_info, container));
-        }
-
-        self.pipeline_info = info.pipeline_info.clone();
-        self.effect_instances = effect_instances;
-    }
-
-    pub fn new(pipeline_info: PipelineInfo, effect_instances: Vec<MaterialEffectInstance>) -> Self {
+    pub fn new(pipeline_info: PipelineInfo, effect_infos: Vec<MaterialEffectInfo>) -> Self {
         Self {
             pipeline_info,
-            effect_instances,
+            effect_infos,
+            resource_bindings: Default::default(),
         }
     }
 }

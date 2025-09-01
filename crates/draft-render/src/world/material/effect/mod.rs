@@ -1,32 +1,35 @@
 mod container;
+mod loader;
 mod resource_bindings;
 
 pub use container::*;
+pub use loader::*;
 pub use resource_bindings::*;
 
-use std::{error::Error, path::Path};
-
-use draft_gfx_base::{
-    BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingTypeKind, RenderDevice, RenderQueue,
-};
+use std::{error::Error, fs::File, io::Write, path::Path};
 
 use crate::{
-    BindGroupLayout, FrameworkError, MaterialError, MaterialPropertyGroup, MaterialResourceBinding,
+    BindGroupLayout, FrameworkError, MaterialError, MaterialResourceBinding,
     MaterialResourceHandle, MaterialSamplerHandle, MaterialTextureBinding, MaterialTextureHandle,
     PipelineCache, TextureCache,
+    gfx_base::{
+        BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingTypeKind, RenderDevice, RenderQueue,
+    },
 };
 use fyrox_core::{ImmutableString, TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
-use fyrox_resource::{Resource, ResourceData};
+use fyrox_resource::{Resource, ResourceData, io::ResourceIo};
+use serde::{Deserialize, Serialize};
 
 pub type MaterialEffectResource = Resource<MaterialEffect>;
 
-#[derive(Default, Reflect, Visit, Clone, Debug, TypeUuidProvider)]
+#[derive(Default, Reflect, Visit, Clone, Debug, TypeUuidProvider, Deserialize, Serialize)]
 #[type_uuid(id = "3cee68e7-ef0a-463b-a2f5-68f90586b654")]
 pub struct MaterialEffect {
     pub effect_name: ImmutableString,
     pub resource_binding_definitions: Vec<ResourceBindingDefinition>,
 }
 
+#[derive(Default, Reflect, Visit, Debug, Clone, Deserialize, Serialize)]
 pub struct MaterialEffectInfo {
     pub effect_name: ImmutableString,
 }
@@ -37,9 +40,10 @@ impl ResourceData for MaterialEffect {
     }
 
     fn save(&mut self, path: &Path) -> Result<(), Box<dyn Error>> {
-        let mut visitor = Visitor::new();
-        self.visit("MaterialEffect", &mut visitor)?;
-        visitor.save_binary_to_file(path)?;
+        let toml = toml::to_string(self)?;
+        let mut file = File::create(path)?;
+        file.write_all(toml.as_bytes())?;
+
         Ok(())
     }
 
@@ -53,6 +57,16 @@ impl ResourceData for MaterialEffect {
 }
 
 impl MaterialEffect {
+    pub async fn from_file<P>(path: P, io: &dyn ResourceIo) -> Result<Self, FrameworkError>
+    where
+        P: AsRef<Path>,
+    {
+        let content = io.load_file(path.as_ref()).await?;
+        let effect = toml::from_slice::<Self>(&content)?;
+
+        Ok(effect)
+    }
+
     pub fn to_bind_group_layout_descriptor(&self) -> BindGroupLayoutDescriptor {
         BindGroupLayoutDescriptor {
             entries: self
@@ -64,51 +78,10 @@ impl MaterialEffect {
     }
 }
 
-#[derive(Default, Reflect, Visit, Debug, Clone)]
+#[derive(Default, Reflect, Visit, Debug, Clone, Deserialize, Serialize)]
 pub struct ResourceBindingDefinition {
     pub name: ImmutableString,
     pub entry: BindGroupLayoutEntry,
-}
-
-#[derive(Debug, Clone, Reflect, Visit, Default)]
-pub struct MaterialEffectInstance {
-    pub effect_name: ImmutableString,
-    pub resource_bindings: ResourceBindings,
-}
-
-impl MaterialEffectInstance {
-    pub fn new(info: &MaterialEffectInfo, container: &MaterialEffectContainer) -> Self {
-        let effect = container
-            .get(&info.effect_name)
-            .expect("material_effect mut have");
-
-        let mut resource_bindings = ResourceBindings::default();
-
-        for resource_binding_definition in effect.resource_binding_definitions.iter() {
-            let kind = resource_binding_definition.entry.ty.get_binding_type_kind();
-
-            match kind {
-                BindingTypeKind::Sampler | BindingTypeKind::Texture => {
-                    resource_bindings.insert(
-                        resource_binding_definition.name.clone(),
-                        MaterialResourceBinding::Texture(MaterialTextureBinding::default()),
-                    );
-                }
-                BindingTypeKind::Buffer => {
-                    resource_bindings.insert(
-                        resource_binding_definition.name.clone(),
-                        MaterialResourceBinding::PropertyGroup(MaterialPropertyGroup::default()),
-                    );
-                }
-                _ => {}
-            }
-        }
-
-        Self {
-            effect_name: info.effect_name.clone(),
-            resource_bindings,
-        }
-    }
 }
 
 fn extra_texture(
@@ -221,7 +194,7 @@ impl MaterialEffectContext<'_> {
     pub fn process(
         &mut self,
         effect: &MaterialEffect,
-        instance: &MaterialEffectInstance,
+        resource_bindings: &ResourceBindings,
     ) -> Result<MaterialEffectData, FrameworkError> {
         let desc = effect.to_bind_group_layout_descriptor();
 
@@ -233,7 +206,7 @@ impl MaterialEffectContext<'_> {
         let mut handles = vec![];
 
         for resource_binding_definition in effect.resource_binding_definitions.iter() {
-            handles.push(resource_binding_definition.extra(&instance.resource_bindings, self)?);
+            handles.push(resource_binding_definition.extra(resource_bindings, self)?);
         }
 
         Ok(MaterialEffectData {

@@ -1,10 +1,10 @@
 use std::{collections::HashMap, sync::Arc};
 
 use draft_render::{
-    ErasedMaterial, FragmentState, Geometry, GeometryResource, Material, MaterialEffectInfo,
-    MaterialInfo, MaterialResource, MaterialTextureBinding, MeshRenderPhase, PipelineInfo,
-    RenderPhasesContainer, RenderPipelineInfo, RenderServer, RenderWorld, Shader, ShaderResource,
-    Texture, TextureResource, Vertex, VertexAttributeDescriptor,
+    ErasedMaterial, FragmentState, Geometry, GeometryResource, Material, MaterialEffect,
+    MaterialEffectInfo, MaterialInfo, MaterialResource, MaterialTextureBinding, MeshRenderPhase,
+    PipelineInfo, RenderPhasesContainer, RenderPipelineInfo, RenderServer, RenderWorld, Shader,
+    ShaderResource, Texture, TextureResource, Vertex, VertexAttributeDescriptor,
     frame_graph::{ColorAttachment, FrameGraph, TextureView},
     gfx_base::{
         BlendComponent, BlendState, ColorTargetState, ColorWrites, GpuTextureView,
@@ -19,6 +19,7 @@ use draft_render::{
 
 use draft::renderer::{
     Batch, Observer, ObserversCollection, Pipeline, PipelineContext, PipelineNode, WorldRenderer,
+    initialize_renderer,
 };
 
 use fyrox_core::{ImmutableString, futures, task::TaskPool, uuid};
@@ -86,21 +87,6 @@ impl ErasedMaterial for TestMaterial {
         let test_effect_info = MaterialEffectInfo {
             effect_name: test_effct_name,
         };
-
-        // test_effect_info
-        //     .resource_binding_definitions
-        //     .push(ResourceBindingDefinition {
-        //         name: "t_diffuse".into(),
-        //         entry: texture_2d(TextureSampleType::Float { filterable: true })
-        //             .build(0, ShaderStages::default()),
-        //     });
-
-        // test_effect_info
-        //     .resource_binding_definitions
-        //     .push(ResourceBindingDefinition {
-        //         name: ResourceBindingName::Local("t_diffuse".into()),
-        //         entry: sampler(SamplerBindingType::Filtering).build(1, ShaderStages::default()),
-        //     });
 
         MaterialInfo {
             pipeline_info,
@@ -328,7 +314,7 @@ impl State {
 
         let windows = Windows::from_server(&render_server, window);
 
-        let mut renderer = WorldRenderer::new(render_server, &resource_manager);
+        let mut renderer = initialize_renderer(render_server, &resource_manager);
 
         let mut pipeline = Pipeline::empty();
         pipeline.push_node(TestNode);
@@ -336,6 +322,8 @@ impl State {
         renderer.pipeline_container.insert("test".into(), pipeline);
 
         resource_manager.update_or_load_registry();
+
+        resource_manager.request::<MaterialEffect>("data/test.material_effect");
 
         let image = resource_manager.request::<Texture>("data/happy-tree.png");
         let batch = new_batch(&image);
@@ -416,17 +404,13 @@ fn new_batch(image: &TextureResource) -> Batch {
 
     let mut material = Material::from_material::<TestMaterial>();
 
-    let test_effct_name = TestMaterial::get_test_effct_name();
-
-    if let Some(effect) = material.effect_mut(&test_effct_name) {
-        effect.resource_bindings.insert(
-            "t_diffuse".into(),
-            MaterialTextureBinding {
-                value: Some(image.clone()),
-            }
-            .into(),
-        );
-    }
+    material.resource_bindings.insert(
+        "t_diffuse".into(),
+        MaterialTextureBinding {
+            value: Some(image.clone()),
+        }
+        .into(),
+    );
 
     Batch::new(
         GeometryResource::new_embedded(geometry),

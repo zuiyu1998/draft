@@ -48,12 +48,13 @@ impl MeshPhaseExtractor for Batch {
         let mut layouts = vec![];
         let mut material_effect_data = vec![];
 
-        for instance in material.effects().iter() {
+        for effect_info in material.effect_infos().iter() {
             let effect = context
                 .world
                 .material_effect_container
-                .get(&instance.effect_name)
+                .get(&effect_info.effect_name)
                 .unwrap();
+
             layouts.push(effect.to_bind_group_layout_descriptor());
 
             let mut context = MaterialEffectContext {
@@ -63,7 +64,7 @@ impl MeshPhaseExtractor for Batch {
                 texture_cache: &mut context.world.texture_cache,
             };
 
-            material_effect_data.push(context.process(&effect, instance)?);
+            material_effect_data.push(context.process(&effect, &material.resource_bindings)?);
         }
 
         let desc = PipelineDescriptor::new(&material.pipeline_info, &layouts, &[vertex_layout]);

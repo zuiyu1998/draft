@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 
+use fyrox_core::{io::FileError, visitor::error::VisitError};
 use thiserror::Error;
+use toml::de::Error as TomlError;
 
 use fyrox_resource::{
     Resource, TypedResourceData,
@@ -19,6 +21,18 @@ pub enum FrameworkError {
     ResourcePending { path: PathBuf },
     #[error(transparent)]
     MaterialError(#[from] MaterialError),
+    #[error(transparent)]
+    Visit(#[from] VisitError),
+    #[error("file error: {0:?}")]
+    FileError(FileError),
+    #[error(transparent)]
+    TomlError(#[from] TomlError),
+}
+
+impl From<FileError> for FrameworkError {
+    fn from(value: FileError) -> Self {
+        FrameworkError::FileError(value)
+    }
 }
 
 impl From<naga_oil::compose::ComposerError> for FrameworkError {

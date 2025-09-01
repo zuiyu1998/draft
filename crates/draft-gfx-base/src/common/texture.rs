@@ -3,6 +3,7 @@ use crate::{
     RawTextureUsages,
 };
 use fyrox_core::{reflect::*, visitor::*};
+use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, Reflect, Visit, Default)]
 pub struct TextureUsages(u32);
@@ -124,7 +125,9 @@ impl From<RawExtent3d> for Extent3d {
 
 /// ASTC RGBA channel
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, Visit, Reflect, Default)]
+#[derive(
+    Copy, Clone, Debug, Hash, Eq, PartialEq, Visit, Reflect, Default, Deserialize, Serialize,
+)]
 pub enum AstcChannel {
     /// 8 bit integer RGBA, [0, 255] converted to/from linear-color float [0, 1] in shader.
     ///
@@ -163,7 +166,9 @@ impl From<RawAstcChannel> for AstcChannel {
 
 /// ASTC block dimensions
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, Visit, Reflect, Default)]
+#[derive(
+    Copy, Clone, Debug, Hash, Eq, PartialEq, Visit, Reflect, Default, Deserialize, Serialize,
+)]
 pub enum AstcBlock {
     /// 4x4 block compressed texture. 16 bytes per block (8 bit/px).
     #[default]
@@ -246,7 +251,9 @@ impl From<RawAstcBlock> for AstcBlock {
 /// Corresponds to [WebGPU `GPUTextureFormat`](
 /// https://gpuweb.github.io/gpuweb/#enumdef-gputextureformat).
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, Reflect, Visit, Default)]
+#[derive(
+    Copy, Clone, Debug, Hash, Eq, PartialEq, Reflect, Visit, Default, Deserialize, Serialize,
+)]
 pub enum TextureFormat {
     // Normal 8 bit formats
     /// Red channel only. 8 bit integer per channel. [0, 255] converted to/from float [0, 1] in shader.

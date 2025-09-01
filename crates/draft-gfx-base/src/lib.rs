@@ -33,7 +33,7 @@ pub use wgpu::{
     BindGroup as WgpuBindGroup, BindGroupDescriptor as WgpuBindGroupDescriptor, BindGroupEntry,
     BindGroupEntry as WgpuBindGroupEntry, BindGroupLayout as WgpuBindGroupLayout,
     BindGroupLayoutDescriptor as RawBindGroupLayoutDescriptor,
-    BindGroupLayoutEntry as RawBindGroupLayoutEntry, BindingResource as WgpuBindingResource,
+    BindGroupLayoutEntry as WgpuBindGroupLayoutEntry, BindingResource as WgpuBindingResource,
     BindingType as RawBindingType, BlendComponent as RawBlendComponent,
     BlendFactor as RawBlendFactor, BlendOperation as RawBlendOperation,
     BlendState as RawBlendState, Buffer as WgpuBuffer, BufferAddress,

@@ -9,14 +9,15 @@ use std::{
 };
 
 use crate::{
-    RawBindGroupLayoutEntry, RawBindingType, RawBufferBindingType, RawPipelineCompilationOptions,
-    RawSamplerBindingType, RawShaderStages, RawStorageTextureAccess, RawTextureSampleType,
-    RawTextureViewDimension, TextureFormat,
+    RawBindingType, RawBufferBindingType, RawPipelineCompilationOptions, RawSamplerBindingType,
+    RawShaderStages, RawStorageTextureAccess, RawTextureSampleType, RawTextureViewDimension,
+    TextureFormat, WgpuBindGroupLayoutEntry,
 };
+use serde::{Deserialize, Serialize};
 
 use fyrox_core::{reflect::*, visitor::*};
 
-#[derive(Clone, Debug, Visit, Reflect, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, Visit, Reflect, Copy, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub struct ShaderStages(u32);
 
 impl Default for ShaderStages {
@@ -81,7 +82,9 @@ impl PipelineCompilationOptions {
 ///
 /// Corresponds to [WebGPU `GPUStorageTextureAccess`](
 /// https://gpuweb.github.io/gpuweb/#enumdef-gpustoragetextureaccess).
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Reflect, Visit, Default)]
+#[derive(
+    Clone, Copy, Debug, Eq, PartialEq, Hash, Reflect, Visit, Default, Deserialize, Serialize,
+)]
 pub enum StorageTextureAccess {
     /// The texture can only be written in the shader and it:
     /// - may or may not be annotated with `write` (WGSL).
@@ -163,7 +166,9 @@ impl From<StorageTextureAccess> for RawStorageTextureAccess {
 /// Corresponds to [WebGPU `GPUTextureViewDimension`](
 /// https://gpuweb.github.io/gpuweb/#enumdef-gputextureviewdimension).
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Default, Hash, Eq, PartialEq, Reflect, Visit)]
+#[derive(
+    Copy, Clone, Debug, Default, Hash, Eq, PartialEq, Reflect, Visit, Deserialize, Serialize,
+)]
 pub enum TextureViewDimension {
     /// A one dimensional texture. `texture_1d` in WGSL and `texture1D` in GLSL.
     D1,
@@ -210,7 +215,9 @@ impl From<RawTextureViewDimension> for TextureViewDimension {
 ///
 /// Corresponds to [WebGPU `GPUTextureSampleType`](
 /// https://gpuweb.github.io/gpuweb/#enumdef-gputexturesampletype).
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Reflect, Visit, Default)]
+#[derive(
+    Clone, Copy, Debug, Eq, PartialEq, Hash, Reflect, Visit, Default, Deserialize, Serialize,
+)]
 pub enum TextureSampleType {
     /// Sampling returns floats.
     ///
@@ -298,7 +305,9 @@ impl From<TextureSampleType> for RawTextureSampleType {
 /// Corresponds to [WebGPU `GPUSamplerBindingType`](
 /// https://gpuweb.github.io/gpuweb/#enumdef-gpusamplerbindingtype).
 #[repr(C)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Reflect, Visit, Default)]
+#[derive(
+    Clone, Copy, Debug, Eq, PartialEq, Hash, Reflect, Visit, Default, Serialize, Deserialize,
+)]
 pub enum SamplerBindingType {
     /// The sampling result is produced based on more than a single color sample from a texture,
     /// e.g. when bilinear interpolation is enabled.
@@ -325,7 +334,9 @@ impl From<SamplerBindingType> for RawSamplerBindingType {
 ///
 /// Corresponds to [WebGPU `GPUBufferBindingType`](
 /// https://gpuweb.github.io/gpuweb/#enumdef-gpubufferbindingtype).
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Hash, Reflect, Visit)]
+#[derive(
+    Clone, Copy, Debug, Default, Eq, PartialEq, Hash, Reflect, Visit, Deserialize, Serialize,
+)]
 pub enum BufferBindingType {
     /// A buffer for uniform values.
     ///
@@ -400,7 +411,9 @@ impl From<BufferBindingType> for RawBufferBindingType {
 ///
 /// Corresponds to WebGPU's mutually exclusive fields within [`GPUBindGroupLayoutEntry`](
 /// https://gpuweb.github.io/gpuweb/#dictdef-gpubindgrouplayoutentry).
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Reflect, Visit, Default)]
+#[derive(
+    Clone, Copy, Debug, Eq, PartialEq, Hash, Reflect, Visit, Default, Deserialize, Serialize,
+)]
 pub enum BindingType {
     /// A buffer binding.
     ///
@@ -532,7 +545,7 @@ pub enum BindingType {
     AccelerationStructure,
 }
 
-#[derive(Debug, Default, Reflect, Visit, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Default, Reflect, Visit, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub struct BindGroupLayoutEntry {
     /// Binding index. Must match shader index and be unique inside a BindGroupLayout. A binding
     /// of index 1, would be described as `layout(set = 0, binding = 1) uniform` in shaders.
@@ -619,9 +632,9 @@ impl From<BindingType> for RawBindingType {
     }
 }
 
-impl From<BindGroupLayoutEntry> for RawBindGroupLayoutEntry {
+impl From<BindGroupLayoutEntry> for WgpuBindGroupLayoutEntry {
     fn from(value: BindGroupLayoutEntry) -> Self {
-        RawBindGroupLayoutEntry {
+        WgpuBindGroupLayoutEntry {
             binding: value.binding,
             visibility: value.visibility.into(),
             ty: value.ty.into(),

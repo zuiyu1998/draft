@@ -1,0 +1,25 @@
+effect_name = "test"
+
+[[resource_binding_definitions]]
+name = "t_diffuse"
+
+[resource_binding_definitions.entry]
+binding = 0
+visibility = 3
+
+[resource_binding_definitions.entry.ty.Texture]
+view_dimension = "D2"
+multisampled = false
+
+[resource_binding_definitions.entry.ty.Texture.sample_type.Float]
+filterable = true
+
+[[resource_binding_definitions]]
+name = "t_diffuse"
+
+[resource_binding_definitions.entry]
+binding = 1
+visibility = 3
+
+[resource_binding_definitions.entry.ty]
+Sampler = "Filtering"
