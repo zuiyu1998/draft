@@ -6,7 +6,7 @@ pub use binding::*;
 pub use effect::*;
 pub use handle::*;
 
-use crate::{BindGroupLayout, PipelineInfo, gfx_base::BindingTypeKind};
+use crate::{PipelineInfo, gfx_base::BindingTypeKind};
 use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
 use fyrox_resource::{Resource, ResourceData};
 use std::{error::Error, fmt::Debug, path::Path};
@@ -24,11 +24,6 @@ pub enum MaterialError {
         target_kind: BindingTypeKind,
         source_kind: BindingTypeKind,
     },
-}
-
-pub struct MaterialBindGroupHandle {
-    pub bind_group_layout: BindGroupLayout,
-    pub material_resource_handle_container: MaterialResourceHandleContainer,
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Default, TypeUuidProvider)]

@@ -22,6 +22,11 @@ use serde::{Deserialize, Serialize};
 
 pub type MaterialEffectResource = Resource<MaterialEffect>;
 
+pub struct MaterialBindGroupHandle {
+    pub bind_group_layout: BindGroupLayout,
+    pub material_resource_handles: Vec<MaterialResourceHandle>,
+}
+
 #[derive(Default, Reflect, Visit, Clone, Debug, TypeUuidProvider, Deserialize, Serialize)]
 #[type_uuid(id = "3cee68e7-ef0a-463b-a2f5-68f90586b654")]
 pub struct MaterialEffect {
@@ -178,11 +183,6 @@ impl ResourceBindingDefinition {
     }
 }
 
-pub struct MaterialEffectData {
-    pub bind_group_layout: BindGroupLayout,
-    pub handles: Vec<MaterialResourceHandle>,
-}
-
 pub struct MaterialEffectContext<'a> {
     pub pipeline_cache: &'a mut PipelineCache,
     pub device: &'a RenderDevice,
@@ -195,7 +195,7 @@ impl MaterialEffectContext<'_> {
         &mut self,
         effect: &MaterialEffect,
         resource_bindings: &ResourceBindings,
-    ) -> Result<MaterialEffectData, FrameworkError> {
+    ) -> Result<MaterialBindGroupHandle, FrameworkError> {
         let desc = effect.to_bind_group_layout_descriptor();
 
         let bind_group_layout = self
@@ -209,9 +209,9 @@ impl MaterialEffectContext<'_> {
             handles.push(resource_binding_definition.extra(resource_bindings, self)?);
         }
 
-        Ok(MaterialEffectData {
+        Ok(MaterialBindGroupHandle {
             bind_group_layout,
-            handles,
+            material_resource_handles: handles,
         })
     }
 }

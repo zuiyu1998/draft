@@ -1,21 +1,20 @@
-use draft_gfx_base::CachedPipelineId;
 use fyrox_core::ImmutableString;
-use wgpu::BufferUsages;
 
 use crate::{
-    IndexRenderBuffer, MaterialEffectData, MaterialResourceHandle, PhaseName, RenderPhase,
-    RenderWorld, frame_graph::RenderPassBuilder, render_resource::RenderBuffer,
+    IndexRenderBuffer, MaterialBindGroupHandle, MaterialResourceHandle, PhaseName, RenderPhase,
+    RenderWorld, frame_graph::RenderPassBuilder, gfx_base::CachedPipelineId,
+    render_resource::RenderBuffer,
 };
 
 pub struct MeshRenderPhase {
     pub vertex_buffer: RenderBuffer,
     pub index_buffer: Option<IndexRenderBuffer>,
     pub pipeline_id: CachedPipelineId,
-    pub material_effect_data: Vec<MaterialEffectData>,
+    pub material_bind_group_handles: Vec<MaterialBindGroupHandle>,
 }
 
 impl PhaseName for MeshRenderPhase {
-    fn name() -> fyrox_core::ImmutableString {
+    fn name() -> ImmutableString {
         ImmutableString::new("MeshRenderPhase")
     }
 }
@@ -28,11 +27,13 @@ impl RenderPhase for MeshRenderPhase {
 
         render_pass_builder.set_render_pipeline(self.pipeline_id);
 
-        for (index, material_effect_data) in self.material_effect_data.iter().enumerate() {
+        for (index, material_bind_group_handle) in
+            self.material_bind_group_handles.iter().enumerate()
+        {
             let mut bind_group_handle_builder = render_pass_builder
                 .create_bind_group_handle_builder(
                     None,
-                    material_effect_data
+                    material_bind_group_handle
                         .bind_group_layout
                         .get_gpu_bind_group_layout()
                         .clone(),
@@ -40,7 +41,11 @@ impl RenderPhase for MeshRenderPhase {
 
             let mut offsets = vec![];
 
-            for (binding, handle) in material_effect_data.handles.iter().enumerate() {
+            for (binding, handle) in material_bind_group_handle
+                .material_resource_handles
+                .iter()
+                .enumerate()
+            {
                 match handle {
                     MaterialResourceHandle::Texture(material_texture_handle) => {
                         bind_group_handle_builder = bind_group_handle_builder
@@ -49,18 +54,6 @@ impl RenderPhase for MeshRenderPhase {
                     MaterialResourceHandle::Sampler(material_sampler_handle) => {
                         bind_group_handle_builder = bind_group_handle_builder
                             .add_handle(binding as u32, &material_sampler_handle.sampler);
-                    }
-                    MaterialResourceHandle::PropertyGroup(material_property_group_handle) => {
-                        let handle = world.material_buffer_handle_cache.get_or_create(
-                            &mut world.buffer_allocator,
-                            &mut world.buffer_cache,
-                            bind_group_handle_builder.frame_graph_mut(),
-                            material_property_group_handle,
-                            BufferUsages::UNIFORM | BufferUsages::COPY_DST,
-                        );
-                        offsets.push(material_property_group_handle.offset);
-                        bind_group_handle_builder =
-                            bind_group_handle_builder.add_handle(binding as u32, &handle);
                     }
                     MaterialResourceHandle::Buffer(material_buffer_handle) => {
                         offsets.push(material_buffer_handle.offset);

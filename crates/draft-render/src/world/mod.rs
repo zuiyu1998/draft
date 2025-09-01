@@ -24,7 +24,6 @@ pub struct RenderWorld {
     pub texture_cache: TextureCache,
     pub buffer_cache: BufferCache,
     pub buffer_allocator: BufferAllocator,
-    pub material_buffer_handle_cache: MaterialBufferHandleCache,
     pub material_effect_container: MaterialEffectContainer,
 }
 
@@ -37,7 +36,6 @@ impl RenderWorld {
             geometry_cache: Default::default(),
             texture_cache: Default::default(),
             buffer_allocator: Default::default(),
-            material_buffer_handle_cache: Default::default(),
             material_effect_container: MaterialEffectContainer::default(),
         }
     }
