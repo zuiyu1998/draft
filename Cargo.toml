@@ -13,6 +13,7 @@ fyrox-resource = { git = "https://github.com/zuiyu1998/Fyrox.git" }
 lazy_static = "1.4.0"
 fxhash = { version = "0.2" }
 serde = { version = "1.0", features = ['derive'] }
+downcast-rs = "2.0.1"
 
 [dev-dependencies]
 winit = "0.30"
