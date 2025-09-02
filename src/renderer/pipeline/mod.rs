@@ -8,6 +8,8 @@ use draft_render::{
 use fxhash::FxHashMap;
 use fyrox_core::ImmutableString;
 
+use crate::renderer::ObserversCollection;
+
 pub struct PhaseContext<'a> {
     pub world: &'a mut RenderWorld,
     pub render_phases_container: &'a mut RenderPhasesContainer,
@@ -18,6 +20,7 @@ pub trait MeshPhaseExtractor {
     fn extra(&self, context: &mut PhaseContext) -> Result<(), FrameworkError>;
 }
 
+#[derive(Clone)]
 pub struct Batch {
     pub geometry: GeometryResource,
     pub material: MaterialResource,
@@ -85,9 +88,10 @@ impl MeshPhaseExtractor for Batch {
     }
 }
 
-pub struct PipelineContext<'a> {
-    pub batch: &'a Batch,
+pub struct PipelineContext {
+    pub batch: Batch,
     pub texture_view: TextureView,
+    pub observers_collection: ObserversCollection,
 }
 
 pub trait PipelineNode: 'static {

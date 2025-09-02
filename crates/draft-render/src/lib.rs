@@ -14,3 +14,7 @@ pub use error::*;
 pub use phase::*;
 pub use utils::*;
 pub use world::*;
+
+pub mod encase {
+    pub use encase::*;
+}

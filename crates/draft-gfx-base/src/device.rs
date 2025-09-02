@@ -23,6 +23,11 @@ impl RenderDevice {
         &self.device
     }
 
+    #[inline]
+    pub fn limits(&self) -> wgpu::Limits {
+        self.device.limits()
+    }
+
     pub fn create_bind_group(&self, desc: &BindGroupDescriptor) -> GpuBindGroup {
         let entries = desc
             .entries

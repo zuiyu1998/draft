@@ -48,7 +48,7 @@ pub use wgpu::{
     PipelineCompilationOptions as RawPipelineCompilationOptions,
     PipelineLayout as RawPipelineLayout, PipelineLayoutDescriptor as RawPipelineLayoutDescriptor,
     PolygonMode as RawPolygonMode, PrimitiveState as RawPrimitiveState,
-    PrimitiveTopology as RawPrimitiveTopology, Queue as RawQueue,
+    PrimitiveTopology as RawPrimitiveTopology, Queue as RawQueue, QueueWriteBufferView,
     RenderPipelineDescriptor as RawRenderPipelineDescriptor, Sampler as WgpuSampler,
     SamplerBindingType as RawSamplerBindingType, SamplerBorderColor as RawSamplerBorderColor,
     SamplerDescriptor as RawSamplerDescriptor, ShaderLocation,
@@ -77,6 +77,19 @@ pub struct RenderQueue(Arc<RawQueue>);
 impl RenderQueue {
     pub fn wgpu_queue(&self) -> &RawQueue {
         &self.0
+    }
+
+    pub fn write_buffer(&self, buffer: &GpuBuffer, offset: BufferAddress, data: &[u8]) {
+        self.0.write_buffer(buffer.get_buffer(), offset, data);
+    }
+
+    pub fn write_buffer_with<'a>(
+        &'a self,
+        buffer: &'a GpuBuffer,
+        offset: BufferAddress,
+        size: BufferSize,
+    ) -> Option<QueueWriteBufferView<'a>> {
+        self.0.write_buffer_with(buffer.get_buffer(), offset, size)
     }
 }
 

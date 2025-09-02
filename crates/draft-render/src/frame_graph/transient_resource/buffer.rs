@@ -2,7 +2,8 @@ use std::borrow::Cow;
 use std::sync::Arc;
 
 use crate::gfx_base::{
-    BufferAddress, BufferDescriptor, BufferUsages, COPY_BUFFER_ALIGNMENT, GpuBuffer,
+    BufferAddress, BufferDescriptor, BufferInitDescriptor, BufferUsages, COPY_BUFFER_ALIGNMENT,
+    GpuBuffer,
 };
 
 use super::{
@@ -49,10 +50,10 @@ pub struct BufferInfo {
 }
 
 impl BufferInfo {
-    pub fn from_buffer_init_desc(desc: &wgpu::util::BufferInitDescriptor) -> Self {
+    pub fn from_buffer_init_desc(desc: &BufferInitDescriptor) -> Self {
         if desc.contents.is_empty() {
             BufferInfo {
-                label: desc.label.map(|label| label.to_string().into()),
+                label: desc.label.as_ref().map(|label| label.to_string().into()),
                 size: 0,
                 usage: desc.usage,
                 mapped_at_creation: false,
@@ -68,7 +69,7 @@ impl BufferInfo {
                 ((unpadded_size + align_mask) & !align_mask).max(COPY_BUFFER_ALIGNMENT);
 
             BufferInfo {
-                label: desc.label.map(|label| label.to_string().into()),
+                label: desc.label.as_ref().map(|label| label.to_string().into()),
                 size: padded_size,
                 usage: desc.usage,
                 mapped_at_creation: false,

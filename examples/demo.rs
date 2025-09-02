@@ -362,7 +362,8 @@ impl State {
         {
             let pipeline_context = PipelineContext {
                 texture_view: TextureView::new(texture_view),
-                batch: &self.batch,
+                batch: self.batch.clone(),
+                observers_collection: Default::default(),
             };
 
             self.renderer.render(&pipeline_context, &observers);

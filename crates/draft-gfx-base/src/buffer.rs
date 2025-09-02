@@ -12,6 +12,10 @@ impl GpuBuffer {
         &self.0
     }
 
+    pub fn size(&self) -> u64 {
+        self.0.size()
+    }
+
     pub fn new(buffer: WgpuBuffer) -> Self {
         Self(buffer)
     }

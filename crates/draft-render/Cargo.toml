@@ -32,3 +32,4 @@ strum = "0.26.1"
 strum_macros = "0.26.1"
 bytes = { version = "1.10" }
 toml = { version = "0.9" }
+encase = { version = "0.10", features = ["nalgebra"] }
