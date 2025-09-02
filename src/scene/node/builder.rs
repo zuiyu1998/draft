@@ -1,7 +1,7 @@
 use fyrox_core::algebra::Matrix4;
 use std::cell::Cell;
 
-use crate::scene::AbstractNode;
+use crate::scene::Object;
 
 use super::Node;
 
@@ -24,7 +24,7 @@ impl NodeBuilder {
         }
     }
 
-    pub fn build_abstract_node(self) -> AbstractNode {
-        AbstractNode::new(self.build())
+    pub fn build_object(self) -> Object {
+        Object::new(self.build())
     }
 }

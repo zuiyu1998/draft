@@ -1,6 +1,6 @@
 use fyrox_core::algebra::Matrix4;
 
-use crate::scene::{AbstractNode, Camera, NodeBuilder, Projection};
+use crate::scene::{Camera, NodeBuilder, Object, Projection};
 
 pub struct CameraBuilder {
     node_builder: NodeBuilder,
@@ -19,7 +19,7 @@ impl CameraBuilder {
         }
     }
 
-    pub fn build_abstract_node(self) -> AbstractNode {
-        AbstractNode::new(self.build())
+    pub fn build_object(self) -> Object {
+        Object::new(self.build())
     }
 }

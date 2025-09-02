@@ -2,6 +2,8 @@ mod builder;
 
 pub use builder::*;
 
+use crate::scene::DynObject;
+
 use super::{DynNode, Node, NodeMut, NodeRef};
 use fyrox_core::{
     algebra::{Matrix4, Point3, Vector2},
@@ -138,6 +140,8 @@ pub struct Camera {
     projection_matrix: Matrix4<f32>,
     projection: InheritableVariable<Projection>,
 }
+
+impl DynObject for Camera {}
 
 impl DynNode for Camera {
     fn get_ref(&self) -> NodeRef {
