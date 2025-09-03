@@ -98,20 +98,29 @@ impl WorldRenderer {
         &mut self,
         pipeline_context: &PipelineContext,
         render_phases_container: &RenderPhasesContainer,
-        observers: &ObserversCollection,
     ) {
+        //camera uniform
+        let observer_data = ObserversData::new(&pipeline_context.observers_collection, &self.world);
+
         let mut command_buffers = vec![];
 
-        for observer in observers.cameras.iter() {
+        for (index, observer) in pipeline_context
+            .observers_collection
+            .cameras
+            .iter()
+            .enumerate()
+        {
             if let Some(pipeline) = self.pipeline_container.get_mut(&observer.pipeline_name) {
                 let mut frame_graph = FrameGraph::default();
 
-                pipeline.run(
-                    &mut frame_graph,
-                    &mut self.world,
-                    pipeline_context,
+                let frame_context = FrameContext {
+                    context: pipeline_context,
                     render_phases_container,
-                );
+                    observer_data: &observer_data,
+                    camera: Some(index),
+                };
+
+                pipeline.run(&mut frame_graph, &mut self.world, &frame_context);
 
                 frame_graph.compile();
 
@@ -129,15 +138,15 @@ impl WorldRenderer {
             }
         }
 
-        self.world.server.queue.wgpu_queue().submit(command_buffers);
+        self.world.server.queue.submit(command_buffers);
     }
 
-    pub fn render(&mut self, pipeline_context: &PipelineContext, observers: &ObserversCollection) {
+    pub fn render(&mut self, pipeline_context: &PipelineContext) {
         let mut phases_container = RenderPhasesContainer::default();
 
         self.prepare(pipeline_context, &mut phases_container);
 
-        self.render_frame(pipeline_context, &phases_container, observers);
+        self.render_frame(pipeline_context, &phases_container);
     }
 }
 

@@ -40,15 +40,16 @@ pub use wgpu::{
     BufferBinding as WgpuBufferBinding, BufferBindingType as RawBufferBindingType,
     BufferDescriptor as RawBufferDescriptor, BufferSize, BufferUsages, COPY_BUFFER_ALIGNMENT,
     Color, ColorTargetState as RawColorTargetState, ColorWrites as RawColorWrites,
-    CommandBuffer as RawCommandBuffer, CommandEncoder, CompareFunction as RawCompareFunction,
-    DepthBiasState as RawDepthBiasState, DepthStencilState as RawDepthStencilState,
-    Device as RawDevice, Extent3d as RawExtent3d, Face as RawFace, FilterMode as RawFilterMode,
-    FragmentState as RawFragmentState, FrontFace as RawFrontFace, IndexFormat as RawIndexFormat,
-    LoadOp, MultisampleState as RawMultisampleState, Operations,
+    CommandBuffer as RawCommandBuffer, CommandBuffer as WgpuCommandBuffer, CommandEncoder,
+    CompareFunction as RawCompareFunction, DepthBiasState as RawDepthBiasState,
+    DepthStencilState as RawDepthStencilState, Device as RawDevice, Extent3d as RawExtent3d,
+    Face as RawFace, FilterMode as RawFilterMode, FragmentState as RawFragmentState,
+    FrontFace as RawFrontFace, IndexFormat as RawIndexFormat, LoadOp,
+    MultisampleState as RawMultisampleState, Operations,
     PipelineCompilationOptions as RawPipelineCompilationOptions,
     PipelineLayout as RawPipelineLayout, PipelineLayoutDescriptor as RawPipelineLayoutDescriptor,
     PolygonMode as RawPolygonMode, PrimitiveState as RawPrimitiveState,
-    PrimitiveTopology as RawPrimitiveTopology, Queue as RawQueue, QueueWriteBufferView,
+    PrimitiveTopology as RawPrimitiveTopology, Queue as WgpuQueue, QueueWriteBufferView,
     RenderPipelineDescriptor as RawRenderPipelineDescriptor, Sampler as WgpuSampler,
     SamplerBindingType as RawSamplerBindingType, SamplerBorderColor as RawSamplerBorderColor,
     SamplerDescriptor as RawSamplerDescriptor, ShaderLocation,
@@ -72,11 +73,15 @@ use tracing::info;
 use wgpu::{Instance, RequestAdapterOptions};
 
 #[derive(Clone)]
-pub struct RenderQueue(Arc<RawQueue>);
+pub struct RenderQueue(Arc<WgpuQueue>);
 
 impl RenderQueue {
-    pub fn wgpu_queue(&self) -> &RawQueue {
+    pub fn wgpu_queue(&self) -> &WgpuQueue {
         &self.0
+    }
+
+    pub fn submit(&self, buffers: Vec<WgpuCommandBuffer>) {
+        self.wgpu_queue().submit(buffers);
     }
 
     pub fn write_buffer(&self, buffer: &GpuBuffer, offset: BufferAddress, data: &[u8]) {

@@ -6,6 +6,7 @@ use crate::scene::DynObject;
 
 use super::{DynNode, Node, NodeMut, NodeRef};
 use fyrox_core::{
+    ImmutableString,
     algebra::{Matrix4, Point3, Vector2},
     reflect::*,
     variable::InheritableVariable,
@@ -114,6 +115,7 @@ impl Default for OrthographicProjection {
     }
 }
 
+#[derive(Clone)]
 pub enum Projection {
     Perspective(PerspectiveProjection),
     Orthographic(OrthographicProjection),
@@ -124,6 +126,20 @@ impl Projection {
         match self {
             Projection::Perspective(v) => v.matrix(frame_size),
             Projection::Orthographic(v) => v.matrix(frame_size),
+        }
+    }
+
+    pub fn z_near(&self) -> f32 {
+        match self {
+            Projection::Perspective(v) => v.z_near,
+            Projection::Orthographic(v) => v.z_near,
+        }
+    }
+
+    pub fn z_far(&self) -> f32 {
+        match self {
+            Projection::Perspective(v) => v.z_far,
+            Projection::Orthographic(v) => v.z_far,
         }
     }
 }
@@ -139,6 +155,7 @@ pub struct Camera {
     view_matrix: Matrix4<f32>,
     projection_matrix: Matrix4<f32>,
     projection: InheritableVariable<Projection>,
+    pub pipeline_name: ImmutableString,
 }
 
 impl DynObject for Camera {}
@@ -154,6 +171,22 @@ impl DynNode for Camera {
 }
 
 impl Camera {
+    pub fn view_projection_matrix(&self) -> Matrix4<f32> {
+        self.projection_matrix * self.view_matrix
+    }
+
+    pub fn projection_matrix(&self) -> Matrix4<f32> {
+        self.projection_matrix
+    }
+
+    pub fn view_matrix(&self) -> Matrix4<f32> {
+        self.view_matrix
+    }
+
+    pub fn projection(&self) -> &Projection {
+        &self.projection
+    }
+
     pub fn calculate_matrices(&mut self, frame_size: Vector2<f32>) {
         let node_ref = self.node.get_ref();
 

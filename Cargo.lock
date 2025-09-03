@@ -570,6 +570,7 @@ version = "0.1.0"
 dependencies = [
  "downcast-rs 2.0.1",
  "draft-render",
+ "encase",
  "fxhash",
  "fyrox-core",
  "fyrox-resource",

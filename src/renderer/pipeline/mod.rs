@@ -1,14 +1,14 @@
 use std::ops::{Deref, DerefMut};
 
 use draft_render::{
-    BufferAllocator, FrameworkError, GeometryResource, MaterialEffectContext, MaterialResource,
-    MeshRenderPhase, PipelineDescriptor, RenderPhasesContainer, RenderWorld,
+    BufferAllocator, FrameworkError, FrameworkErrorKind, GeometryResource, MaterialEffectContext,
+    MaterialResource, MeshRenderPhase, PipelineDescriptor, RenderPhasesContainer, RenderWorld,
     frame_graph::{FrameGraph, TextureView},
 };
 use fxhash::FxHashMap;
 use fyrox_core::ImmutableString;
 
-use crate::renderer::ObserversCollection;
+use crate::renderer::{ObserversCollection, ObserversData};
 
 pub struct PhaseContext<'a> {
     pub world: &'a mut RenderWorld,
@@ -56,7 +56,9 @@ impl MeshPhaseExtractor for Batch {
                 .world
                 .material_effect_container
                 .get(&effect_info.effect_name)
-                .unwrap();
+                .ok_or(FrameworkErrorKind::MaterialEffectNotFound(
+                    effect_info.effect_name.to_string(),
+                ))?;
 
             layouts.push(effect.to_bind_group_layout_descriptor());
 
@@ -99,21 +101,11 @@ pub trait PipelineNode: 'static {
         &mut self,
         frame_graph: &mut FrameGraph,
         world: &mut RenderWorld,
-        context: &PipelineContext,
-        render_phases_container: &RenderPhasesContainer,
+        frame_context: &FrameContext,
     );
 }
 
-pub struct PipelineContainer(FxHashMap<PipelineName, Pipeline>);
-
-#[derive(Debug, PartialEq, Eq, Hash, Default)]
-pub struct PipelineName(ImmutableString);
-
-impl From<&'static str> for PipelineName {
-    fn from(value: &'static str) -> Self {
-        PipelineName(value.into())
-    }
-}
+pub struct PipelineContainer(FxHashMap<ImmutableString, Pipeline>);
 
 impl Default for PipelineContainer {
     fn default() -> Self {
@@ -132,7 +124,7 @@ impl PipelineContainer {
 }
 
 impl Deref for PipelineContainer {
-    type Target = FxHashMap<PipelineName, Pipeline>;
+    type Target = FxHashMap<ImmutableString, Pipeline>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -149,6 +141,13 @@ pub struct Pipeline {
     nodes: Vec<Box<dyn PipelineNode>>,
 }
 
+pub struct FrameContext<'a> {
+    pub context: &'a PipelineContext,
+    pub render_phases_container: &'a RenderPhasesContainer,
+    pub observer_data: &'a ObserversData,
+    pub camera: Option<usize>,
+}
+
 impl Pipeline {
     pub fn empty() -> Self {
         Pipeline { nodes: vec![] }
@@ -162,11 +161,10 @@ impl Pipeline {
         &mut self,
         frame_graph: &mut FrameGraph,
         world: &mut RenderWorld,
-        context: &PipelineContext,
-        render_phases_container: &RenderPhasesContainer,
+        frame_context: &FrameContext,
     ) {
         for node in self.nodes.iter_mut() {
-            node.run(frame_graph, world, context, render_phases_container);
+            node.run(frame_graph, world, frame_context);
         }
     }
 }

@@ -146,6 +146,10 @@ impl<T: ShaderType + WriteInto> DynamicUniformBuffer<T> {
         }
     }
 
+    pub fn into_inner(self) -> Option<TransientBuffer> {
+        self.buffer
+    }
+
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.scratch.as_ref().is_empty()

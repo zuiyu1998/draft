@@ -3,8 +3,8 @@ use std::{collections::HashMap, sync::Arc};
 use draft_render::{
     ErasedMaterial, FragmentState, Geometry, GeometryResource, Material, MaterialEffect,
     MaterialEffectInfo, MaterialInfo, MaterialResource, MaterialTextureBinding, MeshRenderPhase,
-    PipelineInfo, RenderPhasesContainer, RenderPipelineInfo, RenderServer, RenderWorld, Shader,
-    ShaderResource, Texture, TextureResource, Vertex, VertexAttributeDescriptor,
+    PipelineInfo, RenderPipelineInfo, RenderServer, RenderWorld, Shader, ShaderResource, Texture,
+    TextureResource, Vertex, VertexAttributeDescriptor,
     frame_graph::{ColorAttachment, FrameGraph, TextureView},
     gfx_base::{
         BlendComponent, BlendState, ColorTargetState, ColorWrites, GpuTextureView,
@@ -17,9 +17,12 @@ use draft_render::{
     },
 };
 
-use draft::renderer::{
-    Batch, Observer, ObserversCollection, Pipeline, PipelineContext, PipelineNode, WorldRenderer,
-    initialize_renderer,
+use draft::{
+    renderer::{
+        Batch, FrameContext, Observer, ObserverPosition, ObserversCollection, Pipeline,
+        PipelineContext, PipelineNode, WorldRenderer, initialize_renderer,
+    },
+    scene::CameraBuilder,
 };
 
 use fyrox_core::{ImmutableString, futures, task::TaskPool, uuid};
@@ -102,14 +105,13 @@ impl PipelineNode for TestNode {
         &mut self,
         frame_graph: &mut FrameGraph,
         world: &mut RenderWorld,
-        context: &PipelineContext,
-        phases_container: &RenderPhasesContainer,
+        context: &FrameContext,
     ) {
         let mut pass_builder = frame_graph.create_pass_builder("test_node");
         let mut render_pass_builder = pass_builder.create_render_pass_builder("test_pass");
 
         render_pass_builder.add_out_color_attachment(ColorAttachment {
-            view: context.texture_view.clone(),
+            view: context.context.texture_view.clone(),
             resolve_target: None,
             ops: Operations {
                 load: LoadOp::Clear(Color::WHITE),
@@ -117,7 +119,10 @@ impl PipelineNode for TestNode {
             },
         });
 
-        if let Some(phases) = phases_container.get_phases::<MeshRenderPhase>() {
+        if let Some(phases) = context
+            .render_phases_container
+            .get_phases::<MeshRenderPhase>()
+        {
             phases.render(&mut render_pass_builder, world);
         }
     }
@@ -346,27 +351,30 @@ impl State {
 
         self.windows.set_swapchain_texture();
 
-        let mut observers: ObserversCollection = ObserversCollection::default();
-        let observer = Observer {
-            pipeline_name: "test".into(),
-            ..Default::default()
-        };
-
-        observers.cameras.push(observer);
-
         if let Some(texture_view) = self
             .windows
             .get_primary_window()
             .swap_chain_texture_view
             .clone()
         {
+            let camera = CameraBuilder::new("test".into()).build();
+
+            let mut observers: ObserversCollection = ObserversCollection::default();
+            let observer = Observer {
+                pipeline_name: camera.pipeline_name.clone(),
+                position: ObserverPosition::from_camera(&camera),
+                projection: camera.projection().clone(),
+            };
+
+            observers.cameras.push(observer);
+
             let pipeline_context = PipelineContext {
                 texture_view: TextureView::new(texture_view),
                 batch: self.batch.clone(),
-                observers_collection: Default::default(),
+                observers_collection: observers,
             };
 
-            self.renderer.render(&pipeline_context, &observers);
+            self.renderer.render(&pipeline_context);
         }
 
         self.windows.present();

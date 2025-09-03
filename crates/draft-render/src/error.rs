@@ -12,6 +12,12 @@ use fyrox_resource::{
 use crate::MaterialError;
 
 #[derive(Debug, Error)]
+pub enum FrameworkErrorKind {
+    #[error("{0:?} material effect not found")]
+    MaterialEffectNotFound(String),
+}
+
+#[derive(Debug, Error)]
 pub enum FrameworkError {
     #[error(transparent)]
     ProcessShaderError(Box<naga_oil::compose::ComposerError>),
@@ -27,6 +33,8 @@ pub enum FrameworkError {
     FileError(FileError),
     #[error(transparent)]
     TomlError(#[from] TomlError),
+    #[error(transparent)]
+    Kind(#[from] FrameworkErrorKind),
 }
 
 impl From<FileError> for FrameworkError {
