@@ -1,7 +1,5 @@
-use crate::{
-    ShaderResource,
-    gfx_base::{ColorTargetState, VertexBufferLayout},
-};
+use crate::ShaderResource;
+use draft_gfx_base::{ColorTargetState, VertexBufferLayout};
 
 use fyrox_core::{reflect::*, visitor::*};
 

@@ -8,8 +8,6 @@ pub mod render_resource;
 
 pub use wgpu;
 
-pub use draft_gfx_base as gfx_base;
-
 pub use error::*;
 pub use phase::*;
 pub use utils::*;
@@ -17,4 +15,8 @@ pub use world::*;
 
 pub mod encase {
     pub use encase::*;
+}
+
+pub mod gfx_base {
+    pub use draft_gfx_base::*;
 }

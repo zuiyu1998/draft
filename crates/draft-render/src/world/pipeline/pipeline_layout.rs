@@ -2,7 +2,7 @@ use draft_gfx_base::{GpuBindGroupLayout, GpuPipelineLayout, PipelineLayoutDescri
 use fxhash::FxHashMap;
 use std::sync::Arc;
 
-use crate::gfx_base::{
+use draft_gfx_base::{
     BindGroupLayoutDescriptor, RawPipelineLayout, RenderDevice, WgpuBindGroupLayout,
 };
 

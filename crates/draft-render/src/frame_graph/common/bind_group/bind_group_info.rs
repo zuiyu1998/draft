@@ -1,9 +1,7 @@
 use std::borrow::Cow;
 
-use crate::{
-    frame_graph::PassContext,
-    gfx_base::{BindGroupDescriptor, GpuBindGroup, GpuBindGroupLayout},
-};
+use crate::frame_graph::PassContext;
+use draft_gfx_base::{BindGroupDescriptor, GpuBindGroup, GpuBindGroupLayout};
 
 use super::BindGroupEntryInfo;
 

@@ -6,12 +6,11 @@ pub use render_pass::*;
 
 use std::{borrow::Cow, mem::take};
 
-use crate::{
-    frame_graph::{FrameGraphContext, PassNodeBuilder, ResourceTable},
-    gfx_base::{
-        CachedPipelineId, CommandEncoder, ComputePipeline, PipelineContainer, RawCommandBuffer,
-        RenderDevice, RenderPipeline,
-    },
+use crate::frame_graph::{FrameGraphContext, PassNodeBuilder, ResourceTable};
+
+use draft_gfx_base::{
+    CachedPipelineId, CommandEncoder, ComputePipeline, PipelineContainer, RawCommandBuffer,
+    RenderDevice, RenderPipeline,
 };
 
 pub struct PassBuilder<'a> {

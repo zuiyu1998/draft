@@ -3,11 +3,10 @@ use std::sync::Arc;
 use fyrox_core::sparse::AtomicIndex;
 
 use crate::{
-    FrameworkError, TemporaryCache, Texture, TextureResource,
-    frame_graph::TransientTexture,
-    gfx_base::{GpuSampler, RenderDevice, RenderQueue},
+    FrameworkError, TemporaryCache, Texture, TextureResource, frame_graph::TransientTexture,
     render_resource::RenderTexture,
 };
+use draft_gfx_base::{GpuSampler, RenderDevice, RenderQueue};
 
 #[derive(Default)]
 pub struct TextureCache {

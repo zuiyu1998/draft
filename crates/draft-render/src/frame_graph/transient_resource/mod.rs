@@ -8,7 +8,7 @@ pub use texture::*;
 
 use std::sync::Arc;
 
-use crate::gfx_base::RenderDevice;
+use draft_gfx_base::RenderDevice;
 
 pub trait TransientResourceCreator {
     fn create_resource(&self, desc: &AnyTransientResourceDescriptor) -> AnyTransientResource;

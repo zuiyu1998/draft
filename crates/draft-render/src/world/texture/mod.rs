@@ -19,12 +19,10 @@ use std::{
 };
 use thiserror::Error;
 
-use crate::{
-    frame_graph::TextureInfo,
-    gfx_base::{
-        Extent3d, SamplerDescriptor, TextureDimension, TextureFormat, TextureFormatPixelInfo,
-        TextureUsages, Volume,
-    },
+use crate::frame_graph::TextureInfo;
+use draft_gfx_base::{
+    Extent3d, SamplerDescriptor, TextureDimension, TextureFormat, TextureFormatPixelInfo,
+    TextureUsages, Volume,
 };
 
 pub type TextureResource = Resource<Texture>;

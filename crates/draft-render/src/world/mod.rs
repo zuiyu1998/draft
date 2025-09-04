@@ -12,10 +12,8 @@ pub use pipeline::*;
 pub use shader::*;
 pub use texture::*;
 
-use crate::{
-    FrameworkError,
-    gfx_base::{RenderAdapter, RenderDevice, RenderInstance, RenderQueue},
-};
+use crate::FrameworkError;
+use draft_gfx_base::{RenderAdapter, RenderDevice, RenderInstance, RenderQueue};
 
 pub struct RenderWorld {
     pub server: RenderServer,

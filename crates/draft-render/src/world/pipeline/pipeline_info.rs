@@ -2,7 +2,7 @@ use fyrox_resource::ResourceData;
 use std::{error::Error, fmt::Debug, path::Path};
 
 use super::{FragmentState, VertexState};
-use crate::gfx_base::{DepthStencilState, MultisampleState, PrimitiveState};
+use draft_gfx_base::{DepthStencilState, MultisampleState, PrimitiveState};
 use fyrox_core::{ImmutableString, TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
 use strum_macros::{AsRefStr, EnumString, VariantNames};
 

@@ -1,5 +1,5 @@
-use crate::gfx_base::RawIndexFormat;
 use bytemuck::cast_slice;
+use draft_gfx_base::RawIndexFormat;
 use fyrox_core::visitor::Visit;
 use fyrox_core::{reflect::*, visitor::*};
 

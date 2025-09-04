@@ -2,9 +2,9 @@ use fyrox_core::ImmutableString;
 
 use crate::{
     IndexRenderBuffer, MaterialBindGroupHandle, MaterialResourceHandle, PhaseName, RenderPhase,
-    RenderWorld, frame_graph::RenderPassBuilder, gfx_base::CachedPipelineId,
-    render_resource::RenderBuffer,
+    RenderWorld, frame_graph::RenderPassBuilder, render_resource::RenderBuffer,
 };
+use draft_gfx_base::CachedPipelineId;
 
 pub struct MeshRenderPhase {
     pub vertex_buffer: RenderBuffer,

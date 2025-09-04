@@ -1,13 +1,12 @@
 use std::num::NonZero;
 
-use draft_gfx_base::TextureViewDescriptor;
+use draft_gfx_base::{GpuSampler, TextureViewDescriptor};
 
 use crate::{
     frame_graph::{
         BindGroupBufferHandle, BindGroupBufferHandleHelper, BindGroupTextureViewHandle,
         BindGroupTextureViewHandleHelper, FrameGraph, ResourceMaterial,
     },
-    gfx_base::GpuSampler,
     render_resource::{RenderBuffer, RenderTexture},
 };
 

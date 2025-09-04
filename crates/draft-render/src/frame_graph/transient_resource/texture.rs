@@ -2,7 +2,7 @@ use super::{
     AnyTransientResource, AnyTransientResourceDescriptor, ArcTransientResource,
     IntoArcTransientResource, TransientResource, TransientResourceDescriptor,
 };
-use crate::gfx_base::{
+use draft_gfx_base::{
     Extent3d, TextureDimension, TextureFormat, TextureUsages, WgpuTextureDescriptor,
 };
 use draft_gfx_base::{GpuTexture, TextureDescriptor};

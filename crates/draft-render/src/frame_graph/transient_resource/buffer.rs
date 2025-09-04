@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use std::sync::Arc;
 
-use crate::gfx_base::{
+use draft_gfx_base::{
     BufferAddress, BufferDescriptor, BufferInitDescriptor, BufferUsages, COPY_BUFFER_ALIGNMENT,
     GpuBuffer,
 };

@@ -5,14 +5,13 @@ use std::{
 
 use wgpu::{QuerySet, ShaderStages};
 
-use crate::{
-    frame_graph::{
-        BindGroupHandle, BindGroupInfo, ColorAttachment, ColorAttachmentInfo,
-        DepthStencilAttachmentInfo, FrameGraph, PassBuilder, Ref, RenderPassCommandBuilder,
-        ResourceMaterial, ResourceRead, ResourceWrite, TransientBuffer,
-    },
-    gfx_base::CachedPipelineId,
+use crate::frame_graph::{
+    BindGroupHandle, BindGroupInfo, ColorAttachment, ColorAttachmentInfo,
+    DepthStencilAttachmentInfo, FrameGraph, PassBuilder, Ref, RenderPassCommandBuilder,
+    ResourceMaterial, ResourceRead, ResourceWrite, TransientBuffer,
 };
+
+use draft_gfx_base::CachedPipelineId;
 
 use super::RenderPass;
 

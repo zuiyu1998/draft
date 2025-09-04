@@ -1,11 +1,10 @@
 use std::num::NonZero;
 
-use draft_gfx_base::{BufferBinding, GpuBindGroupEntry, GpuBindingResource};
-
-use crate::{
-    frame_graph::{PassContext, Ref, ResourceRead, TransientBuffer, TransientTexture},
-    gfx_base::{GpuSampler, TextureViewDescriptor},
+use draft_gfx_base::{
+    BufferBinding, GpuBindGroupEntry, GpuBindingResource, GpuSampler, TextureViewDescriptor,
 };
+
+use crate::frame_graph::{PassContext, Ref, ResourceRead, TransientBuffer, TransientTexture};
 
 #[derive(Clone)]
 pub struct BindGroupEntryInfo {

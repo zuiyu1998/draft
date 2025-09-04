@@ -1,12 +1,10 @@
 use wgpu::{Extent3d, ImageSubresourceRange, QuerySet, ShaderStages};
 
-use crate::{
-    frame_graph::{
-        BindGroup, BindGroupInfo, GpuRenderPass, PassContext, Ref, ResourceRead, ResourceWrite,
-        TexelCopyBufferInfo, TexelCopyTextureInfo, TransientBuffer, TransientTexture,
-    },
-    gfx_base::CachedPipelineId,
+use crate::frame_graph::{
+    BindGroup, BindGroupInfo, GpuRenderPass, PassContext, Ref, ResourceRead, ResourceWrite,
+    TexelCopyBufferInfo, TexelCopyTextureInfo, TransientBuffer, TransientTexture,
 };
+use draft_gfx_base::CachedPipelineId;
 
 use super::super::{
     BeginPipelineStatisticsQueryParameter, ClearBufferParameter, ClearTextureParameter,

@@ -10,12 +10,13 @@ use super::PipelineLayoutCache;
 
 use crate::{
     BindGroupLayout, FragmentState, FrameworkError, PipelineInfo, ShaderCache, VertexState,
-    gfx_base::{
-        BindGroupLayoutDescriptor, CachedPipelineId, DepthStencilState, GetPipelineContainer,
-        MultisampleState, Pipeline, PipelineContainer, RawFragmentState,
-        RawPipelineCompilationOptions, RawRenderPipelineDescriptor, RawVertexAttribute,
-        RawVertexBufferLayout, RawVertexState, RenderDevice, RenderPipeline,
-    },
+};
+
+use draft_gfx_base::{
+    BindGroupLayoutDescriptor, CachedPipelineId, DepthStencilState, GetPipelineContainer,
+    MultisampleState, Pipeline, PipelineContainer, RawFragmentState, RawPipelineCompilationOptions,
+    RawRenderPipelineDescriptor, RawVertexAttribute, RawVertexBufferLayout, RawVertexState,
+    RenderDevice, RenderPipeline,
 };
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]

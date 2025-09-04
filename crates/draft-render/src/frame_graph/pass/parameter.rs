@@ -2,13 +2,11 @@ use std::ops::Range;
 
 use wgpu::{Extent3d, ImageSubresourceRange, QuerySet, ShaderStages};
 
-use crate::{
-    frame_graph::{
-        BindGroupInfo, Ref, ResourceRead, ResourceWrite, TexelCopyBufferInfo, TexelCopyTextureInfo,
-        TransientBuffer, TransientTexture,
-    },
-    gfx_base::CachedPipelineId,
+use crate::frame_graph::{
+    BindGroupInfo, Ref, ResourceRead, ResourceWrite, TexelCopyBufferInfo, TexelCopyTextureInfo,
+    TransientBuffer, TransientTexture,
 };
+use draft_gfx_base::CachedPipelineId;
 
 use super::{RenderPassCommand, RenderPassContext};
 

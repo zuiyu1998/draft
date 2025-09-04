@@ -1,7 +1,5 @@
-use crate::{
-    frame_graph::{PassContext, TextureView},
-    gfx_base::{Color, Operations},
-};
+use crate::frame_graph::{PassContext, TextureView};
+use draft_gfx_base::{Color, Operations};
 
 use super::{TextureViewInfoRead, TextureViewInfoWrite};
 

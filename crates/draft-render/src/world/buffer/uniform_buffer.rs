@@ -1,8 +1,8 @@
 use core::{marker::PhantomData, num::NonZero};
 
-use crate::{
-    frame_graph::{BufferInfo, TransientBuffer},
-    gfx_base::{BufferDescriptor, BufferInitDescriptor, BufferUsages, RenderDevice, RenderQueue},
+use crate::frame_graph::{BufferInfo, TransientBuffer};
+use draft_gfx_base::{
+    BufferDescriptor, BufferInitDescriptor, BufferUsages, RenderDevice, RenderQueue,
 };
 use encase::{
     DynamicUniformBuffer as DynamicUniformBufferWrapper, ShaderType,

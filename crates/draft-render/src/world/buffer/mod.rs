@@ -7,11 +7,9 @@ pub use uniform_buffer::*;
 use std::sync::Arc;
 
 use crate::{
-    FrameworkError, TemporaryCache,
-    frame_graph::BufferInfo,
-    gfx_base::{GpuBuffer, RenderDevice, RenderQueue},
-    render_resource::RenderBuffer,
+    FrameworkError, TemporaryCache, frame_graph::BufferInfo, render_resource::RenderBuffer,
 };
+use draft_gfx_base::{GpuBuffer, RenderDevice, RenderQueue};
 use fxhash::FxHashMap;
 use fyrox_core::sparse::AtomicIndex;
 

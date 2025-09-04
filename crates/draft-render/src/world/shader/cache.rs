@@ -1,9 +1,7 @@
 use std::{borrow::Cow, sync::Arc};
 
-use crate::{
-    FrameworkError, ShaderResource, TemporaryCache,
-    gfx_base::{RawShaderModuleDescriptor, RawShaderSource, RenderDevice},
-};
+use crate::{FrameworkError, ShaderResource, TemporaryCache};
+use draft_gfx_base::{RawShaderModuleDescriptor, RawShaderSource, RenderDevice};
 
 use super::Shader;
 

@@ -1,9 +1,8 @@
 use std::sync::Arc;
 
-use crate::{
-    frame_graph::{FrameGraph, Handle, ResourceMaterial, TextureInfo, TransientTexture},
-    gfx_base::GpuTexture,
-};
+use crate::frame_graph::{FrameGraph, Handle, ResourceMaterial, TextureInfo, TransientTexture};
+
+use draft_gfx_base::GpuTexture;
 
 #[derive(Clone)]
 pub struct RenderTexture {

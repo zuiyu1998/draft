@@ -6,7 +6,8 @@ pub use binding::*;
 pub use effect::*;
 pub use handle::*;
 
-use crate::{PipelineInfo, gfx_base::BindingTypeKind};
+use crate::PipelineInfo;
+use draft_gfx_base::BindingTypeKind;
 use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
 use fyrox_resource::{Resource, ResourceData};
 use std::{error::Error, fmt::Debug, path::Path};

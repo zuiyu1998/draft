@@ -1,13 +1,10 @@
 use std::{borrow::Cow, sync::Arc};
 
-use draft_gfx_base::GpuBindGroupLayout;
+use draft_gfx_base::{GetPipelineContainer, GpuBindGroupLayout, PipelineContainer, RenderDevice};
 use wgpu::CommandBuffer;
 
-use crate::{
-    frame_graph::{
-        BindGroupHandleBuilder, PassBuilder, PassNodeBuilder, ResourceTable, TransientResourceCache,
-    },
-    gfx_base::{GetPipelineContainer, PipelineContainer, RenderDevice},
+use crate::frame_graph::{
+    BindGroupHandleBuilder, PassBuilder, PassNodeBuilder, ResourceTable, TransientResourceCache,
 };
 
 use super::{
@@ -278,7 +275,7 @@ impl FrameGraph {
 
 #[cfg(test)]
 mod test {
-    use crate::gfx_base::{Extent3d, TextureDimension, TextureFormat, TextureUsages};
+    use draft_gfx_base::{Extent3d, TextureDimension, TextureFormat, TextureUsages};
 
     use crate::frame_graph::{FrameGraph, TextureInfo};
 

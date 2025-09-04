@@ -3,7 +3,7 @@ use std::{
     sync::Arc,
 };
 
-use crate::gfx_base::{BufferAddress, GpuBuffer};
+use draft_gfx_base::{BufferAddress, GpuBuffer};
 
 use crate::frame_graph::{BufferInfo, FrameGraph, Handle, ResourceMaterial, TransientBuffer};
 

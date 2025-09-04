@@ -3,9 +3,10 @@ use std::sync::Arc;
 use crate::{
     Indices, Vertex,
     frame_graph::{BufferInfo, TransientBuffer},
-    gfx_base::{BufferInitDescriptor, RawIndexFormat, RenderDevice, VertexBufferLayout},
     render_resource::RenderBuffer,
 };
+use draft_gfx_base::{BufferInitDescriptor, RawIndexFormat, RenderDevice, VertexBufferLayout};
+
 use fyrox_core::sparse::AtomicIndex;
 use wgpu::BufferUsages;
 

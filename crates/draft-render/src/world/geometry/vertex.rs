@@ -1,7 +1,7 @@
 use std::ops::{Deref, DerefMut};
 
 use super::VertexBuffer;
-use crate::gfx_base::{VertexAttribute, VertexBufferLayout, VertexStepMode};
+use draft_gfx_base::{VertexAttribute, VertexBufferLayout, VertexStepMode};
 
 use fyrox_core::{reflect::*, visitor::*};
 

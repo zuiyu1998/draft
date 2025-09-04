@@ -1,7 +1,8 @@
-use crate::{
-    frame_graph::{PassContext, Ref, ResourceRead, ResourceView, ResourceWrite, TransientTexture},
-    gfx_base::{GpuTextureView, TextureViewDescriptor},
+use crate::frame_graph::{
+    PassContext, Ref, ResourceRead, ResourceView, ResourceWrite, TransientTexture,
 };
+
+use draft_gfx_base::{GpuTextureView, TextureViewDescriptor};
 
 pub type TextureViewInfoRead = TextureViewInfo<ResourceRead>;
 

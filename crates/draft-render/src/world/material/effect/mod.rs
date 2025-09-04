@@ -13,9 +13,9 @@ use crate::{
     BindGroupLayout, FrameworkError, MaterialError, MaterialResourceBinding,
     MaterialResourceHandle, MaterialSamplerHandle, MaterialTextureBinding, MaterialTextureHandle,
     PipelineCache, TextureCache,
-    gfx_base::{
-        BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingTypeKind, RenderDevice, RenderQueue,
-    },
+};
+use draft_gfx_base::{
+    BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingTypeKind, RenderDevice, RenderQueue,
 };
 use fyrox_core::{ImmutableString, TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
 use fyrox_resource::{Resource, ResourceData, io::ResourceIo};

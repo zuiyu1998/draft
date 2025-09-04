@@ -1,13 +1,11 @@
 use std::{borrow::Cow, num::NonZero};
 
-use crate::{
-    frame_graph::{
-        BindGroupBufferBinding, BindGroupInfo, BindGroupResourceBinding,
-        BindGroupResourceBindingHelper, BindGroupTextureViewBinding, Handle,
-        IntoBindGroupResourceBinding, PassNodeBuilder, TransientBuffer, TransientTexture,
-    },
-    gfx_base::{GpuBindGroupLayout, GpuSampler, TextureViewDescriptor},
+use crate::frame_graph::{
+    BindGroupBufferBinding, BindGroupInfo, BindGroupResourceBinding,
+    BindGroupResourceBindingHelper, BindGroupTextureViewBinding, Handle,
+    IntoBindGroupResourceBinding, PassNodeBuilder, TransientBuffer, TransientTexture,
 };
+use draft_gfx_base::{GpuBindGroupLayout, GpuSampler, TextureViewDescriptor};
 
 use super::BindGroupEntryInfo;
 
