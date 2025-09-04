@@ -1,7 +1,5 @@
-mod buffer_allocator;
 mod uniform_buffer;
 
-pub use buffer_allocator::*;
 pub use uniform_buffer::*;
 
 use std::sync::Arc;

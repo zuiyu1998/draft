@@ -1,8 +1,8 @@
 use std::ops::{Deref, DerefMut};
 
 use draft_render::{
-    BufferAllocator, FrameworkError, FrameworkErrorKind, GeometryResource, MaterialEffectContext,
-    MaterialResource, MeshRenderPhase, PipelineDescriptor, RenderPhasesContainer, RenderWorld,
+    FrameworkError, FrameworkErrorKind, GeometryResource, MaterialEffectContext, MaterialResource,
+    MeshRenderPhase, PipelineDescriptor, RenderPhasesContainer, RenderWorld,
     frame_graph::{FrameGraph, TextureView},
 };
 use fxhash::FxHashMap;
@@ -13,7 +13,6 @@ use crate::renderer::{ObserversCollection, ObserversData};
 pub struct PhaseContext<'a> {
     pub world: &'a mut RenderWorld,
     pub render_phases_container: &'a mut RenderPhasesContainer,
-    pub buffer_allocator: &'a mut BufferAllocator,
 }
 
 pub trait MeshPhaseExtractor {

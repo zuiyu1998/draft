@@ -597,7 +597,6 @@ version = "0.1.0"
 dependencies = [
  "bitflags 2.9.1",
  "bytemuck",
- "bytes",
  "downcast-rs 2.0.1",
  "draft-gfx-base",
  "encase",
