@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
 use fyrox_core::{io::FileError, visitor::error::VisitError};
+use serde_yml::Error as YamlError;
 use thiserror::Error;
-use toml::de::Error as TomlError;
 
 use fyrox_resource::{
     Resource, TypedResourceData,
@@ -32,7 +32,7 @@ pub enum FrameworkError {
     #[error("file error: {0:?}")]
     FileError(FileError),
     #[error(transparent)]
-    TomlError(#[from] TomlError),
+    YamlError(#[from] YamlError),
     #[error(transparent)]
     Kind(#[from] FrameworkErrorKind),
 }

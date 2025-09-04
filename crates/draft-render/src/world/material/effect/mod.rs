@@ -10,7 +10,7 @@ pub use resource_bindings::*;
 use std::{error::Error, fs::File, io::Write, path::Path};
 
 use crate::{
-    BindGroupLayout, FrameworkError, MaterialError, MaterialResourceBinding,
+    BindGroupLayout, FrameContext, FrameworkError, MaterialError, MaterialResourceBinding,
     MaterialResourceHandle, MaterialSamplerHandle, MaterialTextureBinding, MaterialTextureHandle,
     PipelineCache, TextureCache,
 };
@@ -46,7 +46,7 @@ impl ResourceData for MaterialEffect {
     }
 
     fn save(&mut self, path: &Path) -> Result<(), Box<dyn Error>> {
-        let toml = toml::to_string(self)?;
+        let toml = serde_yml::to_string(self)?;
         let mut file = File::create(path)?;
         file.write_all(toml.as_bytes())?;
 
@@ -68,7 +68,7 @@ impl MaterialEffect {
         P: AsRef<Path>,
     {
         let content = io.load_file(path.as_ref()).await?;
-        let effect = toml::from_slice::<Self>(&content)?;
+        let effect = serde_yml::from_slice::<Self>(&content)?;
 
         Ok(effect)
     }
@@ -190,6 +190,7 @@ pub struct MaterialEffectContext<'a> {
     pub device: &'a RenderDevice,
     pub queue: &'a RenderQueue,
     pub texture_cache: &'a mut TextureCache,
+    pub frame_context: &'a FrameContext,
 }
 
 impl MaterialEffectContext<'_> {
@@ -215,5 +216,40 @@ impl MaterialEffectContext<'_> {
             bind_group_layout,
             material_resource_handles: handles,
         })
+    }
+}
+
+#[cfg(test)]
+mod test {
+
+    use draft_gfx_base::{
+        SamplerBindingType, ShaderStages, TextureSampleType,
+        binding_types::{sampler, texture_2d},
+    };
+
+    use super::ResourceBindingDefinition;
+    use crate::MaterialEffect;
+
+    #[test]
+    fn test_print_material_effect() {
+        let mut material_effect = MaterialEffect {
+            effect_name: "test".into(),
+            ..MaterialEffect::default()
+        };
+
+        material_effect
+            .resource_binding_definitions
+            .push(ResourceBindingDefinition {
+                name: "t_diffuse".into(),
+                entry: texture_2d(TextureSampleType::Float { filterable: true })
+                    .build(0, ShaderStages::all()),
+            });
+
+        material_effect
+            .resource_binding_definitions
+            .push(ResourceBindingDefinition {
+                name: "t_diffuse".into(),
+                entry: sampler(SamplerBindingType::Filtering).build(1, ShaderStages::all()),
+            });
     }
 }

@@ -1,4 +1,4 @@
-use draft_render::{DynamicUniformBuffer, RenderWorld, frame_graph::TransientBuffer};
+use draft_render::{CameraUniforms, DynamicUniformBuffer, RenderWorld};
 use encase::ShaderType;
 use fyrox_core::{
     ImmutableString,
@@ -25,36 +25,32 @@ pub struct ObserversCollection {
     pub cameras: Vec<Observer>,
 }
 
-pub struct ObserversData {
-    pub camera_offsets: Vec<u32>,
-    pub camera_buffer: TransientBuffer,
-}
+impl ObserversCollection {
+    pub fn get_camera_uniforms(&self, render_world: &RenderWorld) -> Option<CameraUniforms> {
+        if self.cameras.is_empty() {
+            return None;
+        }
 
-impl ObserversData {
-    pub fn new(collection: &ObserversCollection, render_world: &RenderWorld) -> Self {
         let mut buffer = DynamicUniformBuffer::<CameraUniform>::default();
-        let mut camera_offsets = vec![];
+        let mut offsets = vec![];
         {
             let mut writer = buffer
                 .get_writer(
-                    collection.cameras.len(),
+                    self.cameras.len(),
                     &render_world.server.device,
                     &render_world.server.queue,
                 )
                 .unwrap();
 
-            for camera in collection.cameras.iter() {
+            for camera in self.cameras.iter() {
                 let uniform = CameraUniform::new(&camera.position);
-                camera_offsets.push(writer.write(&uniform));
+                offsets.push(writer.write(&uniform));
             }
         }
 
         let buffer = buffer.into_inner().unwrap();
 
-        ObserversData {
-            camera_offsets,
-            camera_buffer: buffer,
-        }
+        Some(CameraUniforms::new(offsets, buffer))
     }
 }
 

@@ -2,17 +2,17 @@ use std::ops::{Deref, DerefMut};
 
 use draft_render::{
     FrameContext, FrameworkError, FrameworkErrorKind, GeometryResource, MaterialEffectContext,
-    MaterialResource, MeshRenderPhase, PipelineDescriptor, RenderPhasesContainer, RenderWorld,
+    MaterialResource, MeshRenderPhase, PipelineDescriptor, RenderWorld,
     frame_graph::{FrameGraph, TextureView},
 };
 use fxhash::FxHashMap;
 use fyrox_core::ImmutableString;
 
-use crate::renderer::{ObserversCollection, ObserversData};
+use crate::renderer::ObserversCollection;
 
 pub struct PhaseContext<'a> {
     pub world: &'a mut RenderWorld,
-    pub render_phases_container: &'a mut RenderPhasesContainer,
+    pub frame_context: &'a mut FrameContext,
 }
 
 pub trait MeshPhaseExtractor {
@@ -66,6 +66,7 @@ impl MeshPhaseExtractor for Batch {
                 device: &mut context.world.server.device,
                 queue: &mut context.world.server.queue,
                 texture_cache: &mut context.world.texture_cache,
+                frame_context: context.frame_context,
             };
 
             material_bind_group_handles
@@ -83,7 +84,10 @@ impl MeshPhaseExtractor for Batch {
             material_bind_group_handles,
         };
 
-        context.render_phases_container.push(mesh_phase);
+        context
+            .frame_context
+            .render_phases_container
+            .push(mesh_phase);
 
         Ok(())
     }
@@ -143,7 +147,6 @@ pub struct Pipeline {
 pub struct FrameGraphContext<'a> {
     pub context: &'a PipelineContext,
     pub frame_context: &'a FrameContext,
-    pub observer_data: &'a ObserversData,
     pub camera: Option<usize>,
 }
 
