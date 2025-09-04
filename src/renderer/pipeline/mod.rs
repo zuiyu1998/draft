@@ -1,8 +1,8 @@
 use std::ops::{Deref, DerefMut};
 
 use draft_render::{
-    FrameworkError, FrameworkErrorKind, GeometryResource, MaterialEffectContext, MaterialResource,
-    MeshRenderPhase, PipelineDescriptor, RenderPhasesContainer, RenderWorld,
+    FrameContext, FrameworkError, FrameworkErrorKind, GeometryResource, MaterialEffectContext,
+    MaterialResource, MeshRenderPhase, PipelineDescriptor, RenderPhasesContainer, RenderWorld,
     frame_graph::{FrameGraph, TextureView},
 };
 use fxhash::FxHashMap;
@@ -100,7 +100,7 @@ pub trait PipelineNode: 'static {
         &mut self,
         frame_graph: &mut FrameGraph,
         world: &mut RenderWorld,
-        frame_context: &FrameContext,
+        frame_graph_context: &FrameGraphContext,
     );
 }
 
@@ -140,9 +140,9 @@ pub struct Pipeline {
     nodes: Vec<Box<dyn PipelineNode>>,
 }
 
-pub struct FrameContext<'a> {
+pub struct FrameGraphContext<'a> {
     pub context: &'a PipelineContext,
-    pub render_phases_container: &'a RenderPhasesContainer,
+    pub frame_context: &'a FrameContext,
     pub observer_data: &'a ObserversData,
     pub camera: Option<usize>,
 }
@@ -160,10 +160,10 @@ impl Pipeline {
         &mut self,
         frame_graph: &mut FrameGraph,
         world: &mut RenderWorld,
-        frame_context: &FrameContext,
+        frame_graph_context: &FrameGraphContext,
     ) {
         for node in self.nodes.iter_mut() {
-            node.run(frame_graph, world, frame_context);
+            node.run(frame_graph, world, frame_graph_context);
         }
     }
 }

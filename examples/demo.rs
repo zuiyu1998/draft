@@ -19,7 +19,7 @@ use draft_render::{
 
 use draft::{
     renderer::{
-        Batch, FrameContext, Observer, ObserverPosition, ObserversCollection, Pipeline,
+        Batch, FrameGraphContext, Observer, ObserverPosition, ObserversCollection, Pipeline,
         PipelineContext, PipelineNode, WorldRenderer, initialize_renderer,
     },
     scene::CameraBuilder,
@@ -105,7 +105,7 @@ impl PipelineNode for TestNode {
         &mut self,
         frame_graph: &mut FrameGraph,
         world: &mut RenderWorld,
-        context: &FrameContext,
+        context: &FrameGraphContext,
     ) {
         let mut pass_builder = frame_graph.create_pass_builder("test_node");
         let mut render_pass_builder = pass_builder.create_render_pass_builder("test_pass");
@@ -120,6 +120,7 @@ impl PipelineNode for TestNode {
         });
 
         if let Some(phases) = context
+            .frame_context
             .render_phases_container
             .get_phases::<MeshRenderPhase>()
         {

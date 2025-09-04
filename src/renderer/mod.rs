@@ -5,9 +5,9 @@ pub use observer::*;
 pub use pipeline::*;
 
 use draft_render::{
-    MaterialEffect, MaterialEffectLoader, RenderPhasesContainer, RenderServer, RenderWorld,
-    Texture, TextureLoader,
-    frame_graph::{FrameGraph, FrameGraphContext, TransientResourceCache},
+    FrameContext, MaterialEffect, MaterialEffectLoader, RenderPhasesContainer, RenderServer,
+    RenderWorld, Texture, TextureLoader,
+    frame_graph::{FrameGraph, RenderContext, TransientResourceCache},
 };
 use fyrox_resource::{event::ResourceEvent, manager::ResourceManager};
 use std::sync::mpsc::Receiver;
@@ -95,7 +95,7 @@ impl WorldRenderer {
     pub fn render_frame(
         &mut self,
         pipeline_context: &PipelineContext,
-        render_phases_container: &RenderPhasesContainer,
+        frame_context: &FrameContext,
     ) {
         //camera uniform
         let observer_data = ObserversData::new(&pipeline_context.observers_collection, &self.world);
@@ -111,18 +111,18 @@ impl WorldRenderer {
             if let Some(pipeline) = self.pipeline_container.get_mut(&observer.pipeline_name) {
                 let mut frame_graph = FrameGraph::default();
 
-                let frame_context = FrameContext {
+                let frame_context = FrameGraphContext {
                     context: pipeline_context,
-                    render_phases_container,
                     observer_data: &observer_data,
                     camera: Some(index),
+                    frame_context,
                 };
 
                 pipeline.run(&mut frame_graph, &mut self.world, &frame_context);
 
                 frame_graph.compile();
 
-                let mut context = FrameGraphContext::new(
+                let mut context = RenderContext::new(
                     &self.world.pipeline_cache,
                     &self.world.server.device,
                     &mut self.transient_resource_cache,
@@ -140,11 +140,11 @@ impl WorldRenderer {
     }
 
     pub fn render(&mut self, pipeline_context: &PipelineContext) {
-        let mut phases_container = RenderPhasesContainer::default();
+        let mut frame_context = FrameContext::default();
 
-        self.prepare(pipeline_context, &mut phases_container);
+        self.prepare(pipeline_context, &mut frame_context.render_phases_container);
 
-        self.render_frame(pipeline_context, &phases_container);
+        self.render_frame(pipeline_context, &frame_context);
     }
 }
 

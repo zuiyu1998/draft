@@ -6,7 +6,7 @@ pub use render_pass::*;
 
 use std::{borrow::Cow, mem::take};
 
-use crate::frame_graph::{FrameGraphContext, PassNodeBuilder, ResourceTable};
+use crate::frame_graph::{PassNodeBuilder, RenderContext, ResourceTable};
 
 use draft_gfx_base::{
     CachedPipelineId, CommandEncoder, ComputePipeline, PipelineContainer, RawCommandBuffer,
@@ -49,7 +49,7 @@ pub struct Pass {
 }
 
 impl Pass {
-    pub fn render(&self, context: &mut FrameGraphContext) {
+    pub fn render(&self, context: &mut RenderContext) {
         let command_encoder = context.render_device.wgpu_device().create_command_encoder(
             &wgpu::CommandEncoderDescriptor {
                 label: self.label.as_deref(),

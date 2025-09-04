@@ -12,7 +12,7 @@ use super::{
     ResourceNode, TransientResource, TransientResourceDescriptor, TypeEquals, VirtualResource,
 };
 
-pub struct FrameGraphContext<'a> {
+pub struct RenderContext<'a> {
     pub resource_table: ResourceTable,
     pub pipeline_container: PipelineContainer,
     pub render_device: RenderDevice,
@@ -20,7 +20,7 @@ pub struct FrameGraphContext<'a> {
     command_buffers: Vec<CommandBuffer>,
 }
 
-impl<'a> FrameGraphContext<'a> {
+impl<'a> RenderContext<'a> {
     pub fn new<T: GetPipelineContainer>(
         pipeline_cache: &'a T,
         render_device: &'a RenderDevice,
@@ -55,7 +55,7 @@ pub struct CompiledFrameGraph {
 }
 
 impl CompiledFrameGraph {
-    pub fn execute(&self, context: &mut FrameGraphContext) {
+    pub fn execute(&self, context: &mut RenderContext) {
         for device_pass in self.device_passes.iter() {
             device_pass.execute(context);
         }
@@ -78,7 +78,7 @@ impl FrameGraph {
         self.resource_board = ResourceBoard::default();
     }
 
-    pub fn execute(&mut self, context: &mut FrameGraphContext) {
+    pub fn execute(&mut self, context: &mut RenderContext) {
         if self.compiled_frame_graph.is_none() {
             return;
         }

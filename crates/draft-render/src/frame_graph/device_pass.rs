@@ -1,4 +1,4 @@
-use crate::frame_graph::FrameGraphContext;
+use crate::frame_graph::RenderContext;
 
 use super::{FrameGraph, IndexHandle, Pass, PassNode, ResourceRelease, ResourceRequese};
 
@@ -11,7 +11,7 @@ pub struct DevicePass {
 }
 
 impl DevicePass {
-    pub fn request_resources(&self, context: &mut FrameGraphContext) {
+    pub fn request_resources(&self, context: &mut RenderContext) {
         for resource in self.resource_request_array.iter() {
             context.resource_table.request_resource(
                 resource,
@@ -21,7 +21,7 @@ impl DevicePass {
         }
     }
 
-    pub fn release_resources(&self, context: &mut FrameGraphContext) {
+    pub fn release_resources(&self, context: &mut RenderContext) {
         for handle in self.resource_release_array.iter() {
             context
                 .resource_table
@@ -29,7 +29,7 @@ impl DevicePass {
         }
     }
 
-    pub fn execute(&self, context: &mut FrameGraphContext) {
+    pub fn execute(&self, context: &mut RenderContext) {
         self.request_resources(context);
 
         if let Some(pass) = &self.pass {

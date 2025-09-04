@@ -1,5 +1,5 @@
 mod error;
-mod phase;
+mod frame_context;
 mod utils;
 mod world;
 
@@ -9,7 +9,7 @@ pub mod render_resource;
 pub use wgpu;
 
 pub use error::*;
-pub use phase::*;
+pub use frame_context::*;
 pub use utils::*;
 pub use world::*;
 
