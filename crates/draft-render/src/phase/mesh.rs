@@ -49,7 +49,7 @@ impl RenderPhase for MeshRenderPhase {
                 match handle {
                     MaterialResourceHandle::Texture(material_texture_handle) => {
                         bind_group_handle_builder = bind_group_handle_builder
-                            .add_texture_view(binding as u32, &material_texture_handle.texture);
+                            .add_texture_view(binding as u32, material_texture_handle);
                     }
                     MaterialResourceHandle::Sampler(material_sampler_handle) => {
                         bind_group_handle_builder = bind_group_handle_builder
@@ -58,7 +58,7 @@ impl RenderPhase for MeshRenderPhase {
                     MaterialResourceHandle::Buffer(material_buffer_handle) => {
                         offsets.push(material_buffer_handle.offset);
                         bind_group_handle_builder = bind_group_handle_builder
-                            .add_handle(binding as u32, &material_buffer_handle.handle);
+                            .add_buffer(binding as u32, material_buffer_handle);
                     }
                 }
             }

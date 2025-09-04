@@ -3,6 +3,7 @@ mod loader;
 mod resource_bindings;
 
 pub use container::*;
+use draft_gfx_base::TextureViewDescriptor;
 pub use loader::*;
 pub use resource_bindings::*;
 
@@ -100,6 +101,7 @@ fn extra_texture(
 
     Ok(MaterialTextureHandle {
         texture: texture_data.get_texture(),
+        texture_view_desc: TextureViewDescriptor::default(),
     })
 }
 

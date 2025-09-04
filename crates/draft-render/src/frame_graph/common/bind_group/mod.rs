@@ -17,13 +17,6 @@ pub trait BindGroupResourceBindingHelper {
     ) -> BindGroupResourceBinding;
 }
 
-pub trait BindGroupResourceHandleHelper {
-    fn make_bind_group_resource_handle(
-        &self,
-        frame_graph: &mut FrameGraph,
-    ) -> BindGroupResourceHandle;
-}
-
 pub trait BindGroupTextureViewHandleHelper {
     fn make_bind_group_texture_view_handle(
         &self,

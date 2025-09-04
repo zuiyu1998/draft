@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use draft_gfx_base::GpuBindGroupLayout;
 
 use crate::frame_graph::{
-    BindGroupEntryHandle, BindGroupHandle, BindGroupResourceHandleHelper,
+    BindGroupBufferHandleHelper, BindGroupEntryHandle, BindGroupHandle,
     BindGroupTextureViewHandleHelper, FrameGraph, IntoBindGroupResourceHandle,
 };
 
@@ -43,6 +43,13 @@ impl<'a> BindGroupHandleBuilder<'a> {
         self.add_handle(binding, handle)
     }
 
+    pub fn add_buffer<T: BindGroupBufferHandleHelper>(self, binding: u32, value: &T) -> Self {
+        let handle = value
+            .make_bind_group_buffer_handle(self.frame_graph)
+            .into_binding();
+        self.add_handle(binding, handle)
+    }
+
     pub fn add_handle<T: IntoBindGroupResourceHandle>(mut self, binding: u32, handle: T) -> Self {
         self.entries.push(BindGroupEntryHandle {
             binding,
@@ -50,11 +57,6 @@ impl<'a> BindGroupHandleBuilder<'a> {
         });
 
         self
-    }
-
-    pub fn add_helper<T: BindGroupResourceHandleHelper>(self, binding: u32, value: &T) -> Self {
-        let handle = value.make_bind_group_resource_handle(self.frame_graph);
-        self.add_handle(binding, handle)
     }
 
     pub fn build(self) -> BindGroupHandle {
