@@ -25,7 +25,7 @@ use draft::{
     scene::CameraBuilder,
 };
 
-use fyrox_core::{ImmutableString, futures, task::TaskPool, uuid};
+use fyrox_core::{futures, task::TaskPool, uuid};
 use fyrox_resource::{
     embedded_data_source,
     io::FsResourceIo,
@@ -58,12 +58,6 @@ lazy_static! {
 
 pub struct TestMaterial;
 
-impl TestMaterial {
-    pub fn get_test_effct_name() -> ImmutableString {
-        "test".into()
-    }
-}
-
 impl ErasedMaterial for TestMaterial {
     fn material_info() -> MaterialInfo {
         let mut desc = RenderPipelineInfo::default();
@@ -85,15 +79,17 @@ impl ErasedMaterial for TestMaterial {
 
         let pipeline_info = PipelineInfo::RenderPipelineInfo(Box::new(desc));
 
-        let test_effct_name = TestMaterial::get_test_effct_name();
+        let camera_effect_info = MaterialEffectInfo {
+            effect_name: "camera".into(),
+        };
 
         let test_effect_info = MaterialEffectInfo {
-            effect_name: test_effct_name,
+            effect_name: "test".into(),
         };
 
         MaterialInfo {
             pipeline_info,
-            effect_infos: vec![test_effect_info],
+            effect_infos: vec![test_effect_info, camera_effect_info],
         }
     }
 }
@@ -119,12 +115,12 @@ impl PipelineNode for TestNode {
             },
         });
 
-        if let Some(phases) = context
-            .frame_context
-            .render_phases_container
-            .get_phases::<MeshRenderPhase>()
-        {
-            phases.render(&mut render_pass_builder, world);
+        if let Some(camera_index) = context.camera {
+            if let Some(phases) =
+                context.view_render_phases_containers[camera_index].get_phases::<MeshRenderPhase>()
+            {
+                phases.render(&mut render_pass_builder, world);
+            }
         }
     }
 }
@@ -330,6 +326,7 @@ impl State {
         resource_manager.update_or_load_registry();
 
         resource_manager.request::<MaterialEffect>("data/test.material_effect");
+        resource_manager.request::<MaterialEffect>("data/camera.material_effect");
 
         let image = resource_manager.request::<Texture>("data/happy-tree.png");
         let batch = new_batch(&image);

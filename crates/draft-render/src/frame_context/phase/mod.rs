@@ -1,5 +1,7 @@
 mod mesh;
 
+use std::ops::{Deref, DerefMut};
+
 pub use mesh::*;
 
 use fxhash::FxHashMap;
@@ -56,6 +58,35 @@ impl RenderPhases {
         for phase in self.phases.iter() {
             phase.render(render_pass_builder, world);
         }
+    }
+}
+
+#[derive(Default)]
+pub struct ViewRenderPhasesContainers(Vec<RenderPhasesContainer>);
+
+impl ViewRenderPhasesContainers {
+    pub fn with_capacity(size: usize) -> Self {
+        let mut target = vec![];
+
+        for _ in 0..size {
+            target.push(RenderPhasesContainer::default());
+        }
+
+        ViewRenderPhasesContainers(target)
+    }
+}
+
+impl Deref for ViewRenderPhasesContainers {
+    type Target = Vec<RenderPhasesContainer>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for ViewRenderPhasesContainers {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 

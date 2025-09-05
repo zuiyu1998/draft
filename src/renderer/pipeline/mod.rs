@@ -2,22 +2,14 @@ use std::ops::{Deref, DerefMut};
 
 use draft_render::{
     FrameContext, FrameworkError, FrameworkErrorKind, GeometryResource, MaterialEffectContext,
-    MaterialResource, MeshRenderPhase, PipelineDescriptor, RenderWorld,
+    MaterialResource, MeshRenderPhase, MeshRenderPhaseExtractor, PhaseContext, PipelineDescriptor,
+    RenderWorld, ViewRenderPhasesContainers,
     frame_graph::{FrameGraph, TextureView},
 };
 use fxhash::FxHashMap;
 use fyrox_core::ImmutableString;
 
 use crate::renderer::ObserversCollection;
-
-pub struct PhaseContext<'a> {
-    pub world: &'a mut RenderWorld,
-    pub frame_context: &'a mut FrameContext,
-}
-
-pub trait MeshPhaseExtractor {
-    fn extra(&self, context: &mut PhaseContext) -> Result<(), FrameworkError>;
-}
 
 #[derive(Clone)]
 pub struct Batch {
@@ -31,12 +23,18 @@ impl Batch {
     }
 }
 
-impl MeshPhaseExtractor for Batch {
-    fn extra(&self, context: &mut PhaseContext) -> Result<(), FrameworkError> {
-        let geometry_data = context
-            .world
+impl MeshRenderPhaseExtractor for Batch {
+    fn extra(&self, context: PhaseContext) -> Result<MeshRenderPhase, FrameworkError> {
+        let PhaseContext {
+            render_world,
+            frame_context,
+            camera_offset,
+            camera_size,
+        } = context;
+
+        let geometry_data = render_world
             .geometry_cache
-            .get_or_create(&context.world.server.device, &self.geometry)?;
+            .get_or_create(&render_world.server.device, &self.geometry)?;
 
         let vertex_layout = geometry_data.layout.clone();
         let vertex_buffer = geometry_data.get_vertex_buffer();
@@ -51,31 +49,29 @@ impl MeshPhaseExtractor for Batch {
         let mut material_bind_group_handles = vec![];
 
         for effect_info in material.effect_infos().iter() {
-            let effect = context
-                .world
+            let effect = render_world
                 .material_effect_container
                 .get(&effect_info.effect_name)
                 .ok_or(FrameworkErrorKind::MaterialEffectNotFound(
                     effect_info.effect_name.to_string(),
                 ))?;
 
-            layouts.push(effect.to_bind_group_layout_descriptor());
+            layouts.push(effect.get_bind_group_layout_descriptor());
 
-            let mut context = MaterialEffectContext {
-                pipeline_cache: &mut context.world.pipeline_cache,
-                device: &mut context.world.server.device,
-                queue: &mut context.world.server.queue,
-                texture_cache: &mut context.world.texture_cache,
-                frame_context: context.frame_context,
+            let context = MaterialEffectContext {
+                resource_bindings: &material.resource_bindings,
+                frame_context,
+                camera_offset,
+                camera_size,
+                world: render_world,
             };
 
-            material_bind_group_handles
-                .push(context.process(&effect, &material.resource_bindings)?);
+            material_bind_group_handles.push(effect.process(context)?);
         }
 
         let desc = PipelineDescriptor::new(&material.pipeline_info, &layouts, &[vertex_layout]);
 
-        let pipeline_id = context.world.pipeline_cache.get_or_create(&desc);
+        let pipeline_id = render_world.pipeline_cache.get_or_create(&desc);
 
         let mesh_phase = MeshRenderPhase {
             vertex_buffer,
@@ -84,12 +80,7 @@ impl MeshPhaseExtractor for Batch {
             material_bind_group_handles,
         };
 
-        context
-            .frame_context
-            .render_phases_container
-            .push(mesh_phase);
-
-        Ok(())
+        Ok(mesh_phase)
     }
 }
 
@@ -148,6 +139,7 @@ pub struct FrameGraphContext<'a> {
     pub context: &'a PipelineContext,
     pub frame_context: &'a FrameContext,
     pub camera: Option<usize>,
+    pub view_render_phases_containers: &'a ViewRenderPhasesContainers,
 }
 
 impl Pipeline {

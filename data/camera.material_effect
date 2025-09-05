@@ -1,18 +1,11 @@
-effect_name: test
+effect_name: camera
 resource_binding_definitions:
-- name: t_diffuse
+- name: internal/camera
   entry:
     binding: 0
     visibility: 7
-    ty: !Texture
-      sample_type: !Float
-        filterable: true
-      view_dimension: D2
-      multisampled: false
-    count: null
-- name: t_diffuse
-  entry:
-    binding: 1
-    visibility: 7
-    ty: !Sampler Filtering
+    ty: !Buffer
+      ty: !Uniform
+      has_dynamic_offset: true
+      min_binding_size: 64
     count: null

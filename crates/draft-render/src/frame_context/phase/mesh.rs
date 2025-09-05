@@ -1,10 +1,24 @@
+use std::num::NonZero;
+
 use fyrox_core::ImmutableString;
 
 use crate::{
-    IndexRenderBuffer, MaterialBindGroupHandle, MaterialResourceHandle, PhaseName, RenderPhase,
-    RenderWorld, frame_graph::RenderPassBuilder, render_resource::RenderBuffer,
+    FrameContext, FrameworkError, IndexRenderBuffer, MaterialBindGroupHandle,
+    MaterialResourceHandle, PhaseName, RenderPhase, RenderWorld, frame_graph::RenderPassBuilder,
+    render_resource::RenderBuffer,
 };
 use draft_gfx_base::CachedPipelineId;
+
+pub struct PhaseContext<'a> {
+    pub render_world: &'a mut RenderWorld,
+    pub frame_context: &'a FrameContext,
+    pub camera_offset: u32,
+    pub camera_size: NonZero<u64>,
+}
+
+pub trait MeshRenderPhaseExtractor {
+    fn extra(&self, context: PhaseContext) -> Result<MeshRenderPhase, FrameworkError>;
+}
 
 pub struct MeshRenderPhase {
     pub vertex_buffer: RenderBuffer,

@@ -50,7 +50,9 @@ impl ObserversCollection {
 
         let buffer = buffer.into_inner().unwrap();
 
-        Some(CameraUniforms::new(offsets, buffer))
+        let size = CameraUniform::min_size();
+
+        Some(CameraUniforms::new(offsets, size, buffer))
     }
 }
 
