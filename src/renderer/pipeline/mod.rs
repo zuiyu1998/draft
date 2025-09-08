@@ -3,7 +3,7 @@ use std::ops::{Deref, DerefMut};
 use draft_render::{
     FrameContext, FrameworkError, FrameworkErrorKind, GeometryResource, MaterialEffectContext,
     MaterialResource, MeshRenderPhase, MeshRenderPhaseExtractor, PhaseContext, PipelineDescriptor,
-    RenderWorld, ViewRenderPhasesContainers,
+    RenderPhasesContainers, RenderWorld,
     frame_graph::{FrameGraph, TextureView},
 };
 use fxhash::FxHashMap;
@@ -90,6 +90,37 @@ pub struct PipelineContext {
     pub observers_collection: ObserversCollection,
 }
 
+impl PipelineContext {
+    pub fn prepare(&self, render_world: &mut RenderWorld) -> Result<FrameContext, FrameworkError> {
+        let render_phases_containers =
+            RenderPhasesContainers::alloc(self.observers_collection.cameras.len());
+
+        let camera_uniforms = self.observers_collection.get_camera_uniforms(render_world);
+
+        let mut frame_context = FrameContext::new(camera_uniforms, render_phases_containers);
+
+        if let Some(ref camera_uniforms) = frame_context.camera_uniforms {
+            for (camera, camera_offset) in camera_uniforms.camera_offsets.iter().enumerate() {
+                let context = PhaseContext {
+                    frame_context: &frame_context,
+                    camera_offset: *camera_offset,
+                    render_world,
+                    camera_size: camera_uniforms.camera_size,
+                };
+
+                let render_phase = self.batch.extra(context)?;
+
+                frame_context
+                    .render_phases_containers
+                    .camera_mut(camera)
+                    .push(render_phase);
+            }
+        }
+
+        Ok(frame_context)
+    }
+}
+
 pub trait PipelineNode: 'static {
     fn run(
         &mut self,
@@ -139,7 +170,6 @@ pub struct FrameGraphContext<'a> {
     pub context: &'a PipelineContext,
     pub frame_context: &'a FrameContext,
     pub camera: Option<usize>,
-    pub view_render_phases_containers: &'a ViewRenderPhasesContainers,
 }
 
 impl Pipeline {

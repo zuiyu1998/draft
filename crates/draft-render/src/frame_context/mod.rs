@@ -6,9 +6,21 @@ pub use phase::*;
 
 use crate::{frame_graph::TransientBuffer, render_resource::RenderBuffer};
 
-#[derive(Default)]
 pub struct FrameContext {
     pub camera_uniforms: Option<CameraUniforms>,
+    pub render_phases_containers: RenderPhasesContainers,
+}
+
+impl FrameContext {
+    pub fn new(
+        camera_uniforms: Option<CameraUniforms>,
+        render_phases_containers: RenderPhasesContainers,
+    ) -> Self {
+        FrameContext {
+            camera_uniforms,
+            render_phases_containers,
+        }
+    }
 }
 
 pub struct CameraUniforms {

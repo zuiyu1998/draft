@@ -6,8 +6,8 @@ pub use observer::*;
 pub use pipeline::*;
 
 use draft_render::{
-    FrameContext, FrameworkError, MaterialEffect, MaterialEffectLoader, MeshRenderPhaseExtractor,
-    PhaseContext, RenderServer, RenderWorld, Texture, TextureLoader, ViewRenderPhasesContainers,
+    FrameContext, MaterialEffect, MaterialEffectLoader, RenderServer, RenderWorld, Texture,
+    TextureLoader,
     frame_graph::{FrameGraph, RenderContext, TransientResourceCache},
 };
 use fyrox_resource::{event::ResourceEvent, manager::ResourceManager};
@@ -78,41 +78,10 @@ impl WorldRenderer {
         }
     }
 
-    pub fn prepare(
-        &mut self,
-        pipeline_context: &PipelineContext,
-        frame_context: &mut FrameContext,
-        view_render_phases_containers: &mut ViewRenderPhasesContainers,
-    ) -> Result<(), FrameworkError> {
-        let camera_uniforms = pipeline_context
-            .observers_collection
-            .get_camera_uniforms(&self.world);
-
-        frame_context.camera_uniforms = camera_uniforms;
-
-        if let Some(ref camera_uniforms) = frame_context.camera_uniforms {
-            for (camera, camera_offset) in camera_uniforms.camera_offsets.iter().enumerate() {
-                let context = PhaseContext {
-                    frame_context,
-                    camera_offset: *camera_offset,
-                    render_world: &mut self.world,
-                    camera_size: camera_uniforms.camera_size,
-                };
-
-                let render_phase = pipeline_context.batch.extra(context)?;
-
-                view_render_phases_containers[camera].push(render_phase);
-            }
-        }
-
-        Ok(())
-    }
-
     pub fn render_frame(
         &mut self,
         pipeline_context: &PipelineContext,
         frame_context: &FrameContext,
-        view_render_phases_containers: &ViewRenderPhasesContainers,
     ) {
         if frame_context.camera_uniforms.is_none() {
             return;
@@ -133,7 +102,6 @@ impl WorldRenderer {
                     context: pipeline_context,
                     camera: Some(index),
                     frame_context,
-                    view_render_phases_containers,
                 };
 
                 pipeline.run(&mut frame_graph, &mut self.world, &frame_context);
@@ -148,9 +116,9 @@ impl WorldRenderer {
 
                 frame_graph.execute(&mut context);
 
-                let mut frame_command_buffers = context.finish();
+                let mut camera_command_buffers = context.finish();
 
-                command_buffers.append(&mut frame_command_buffers);
+                command_buffers.append(&mut camera_command_buffers);
             }
         }
 
@@ -158,24 +126,11 @@ impl WorldRenderer {
     }
 
     pub fn render(&mut self, pipeline_context: &PipelineContext) {
-        let mut frame_context = FrameContext::default();
-        let mut view_render_phases_containers = ViewRenderPhasesContainers::with_capacity(
-            pipeline_context.observers_collection.cameras.len(),
-        );
-
-        let frame_context_res = self.prepare(
-            pipeline_context,
-            &mut frame_context,
-            &mut view_render_phases_containers,
-        );
+        let frame_context_res = pipeline_context.prepare(&mut self.world);
 
         match frame_context_res {
-            Ok(_) => {
-                self.render_frame(
-                    pipeline_context,
-                    &frame_context,
-                    &view_render_phases_containers,
-                );
+            Ok(frame_context) => {
+                self.render_frame(pipeline_context, &frame_context);
             }
             Err(e) => {
                 err!("renderer prepare error: {}", e)

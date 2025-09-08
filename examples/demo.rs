@@ -115,9 +115,12 @@ impl PipelineNode for TestNode {
             },
         });
 
-        if let Some(camera_index) = context.camera {
-            if let Some(phases) =
-                context.view_render_phases_containers[camera_index].get_phases::<MeshRenderPhase>()
+        if let Some(camera) = context.camera {
+            if let Some(phases) = context
+                .frame_context
+                .render_phases_containers
+                .camera(camera)
+                .get_phases::<MeshRenderPhase>()
             {
                 phases.render(&mut render_pass_builder, world);
             }

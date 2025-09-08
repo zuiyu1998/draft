@@ -1,7 +1,5 @@
 mod mesh;
 
-use std::ops::{Deref, DerefMut};
-
 pub use mesh::*;
 
 use fxhash::FxHashMap;
@@ -62,31 +60,25 @@ impl RenderPhases {
 }
 
 #[derive(Default)]
-pub struct ViewRenderPhasesContainers(Vec<RenderPhasesContainer>);
+pub struct RenderPhasesContainers(Vec<RenderPhasesContainer>);
 
-impl ViewRenderPhasesContainers {
-    pub fn with_capacity(size: usize) -> Self {
+impl RenderPhasesContainers {
+    pub fn alloc(size: usize) -> Self {
         let mut target = vec![];
 
         for _ in 0..size {
             target.push(RenderPhasesContainer::default());
         }
 
-        ViewRenderPhasesContainers(target)
+        RenderPhasesContainers(target)
     }
-}
 
-impl Deref for ViewRenderPhasesContainers {
-    type Target = Vec<RenderPhasesContainer>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
+    pub fn camera(&self, camera: usize) -> &RenderPhasesContainer {
+        &self.0[camera]
     }
-}
 
-impl DerefMut for ViewRenderPhasesContainers {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
+    pub fn camera_mut(&mut self, camera: usize) -> &mut RenderPhasesContainer {
+        &mut self.0[camera]
     }
 }
 
