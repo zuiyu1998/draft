@@ -13,13 +13,17 @@ use wgpu::BufferUsages;
 use crate::{FrameworkError, Geometry, GeometryResource, TemporaryCache};
 
 pub struct GeometryData {
-    pub layout: VertexBufferLayout,
+    pub layouts: Vec<VertexBufferLayout>,
     vertex_buffer: TransientBuffer,
     index_buffer: Option<IndexBuffer>,
     cache_index: Arc<AtomicIndex>,
 }
 
 impl GeometryData {
+    pub fn get_index(&self) -> usize {
+        self.cache_index.get()
+    }
+
     pub fn get_vertex_buffer(&self) -> RenderBuffer {
         RenderBuffer {
             key: get_vertex_buffer_key(self.cache_index.get()),
@@ -65,7 +69,7 @@ fn get_index_buffer_key(index: usize) -> String {
     format!("index_buffer_{index}")
 }
 
-fn create_index_render_buffer(device: &RenderDevice, indices: &Indices) -> IndexBuffer {
+fn create_index_buffer(device: &RenderDevice, indices: &Indices) -> IndexBuffer {
     let bytes = indices.create_buffer();
 
     let init_desc = BufferInitDescriptor {
@@ -113,19 +117,23 @@ fn create_vertex_render_buffer(device: &RenderDevice, vertex: &Vertex) -> Transi
 }
 
 impl GeometryData {
-    pub fn new(device: &RenderDevice, geometry: &Geometry) -> Result<Self, FrameworkError> {
+    pub fn new(
+        device: &RenderDevice,
+        geometry: &Geometry,
+        layouts: &[VertexBufferLayout],
+    ) -> Result<Self, FrameworkError> {
         let vertex_buffer = create_vertex_render_buffer(device, &geometry.vertex);
 
         let index_buffer = geometry
             .index
             .indices
             .as_ref()
-            .map(|indices| create_index_render_buffer(device, indices));
+            .map(|indices| create_index_buffer(device, indices));
 
         Ok(GeometryData {
             vertex_buffer,
             index_buffer,
-            layout: geometry.vertex.get_vertex_layout(),
+            layouts: layouts.to_vec(),
             cache_index: geometry.cache_index.clone(),
         })
     }
@@ -141,6 +149,7 @@ impl GeometryCache {
         &mut self,
         device: &RenderDevice,
         geometry: &GeometryResource,
+        layouts: &[VertexBufferLayout],
     ) -> Result<&GeometryData, FrameworkError> {
         let mut geometry_state = geometry.state();
 
@@ -148,7 +157,7 @@ impl GeometryCache {
             match self.geometry_cache.get_or_insert_with(
                 &geometry_state.cache_index,
                 Default::default(),
-                || GeometryData::new(device, geometry_state),
+                || GeometryData::new(device, geometry_state, layouts),
             ) {
                 Ok(data) => Ok(data),
                 Err(error) => Err(error),

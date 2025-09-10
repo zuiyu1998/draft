@@ -1,21 +1,21 @@
 use downcast_rs::{Downcast, impl_downcast};
 
-pub trait DynObject: 'static + Downcast {}
+pub trait DynSceneObject: 'static + Downcast {}
 
-pub struct Object(Box<dyn DynObject>);
+pub struct SceneObject(Box<dyn DynSceneObject>);
 
-impl Object {
-    pub fn new<T: DynObject>(value: T) -> Self {
-        Object(Box::new(value))
+impl SceneObject {
+    pub fn new<T: DynSceneObject>(value: T) -> Self {
+        SceneObject(Box::new(value))
     }
 
-    pub fn cast<T: DynObject>(&self) -> Option<&T> {
+    pub fn cast<T: DynSceneObject>(&self) -> Option<&T> {
         self.0.downcast_ref()
     }
 
-    pub fn cast_mut<T: DynObject>(&mut self) -> Option<&mut T> {
+    pub fn cast_mut<T: DynSceneObject>(&mut self) -> Option<&mut T> {
         self.0.downcast_mut()
     }
 }
 
-impl_downcast!(DynObject);
+impl_downcast!(DynSceneObject);

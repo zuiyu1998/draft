@@ -5,7 +5,7 @@ use fyrox_core::{
     algebra::{Matrix4, Vector3},
 };
 
-use crate::scene::{Camera, DynNode, Projection};
+use crate::scene::{Camera, DynSceneNode, Projection};
 
 #[derive(ShaderType)]
 pub struct CameraUniform {
@@ -26,7 +26,7 @@ pub struct ObserversCollection {
 }
 
 impl ObserversCollection {
-    pub fn get_camera_uniforms(&self, render_world: &RenderWorld) -> Option<CameraUniforms> {
+    pub fn prepare(&self, render_world: &RenderWorld) -> Option<CameraUniforms> {
         if self.cameras.is_empty() {
             return None;
         }

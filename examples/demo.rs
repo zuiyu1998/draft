@@ -2,30 +2,30 @@ use std::{collections::HashMap, sync::Arc};
 
 use draft_render::{
     ErasedMaterial, FragmentState, Geometry, GeometryResource, Material, MaterialEffect,
-    MaterialEffectInfo, MaterialInfo, MaterialResource, MaterialTextureBinding, MeshRenderPhase,
-    PipelineInfo, RenderPipelineInfo, RenderServer, RenderWorld, Shader, ShaderResource, Texture,
+    MaterialEffectInfo, MaterialInfo, MaterialResource, MaterialTextureBinding, PipelineInfo,
+    RenderPipelineInfo, RenderServer, RenderWorld, Shader, ShaderResource, Texture,
     TextureResource, Vertex, VertexAttributeDescriptor,
     frame_graph::{ColorAttachment, FrameGraph, TextureView},
     gfx_base::{
         BlendComponent, BlendState, ColorTargetState, ColorWrites, GpuTextureView,
-        RawTextureFormat, TextureFormat, VertexFormat, initialize_resources,
+        RawTextureFormat, TextureFormat, VertexFormat, WgpuSurface, initialize_resources,
     },
     wgpu::{
         self, Color, CompositeAlphaMode, Instance, InstanceDescriptor, LoadOp, Operations,
-        PresentMode, StoreOp, Surface, SurfaceConfiguration, SurfaceTexture, TextureUsages,
+        PresentMode, StoreOp, SurfaceConfiguration, SurfaceTexture, TextureUsages,
         TextureViewDescriptor,
     },
 };
 
 use draft::{
     renderer::{
-        Batch, FrameGraphContext, Observer, ObserverPosition, ObserversCollection, Pipeline,
-        PipelineContext, PipelineNode, WorldRenderer, initialize_renderer,
+        FrameGraphContext, MeshRenderPhase, Observer, ObserverPosition, ObserversCollection,
+        Pipeline, PipelineContext, PipelineNode, WorldRenderer, initialize_renderer,
     },
-    scene::CameraBuilder,
+    scene::{CameraBuilder, Mesh, Surface},
 };
 
-use fyrox_core::{futures, task::TaskPool, uuid};
+use fyrox_core::{futures, task::TaskPool, uuid, variable::InheritableVariable};
 use fyrox_resource::{
     embedded_data_source,
     io::FsResourceIo,
@@ -183,7 +183,7 @@ impl Windows {
 
 pub struct WindowData {
     window: Arc<Window>,
-    surface: Surface<'static>,
+    surface: WgpuSurface<'static>,
 
     pub swap_chain_texture_view: Option<GpuTextureView>,
     pub swap_chain_texture: Option<SurfaceTexture>,
@@ -193,7 +193,7 @@ pub struct WindowData {
 impl WindowData {
     pub fn new(
         window: Arc<Window>,
-        surface: Surface<'static>,
+        surface: WgpuSurface<'static>,
         swap_chain_texture_format: RawTextureFormat,
     ) -> Self {
         Self {
@@ -305,7 +305,7 @@ struct State {
     size: winit::dpi::PhysicalSize<u32>,
     _resource_manager: ResourceManager,
     renderer: WorldRenderer,
-    batch: Batch,
+    mesh: Mesh,
 }
 
 impl State {
@@ -332,14 +332,14 @@ impl State {
         resource_manager.request::<MaterialEffect>("data/camera.material_effect");
 
         let image = resource_manager.request::<Texture>("data/happy-tree.png");
-        let batch = new_batch(&image);
+        let mesh = new_mesh(&image);
 
         State {
             windows,
             size,
             _resource_manager: resource_manager,
             renderer,
-            batch,
+            mesh,
         }
     }
 
@@ -371,8 +371,7 @@ impl State {
 
             let pipeline_context = PipelineContext {
                 texture_view: TextureView::new(texture_view),
-                batch: self.batch.clone(),
-                observers_collection: observers,
+                mesh: &self.mesh,
             };
 
             self.renderer.render(&pipeline_context);
@@ -382,7 +381,7 @@ impl State {
     }
 }
 
-fn new_batch(image: &TextureResource) -> Batch {
+fn new_mesh(image: &TextureResource) -> Mesh {
     let mut vertex = Vertex::default();
     let mut modifier = vertex.modify();
     modifier.insert_attribute(
@@ -422,10 +421,13 @@ fn new_batch(image: &TextureResource) -> Batch {
         .into(),
     );
 
-    Batch::new(
-        GeometryResource::new_embedded(geometry),
-        MaterialResource::new_embedded(material),
-    )
+    let mut mesh = Mesh::default();
+    mesh.surfaces.push(Surface {
+        geometry: InheritableVariable::new_modified(GeometryResource::new_embedded(geometry)),
+        material: InheritableVariable::new_modified(MaterialResource::new_embedded(material)),
+    });
+
+    mesh
 }
 
 #[derive(Default)]

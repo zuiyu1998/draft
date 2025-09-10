@@ -1,11 +1,9 @@
-mod mesh;
-
-pub use mesh::*;
-
 use fxhash::FxHashMap;
 use fyrox_core::ImmutableString;
 
 use crate::{RenderWorld, frame_graph::RenderPassBuilder};
+
+pub const MESH_RENDER_PHASE: &str = "MeshRenderPhase";
 
 pub trait PhaseName {
     fn name() -> ImmutableString;

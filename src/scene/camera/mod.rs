@@ -2,9 +2,9 @@ mod builder;
 
 pub use builder::*;
 
-use crate::scene::DynObject;
+use crate::scene::DynSceneObject;
 
-use super::{DynNode, Node, NodeMut, NodeRef};
+use super::{DynSceneNode, Node, NodeMut, NodeRef};
 use fyrox_core::{
     ImmutableString,
     algebra::{Matrix4, Point3, Vector2},
@@ -158,9 +158,9 @@ pub struct Camera {
     pub pipeline_name: ImmutableString,
 }
 
-impl DynObject for Camera {}
+impl DynSceneObject for Camera {}
 
-impl DynNode for Camera {
+impl DynSceneNode for Camera {
     fn get_ref(&self) -> NodeRef {
         self.node.get_ref()
     }

@@ -1,6 +1,6 @@
 use fyrox_core::{ImmutableString, algebra::Matrix4};
 
-use crate::scene::{Camera, NodeBuilder, Object, Projection};
+use crate::scene::{Camera, NodeBuilder, Projection, SceneObject};
 
 pub const CAMERA_2D: &str = "2d";
 
@@ -40,7 +40,7 @@ impl CameraBuilder {
         }
     }
 
-    pub fn build_object(self) -> Object {
-        Object::new(self.build())
+    pub fn build_object(self) -> SceneObject {
+        SceneObject::new(self.build())
     }
 }

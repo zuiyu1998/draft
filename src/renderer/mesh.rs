@@ -2,12 +2,13 @@ use std::num::NonZero;
 
 use fyrox_core::ImmutableString;
 
-use crate::{
-    FrameContext, FrameworkError, IndexRenderBuffer, MaterialBindGroupHandle,
+use draft_render::{
+    FrameContext, FrameworkError, IndexRenderBuffer, MESH_RENDER_PHASE, MaterialBindGroupHandle,
     MaterialResourceHandle, PhaseName, RenderPhase, RenderWorld, frame_graph::RenderPassBuilder,
-    render_resource::RenderBuffer,
+    gfx_base::CachedPipelineId, render_resource::RenderBuffer,
 };
-use draft_gfx_base::CachedPipelineId;
+
+use crate::renderer::InstanceRenderBuffer;
 
 pub struct PhaseContext<'a> {
     pub render_world: &'a mut RenderWorld,
@@ -17,19 +18,20 @@ pub struct PhaseContext<'a> {
 }
 
 pub trait MeshRenderPhaseExtractor {
-    fn extra(&self, context: PhaseContext) -> Result<MeshRenderPhase, FrameworkError>;
+    fn prepare(&self, context: PhaseContext) -> Result<MeshRenderPhase, FrameworkError>;
 }
 
 pub struct MeshRenderPhase {
     pub vertex_buffer: RenderBuffer,
     pub index_buffer: Option<IndexRenderBuffer>,
+    pub instance_buffer: InstanceRenderBuffer,
     pub pipeline_id: CachedPipelineId,
     pub material_bind_group_handles: Vec<MaterialBindGroupHandle>,
 }
 
 impl PhaseName for MeshRenderPhase {
     fn name() -> ImmutableString {
-        ImmutableString::new("MeshRenderPhase")
+        ImmutableString::new(MESH_RENDER_PHASE)
     }
 }
 
@@ -91,6 +93,15 @@ impl RenderPhase for MeshRenderPhase {
             buffer_slice.size,
         );
 
+        let buffer_ref = render_pass_builder.read_material(&self.instance_buffer.buffer);
+        let buffer_slice = self.instance_buffer.buffer.slice(0..);
+        render_pass_builder.set_vertex_buffer(
+            0,
+            &buffer_ref,
+            buffer_slice.offset,
+            buffer_slice.size,
+        );
+
         if let Some(index_buffer) = &self.index_buffer {
             let buffer_ref = render_pass_builder.read_material(&index_buffer.buffer);
             let buffer_slice = index_buffer.buffer.slice(0..);
@@ -101,9 +112,13 @@ impl RenderPhase for MeshRenderPhase {
                 buffer_slice.size,
             );
 
-            render_pass_builder.draw_indexed(0..index_buffer.num_indices, 0, 0..1);
+            render_pass_builder.draw_indexed(
+                0..index_buffer.num_indices,
+                0,
+                0..self.instance_buffer.count as u32,
+            );
         } else {
-            render_pass_builder.draw(0..3, 0..1);
+            render_pass_builder.draw(0..3, 0..self.instance_buffer.count as u32);
         }
     }
 }
