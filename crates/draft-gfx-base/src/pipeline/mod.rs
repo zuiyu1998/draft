@@ -3,48 +3,48 @@ mod container;
 pub use container::*;
 
 #[derive(Clone, Debug)]
-pub struct RenderPipeline(wgpu::RenderPipeline);
+pub struct GpuRenderPipeline(wgpu::RenderPipeline);
 
-impl RenderPipeline {
+impl GpuRenderPipeline {
     pub fn wgpu(&self) -> &wgpu::RenderPipeline {
         &self.0
     }
 
     pub fn new(pipeline: wgpu::RenderPipeline) -> Self {
-        RenderPipeline(pipeline)
+        GpuRenderPipeline(pipeline)
     }
 }
 
 #[derive(Clone, Debug)]
-pub struct ComputePipeline(wgpu::ComputePipeline);
+pub struct GpuComputePipeline(wgpu::ComputePipeline);
 
-impl ComputePipeline {
+impl GpuComputePipeline {
     pub fn wgpu(&self) -> &wgpu::ComputePipeline {
         &self.0
     }
 
     pub fn new(pipeline: wgpu::ComputePipeline) -> Self {
-        ComputePipeline(pipeline)
+        GpuComputePipeline(pipeline)
     }
 }
 
 #[derive(Clone, Debug)]
-pub enum Pipeline {
-    RenderPipeline(RenderPipeline),
-    ComputePipeline(ComputePipeline),
+pub enum GpuPipeline {
+    RenderPipeline(GpuRenderPipeline),
+    ComputePipeline(GpuComputePipeline),
 }
 
-impl Pipeline {
-    pub fn get_render_pipeline(&self) -> Option<&RenderPipeline> {
+impl GpuPipeline {
+    pub fn get_render_pipeline(&self) -> Option<&GpuRenderPipeline> {
         match self {
-            Pipeline::RenderPipeline(res) => Some(res),
+            GpuPipeline::RenderPipeline(res) => Some(res),
             _ => None,
         }
     }
 
-    pub fn get_compute_pipeline(&self) -> Option<&ComputePipeline> {
+    pub fn get_compute_pipeline(&self) -> Option<&GpuComputePipeline> {
         match self {
-            Pipeline::ComputePipeline(res) => Some(res),
+            GpuPipeline::ComputePipeline(res) => Some(res),
             _ => None,
         }
     }

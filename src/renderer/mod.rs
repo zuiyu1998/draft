@@ -10,6 +10,7 @@ use draft_render::{
     FrameContext, MaterialEffect, MaterialEffectLoader, RenderServer, RenderWorld, Texture,
     TextureLoader,
     frame_graph::{FrameGraph, RenderContext, TransientResourceCache},
+    render_pipeline::{FrameGraphContext, RenderPipelineContainer},
 };
 use fyrox_core::err;
 use fyrox_resource::{event::ResourceEvent, manager::ResourceManager};
@@ -17,7 +18,7 @@ use std::sync::mpsc::Receiver;
 
 pub struct WorldRenderer {
     pub world: RenderWorld,
-    pub pipeline_container: PipelineContainer,
+    pub render_pipeline_container: RenderPipelineContainer,
     pub transient_resource_cache: TransientResourceCache,
     texture_event_receiver: Receiver<ResourceEvent>,
     material_effect_event_receiver: Receiver<ResourceEvent>,
@@ -44,7 +45,7 @@ impl WorldRenderer {
 
         WorldRenderer {
             world: RenderWorld::new(server),
-            pipeline_container: Default::default(),
+            render_pipeline_container: Default::default(),
             transient_resource_cache: Default::default(),
             texture_event_receiver,
             material_effect_event_receiver,
@@ -93,13 +94,16 @@ impl WorldRenderer {
         let mut command_buffers = vec![];
 
         for (index, observer) in observers_collection.cameras.iter().enumerate() {
-            if let Some(pipeline) = self.pipeline_container.get_mut(&observer.pipeline_name) {
+            if let Some(pipeline) = self
+                .render_pipeline_container
+                .get_mut(&observer.pipeline_name)
+            {
                 let mut frame_graph = FrameGraph::default();
 
                 let frame_context = FrameGraphContext {
-                    context: pipeline_context,
                     camera: Some(index),
                     frame_context,
+                    texture_view: pipeline_context.texture_view.clone(),
                 };
 
                 pipeline.run(&mut frame_graph, &mut self.world, &frame_context);

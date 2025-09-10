@@ -9,8 +9,8 @@ use std::{borrow::Cow, mem::take};
 use crate::frame_graph::{PassNodeBuilder, RenderContext, ResourceTable};
 
 use draft_gfx_base::{
-    CachedPipelineId, CommandEncoder, ComputePipeline, PipelineContainer, RawCommandBuffer,
-    RenderDevice, RenderPipeline,
+    CachedPipelineId, CommandEncoder, GpuComputePipeline, GpuRenderPipeline, PipelineContainer,
+    RawCommandBuffer, RenderDevice,
 };
 
 pub struct PassBuilder<'a> {
@@ -97,13 +97,13 @@ impl<'a> PassContext<'a> {
         }
     }
 
-    pub fn get_compute_pipeline(&self, id: CachedPipelineId) -> &ComputePipeline {
+    pub fn get_compute_pipeline(&self, id: CachedPipelineId) -> &GpuComputePipeline {
         self.pipeline_container
             .get_compute_pipeline(id)
             .expect("compute pipeline mut have")
     }
 
-    pub fn get_render_pipeline(&self, id: CachedPipelineId) -> &RenderPipeline {
+    pub fn get_render_pipeline(&self, id: CachedPipelineId) -> &GpuRenderPipeline {
         self.pipeline_container
             .get_render_pipeline(id)
             .expect("render pipeline mut have")

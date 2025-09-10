@@ -4,6 +4,7 @@ mod utils;
 mod world;
 
 pub mod frame_graph;
+pub mod render_pipeline;
 pub mod render_resource;
 
 pub use wgpu;

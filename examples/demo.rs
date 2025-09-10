@@ -10,6 +10,7 @@ use draft_render::{
         BlendComponent, BlendState, ColorTargetState, ColorWrites, GpuTextureView,
         RawTextureFormat, TextureFormat, VertexFormat, WgpuSurface, initialize_resources,
     },
+    render_pipeline::{FrameGraphContext, Node, RenderPipeline},
     wgpu::{
         self, Color, CompositeAlphaMode, Instance, InstanceDescriptor, LoadOp, Operations,
         PresentMode, StoreOp, SurfaceConfiguration, SurfaceTexture, TextureUsages,
@@ -19,8 +20,8 @@ use draft_render::{
 
 use draft::{
     renderer::{
-        FrameGraphContext, MeshRenderPhase, Observer, ObserverPosition, ObserversCollection,
-        Pipeline, PipelineContext, PipelineNode, WorldRenderer, initialize_renderer,
+        MeshRenderPhase, Observer, ObserverPosition, ObserversCollection, PipelineContext,
+        WorldRenderer, initialize_renderer,
     },
     scene::{CameraBuilder, Mesh, Surface},
 };
@@ -96,7 +97,7 @@ impl ErasedMaterial for TestMaterial {
 
 pub struct TestNode;
 
-impl PipelineNode for TestNode {
+impl Node for TestNode {
     fn run(
         &mut self,
         frame_graph: &mut FrameGraph,
@@ -107,7 +108,7 @@ impl PipelineNode for TestNode {
         let mut render_pass_builder = pass_builder.create_render_pass_builder("test_pass");
 
         render_pass_builder.add_out_color_attachment(ColorAttachment {
-            view: context.context.texture_view.clone(),
+            view: context.texture_view.clone(),
             resolve_target: None,
             ops: Operations {
                 load: LoadOp::Clear(Color::WHITE),
@@ -321,10 +322,12 @@ impl State {
 
         let mut renderer = initialize_renderer(render_server, &resource_manager);
 
-        let mut pipeline = Pipeline::empty();
+        let mut pipeline = RenderPipeline::empty();
         pipeline.push_node(TestNode);
 
-        renderer.pipeline_container.insert("test".into(), pipeline);
+        renderer
+            .render_pipeline_container
+            .insert("test".into(), pipeline);
 
         resource_manager.update_or_load_registry();
 

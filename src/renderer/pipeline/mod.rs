@@ -1,9 +1,7 @@
-use std::ops::{Deref, DerefMut};
-
 use draft_render::{
     FrameContext, FrameworkError, FrameworkErrorKind, GeometryResource, MaterialEffectContext,
     MaterialResource, PipelineDescriptor, RenderPhasesContainers, RenderWorld,
-    frame_graph::{BufferInfo, FrameGraph, TextureView},
+    frame_graph::{BufferInfo, TextureView},
     gfx_base::{
         BufferInitDescriptor, RenderDevice, VertexAttribute, VertexBufferLayout, VertexFormat,
         VertexStepMode,
@@ -12,7 +10,6 @@ use draft_render::{
     wgpu::BufferUsages,
 };
 use fxhash::FxHashMap;
-use fyrox_core::ImmutableString;
 
 use crate::{
     renderer::{MeshRenderPhase, MeshRenderPhaseExtractor, ObserversCollection, PhaseContext},
@@ -250,77 +247,5 @@ impl PipelineContext<'_> {
         }
 
         Ok(frame_context)
-    }
-}
-
-pub trait PipelineNode: 'static {
-    fn run(
-        &mut self,
-        frame_graph: &mut FrameGraph,
-        world: &mut RenderWorld,
-        frame_graph_context: &FrameGraphContext,
-    );
-}
-
-pub struct PipelineContainer(FxHashMap<ImmutableString, Pipeline>);
-
-impl Default for PipelineContainer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl PipelineContainer {
-    pub fn empty() -> Self {
-        Self(Default::default())
-    }
-
-    pub fn new() -> Self {
-        PipelineContainer::empty()
-    }
-}
-
-impl Deref for PipelineContainer {
-    type Target = FxHashMap<ImmutableString, Pipeline>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for PipelineContainer {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-pub struct Pipeline {
-    nodes: Vec<Box<dyn PipelineNode>>,
-}
-
-pub struct FrameGraphContext<'a, 'b> {
-    pub context: &'b PipelineContext<'a>,
-    pub frame_context: &'b FrameContext,
-    pub camera: Option<usize>,
-}
-
-impl Pipeline {
-    pub fn empty() -> Self {
-        Pipeline { nodes: vec![] }
-    }
-
-    pub fn push_node<T: PipelineNode>(&mut self, node: T) {
-        self.nodes.push(Box::new(node));
-    }
-
-    pub fn run(
-        &mut self,
-        frame_graph: &mut FrameGraph,
-        world: &mut RenderWorld,
-        frame_graph_context: &FrameGraphContext,
-    ) {
-        for node in self.nodes.iter_mut() {
-            node.run(frame_graph, world, frame_graph_context);
-        }
     }
 }

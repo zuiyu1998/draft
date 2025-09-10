@@ -14,9 +14,9 @@ use crate::{
 
 use draft_gfx_base::{
     BindGroupLayoutDescriptor, CachedPipelineId, DepthStencilState, GetPipelineContainer,
-    MultisampleState, Pipeline, PipelineContainer, RawFragmentState, RawPipelineCompilationOptions,
-    RawRenderPipelineDescriptor, RawVertexAttribute, RawVertexBufferLayout, RawVertexState,
-    RenderDevice, RenderPipeline,
+    GpuPipeline, GpuRenderPipeline, MultisampleState, PipelineContainer, RawFragmentState,
+    RawPipelineCompilationOptions, RawRenderPipelineDescriptor, RawVertexAttribute,
+    RawVertexBufferLayout, RawVertexState, RenderDevice,
 };
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
@@ -77,12 +77,12 @@ pub struct CachedPipeline {
 #[derive(Debug)]
 pub enum PipelineState {
     Queue,
-    Ok(Pipeline),
+    Ok(GpuPipeline),
     Error(FrameworkError),
 }
 
 impl PipelineState {
-    pub fn as_pipeline_ref(&self) -> Option<&Pipeline> {
+    pub fn as_pipeline_ref(&self) -> Option<&GpuPipeline> {
         match self {
             PipelineState::Ok(pipeline) => Some(pipeline),
             _ => None,
@@ -117,8 +117,8 @@ impl PipelineCache {
         if let Some(pipeline) = self.pipelines.get(id) {
             match &pipeline.state {
                 PipelineState::Ok(pipeline) => match pipeline {
-                    Pipeline::RenderPipeline(_) => true,
-                    Pipeline::ComputePipeline(_) => false,
+                    GpuPipeline::RenderPipeline(_) => true,
+                    GpuPipeline::ComputePipeline(_) => false,
                 },
                 _ => false,
             }
@@ -226,7 +226,7 @@ fn create_pipeline_with_render_pipeline_descriptor(
     desc: &RenderPipelineDescriptor,
     shader_cache: &mut ShaderCache,
     pipeline_layout_cache: &mut PipelineLayoutCache,
-) -> Result<Pipeline, FrameworkError> {
+) -> Result<GpuPipeline, FrameworkError> {
     let vertex_module = shader_cache.get(device, &desc.vertex.shader)?.clone();
     let fragment_module = match &desc.fragment {
         Some(fragment) => match shader_cache.get(device, &fragment.shader) {
@@ -307,5 +307,7 @@ fn create_pipeline_with_render_pipeline_descriptor(
 
     let pipeline = device.wgpu_device().create_render_pipeline(&descriptor);
 
-    Ok(Pipeline::RenderPipeline(RenderPipeline::new(pipeline)))
+    Ok(GpuPipeline::RenderPipeline(GpuRenderPipeline::new(
+        pipeline,
+    )))
 }
