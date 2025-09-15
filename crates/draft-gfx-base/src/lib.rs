@@ -38,7 +38,7 @@ pub use wgpu::{
     BlendFactor as RawBlendFactor, BlendOperation as RawBlendOperation,
     BlendState as RawBlendState, Buffer as WgpuBuffer, BufferAddress,
     BufferBinding as WgpuBufferBinding, BufferBindingType as RawBufferBindingType,
-    BufferDescriptor as RawBufferDescriptor, BufferSize, BufferUsages, COPY_BUFFER_ALIGNMENT,
+    BufferDescriptor as WgpuBufferDescriptor, BufferSize, BufferUsages, COPY_BUFFER_ALIGNMENT,
     Color, ColorTargetState as RawColorTargetState, ColorWrites as RawColorWrites,
     CommandBuffer as RawCommandBuffer, CommandBuffer as WgpuCommandBuffer, CommandEncoder,
     CompareFunction as RawCompareFunction, DepthBiasState as RawDepthBiasState,
@@ -50,9 +50,11 @@ pub use wgpu::{
     PipelineLayout as RawPipelineLayout, PipelineLayoutDescriptor as RawPipelineLayoutDescriptor,
     PolygonMode as RawPolygonMode, PrimitiveState as RawPrimitiveState,
     PrimitiveTopology as RawPrimitiveTopology, Queue as WgpuQueue, QueueWriteBufferView,
+    RenderPassColorAttachment as WgpuRenderPassColorAttachment,
+    RenderPassDepthStencilAttachment as WgpuRenderPassDepthStencilAttachment,
     RenderPipelineDescriptor as RawRenderPipelineDescriptor, Sampler as WgpuSampler,
     SamplerBindingType as RawSamplerBindingType, SamplerBorderColor as RawSamplerBorderColor,
-    SamplerDescriptor as RawSamplerDescriptor, ShaderLocation,
+    SamplerDescriptor as WgpuSamplerDescriptor, ShaderLocation,
     ShaderModuleDescriptor as RawShaderModuleDescriptor, ShaderSource as RawShaderSource,
     ShaderStages as RawShaderStages, StencilFaceState as RawStencilFaceState,
     StencilOperation as RawStencilOperation, StencilState as RawStencilState,
@@ -64,7 +66,7 @@ pub use wgpu::{
     VertexAttribute as RawVertexAttribute, VertexBufferLayout as RawVertexBufferLayout,
     VertexFormat as RawVertexFormat, VertexState as RawVertexState,
     VertexStepMode as RawVertexStepMode,
-    util::{BufferInitDescriptor as RawBufferInitDescriptor, TextureDataOrder},
+    util::{BufferInitDescriptor as WgpuBufferInitDescriptor, TextureDataOrder},
 };
 
 use std::sync::Arc;

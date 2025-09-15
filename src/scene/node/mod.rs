@@ -24,7 +24,7 @@ impl DynSceneNode for Node {
         }
     }
 
-    fn get_mut(&mut self) -> NodeMut {
+    fn get_mut<'a>(&'a mut self) -> NodeMut<'a> {
         NodeMut {
             global_transform: &mut self.global_transform,
         }
@@ -56,7 +56,7 @@ pub struct NodeMut<'a> {
 pub trait DynSceneNode: DynSceneObject {
     fn get_ref(&self) -> NodeRef;
 
-    fn get_mut(&mut self) -> NodeMut;
+    fn get_mut<'a>(&'a mut self) -> NodeMut<'a>;
 
     fn collect_render_data(&self, _context: &mut FrameRenderContext) {}
 }

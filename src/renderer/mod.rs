@@ -60,22 +60,22 @@ impl WorldRenderer {
 
     fn update_texture(&mut self) {
         while let Ok(event) = self.texture_event_receiver.try_recv() {
-            if let ResourceEvent::Loaded(resource) | ResourceEvent::Reloaded(resource) = event {
-                if let Some(texture) = resource.try_cast::<Texture>() {
-                    self.world.update_texture(&texture);
-                }
+            if let ResourceEvent::Loaded(resource) | ResourceEvent::Reloaded(resource) = event
+                && let Some(texture) = resource.try_cast::<Texture>()
+            {
+                self.world.update_texture(&texture);
             }
         }
     }
 
     fn update_material_effect(&mut self) {
-        while let Ok(event) = self.material_effect_event_receiver.try_recv() {
-            if let ResourceEvent::Loaded(resource) | ResourceEvent::Reloaded(resource) = event {
-                if let Some(material_effect) = resource.try_cast::<MaterialEffect>() {
-                    let container = self.world.material_effect_container.clone();
-                    if let Some(material_effect) = material_effect.data_ref().as_loaded_ref() {
-                        container.register_material_effect(material_effect.clone());
-                    }
+        while let Ok(event) = self.material_effect_event_receiver.try_recv()
+            && let ResourceEvent::Loaded(resource) | ResourceEvent::Reloaded(resource) = event
+        {
+            if let Some(material_effect) = resource.try_cast::<MaterialEffect>() {
+                let container = self.world.material_effect_container.clone();
+                if let Some(material_effect) = material_effect.data_ref().as_loaded_ref() {
+                    container.register_material_effect(material_effect.clone());
                 }
             }
         }

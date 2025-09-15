@@ -43,7 +43,7 @@ impl From<wgpu::TextureViewDescriptor<'_>> for TextureViewDescriptor {
 }
 
 impl TextureViewDescriptor {
-    pub fn get_desc(&self) -> WgpuTextureViewDescriptor {
+    pub fn get_desc<'a>(&'a self) -> WgpuTextureViewDescriptor<'a> {
         wgpu::TextureViewDescriptor {
             label: self.label.as_deref(),
             format: self.format.map(|format| format.into()),

@@ -165,7 +165,7 @@ impl DynSceneNode for Camera {
         self.node.get_ref()
     }
 
-    fn get_mut(&mut self) -> NodeMut {
+    fn get_mut<'a>(&'a mut self) -> NodeMut<'a> {
         self.node.get_mut()
     }
 }

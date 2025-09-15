@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    BufferAddress, BufferUsages, RawBufferDescriptor, RawBufferInitDescriptor, WgpuBuffer,
+    BufferAddress, BufferUsages, WgpuBuffer, WgpuBufferDescriptor, WgpuBufferInitDescriptor,
 };
 
 #[derive(Clone)]
@@ -29,8 +29,8 @@ pub struct BufferDescriptor {
 }
 
 impl BufferDescriptor {
-    pub fn get_desc(&self) -> RawBufferDescriptor {
-        RawBufferDescriptor {
+    pub fn get_desc<'a>(&'a self) -> WgpuBufferDescriptor<'a> {
+        WgpuBufferDescriptor {
             label: self.label.as_deref(),
             size: self.size,
             usage: self.usage,
@@ -55,8 +55,8 @@ impl BufferInitDescriptor<'_> {
         }
     }
 
-    pub fn to_buffer_init_desc(&self) -> RawBufferInitDescriptor {
-        RawBufferInitDescriptor {
+    pub fn to_buffer_init_desc<'a>(&'a self) -> WgpuBufferInitDescriptor<'a> {
+        WgpuBufferInitDescriptor {
             label: self.label.as_deref(),
             usage: self.usage,
             contents: self.contents,

@@ -15,7 +15,7 @@ pub struct Vertex {
 }
 
 impl Vertex {
-    pub fn modify(&mut self) -> VertexModifier {
+    pub fn modify<'a>(&'a mut self) -> VertexModifier<'a> {
         VertexModifier {
             vertex: self,
             need_update: false,

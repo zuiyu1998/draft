@@ -17,7 +17,7 @@ pub struct Mesh {
 impl DynSceneObject for Mesh {}
 
 impl DynSceneNode for Mesh {
-    fn get_mut(&mut self) -> NodeMut {
+    fn get_mut<'a>(&'a mut self) -> NodeMut<'a> {
         self.node.get_mut()
     }
 

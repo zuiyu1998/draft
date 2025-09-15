@@ -18,7 +18,7 @@ pub struct BufferBinding {
 }
 
 impl BufferBinding {
-    pub fn get_binding(&self) -> WgpuBufferBinding {
+    pub fn get_binding<'a>(&'a self) -> WgpuBufferBinding<'a> {
         WgpuBufferBinding {
             buffer: self.buffer.get_buffer(),
             size: self.size,
@@ -46,7 +46,7 @@ pub enum BindingResource<'a> {
 }
 
 impl<'a> BindingResource<'a> {
-    pub fn get_binding_resource(&self) -> WgpuBindingResource {
+    pub fn get_binding_resource(&'a self) -> WgpuBindingResource<'a> {
         match &self {
             BindingResource::Buffer(v) => WgpuBindingResource::Buffer(v.clone()),
             BindingResource::BufferArray(v) => WgpuBindingResource::BufferArray(v),

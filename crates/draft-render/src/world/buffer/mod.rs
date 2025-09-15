@@ -112,12 +112,12 @@ impl BufferCache {
     }
 
     pub fn upload_bytes(&mut self, key: &BufferKey, bytes: &[u8]) {
-        if let Some(set) = self.cache.get_mut(&key.desc) {
-            if let Some(render_buffer) = set.get_render_buffer(key) {
-                self.queue
-                    .wgpu_queue()
-                    .write_buffer(render_buffer.value.get_buffer(), 0, bytes);
-            }
+        if let Some(set) = self.cache.get_mut(&key.desc)
+            && let Some(render_buffer) = set.get_render_buffer(key)
+        {
+            self.queue
+                .wgpu_queue()
+                .write_buffer(render_buffer.value.get_buffer(), 0, bytes);
         }
     }
 

@@ -116,15 +116,14 @@ impl Node for TestNode {
             },
         });
 
-        if let Some(camera) = context.camera {
-            if let Some(phases) = context
+        if let Some(camera) = context.camera
+            && let Some(phases) = context
                 .frame_context
                 .render_phases_containers
                 .camera(camera)
                 .get_phases::<MeshRenderPhase>()
-            {
-                phases.render(&mut render_pass_builder, world);
-            }
+        {
+            phases.render(&mut render_pass_builder, world);
         }
     }
 }

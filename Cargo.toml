@@ -19,3 +19,7 @@ encase = { version = "0.10", features = ["nalgebra"] }
 [dev-dependencies]
 winit = "0.30"
 tracing-subscriber = { version = "0.3" }
+
+[[example]]
+name = "demo"
+path = "examples/demo.rs"

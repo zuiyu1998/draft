@@ -15,7 +15,7 @@ pub struct RenderBuffer {
 }
 
 impl RenderBuffer {
-    pub fn slice(&self, bounds: impl RangeBounds<BufferAddress>) -> BufferSlice {
+    pub fn slice<'a>(&'a self, bounds: impl RangeBounds<BufferAddress>) -> BufferSlice<'a> {
         let offset = match bounds.start_bound() {
             Bound::Included(&bound) => bound,
             Bound::Excluded(&bound) => bound + 1,

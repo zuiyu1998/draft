@@ -1,4 +1,5 @@
 use crate::frame_graph::{PassContext, TextureView, TextureViewInfoWrite};
+use draft_gfx_base::WgpuRenderPassDepthStencilAttachment;
 
 #[derive(Clone)]
 pub struct DepthStencilAttachmentInfo {
@@ -14,10 +15,10 @@ pub struct DepthStencilAttachment {
 }
 
 impl DepthStencilAttachment {
-    pub fn get_render_pass_depth_stencil_attachment(
-        &self,
-    ) -> wgpu::RenderPassDepthStencilAttachment {
-        wgpu::RenderPassDepthStencilAttachment {
+    pub fn get_render_pass_depth_stencil_attachment<'a>(
+        &'a self,
+    ) -> WgpuRenderPassDepthStencilAttachment<'a> {
+        WgpuRenderPassDepthStencilAttachment {
             view: self.view.get_gpu_texture_view().get_texture_view(),
             depth_ops: self.depth_ops,
             stencil_ops: self.stencil_ops,

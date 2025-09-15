@@ -68,7 +68,7 @@ pub struct PipelineCompilationOptions {
 }
 
 impl PipelineCompilationOptions {
-    pub fn get_raw(&self) -> RawPipelineCompilationOptions {
+    pub fn get_raw<'a>(&'a self) -> RawPipelineCompilationOptions<'a> {
         RawPipelineCompilationOptions {
             constants: &self.constants,
             zero_initialize_workgroup_memory: self.zero_initialize_workgroup_memory,
