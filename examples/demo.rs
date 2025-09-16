@@ -20,8 +20,8 @@ use draft_render::{
 
 use draft::{
     renderer::{
-        MeshRenderPhase, Observer, ObserverPosition, ObserversCollection, PipelineContext,
-        WorldRenderer, initialize_renderer,
+        Observer, ObserverPosition, ObserversCollection, PipelineContext, WorldRenderer,
+        initialize_renderer,
     },
     scene::{CameraBuilder, Mesh, Surface},
 };
@@ -101,7 +101,7 @@ impl Node for TestNode {
     fn run(
         &mut self,
         frame_graph: &mut FrameGraph,
-        world: &mut RenderWorld,
+        _world: &mut RenderWorld,
         context: &FrameGraphContext,
     ) {
         let mut pass_builder = frame_graph.create_pass_builder("test_node");
@@ -115,16 +115,6 @@ impl Node for TestNode {
                 store: StoreOp::Store,
             },
         });
-
-        if let Some(camera) = context.camera
-            && let Some(phases) = context
-                .frame_context
-                .render_phases_containers
-                .camera(camera)
-                .get_phases::<MeshRenderPhase>()
-        {
-            phases.render(&mut render_pass_builder, world);
-        }
     }
 }
 

@@ -171,12 +171,7 @@ impl ResourceBindingDefinition {
                 "internal/camera" => Ok(MaterialResourceHandle::Buffer(MaterialBufferHandle {
                     offset: context.camera_offset,
                     size: Some(context.camera_size),
-                    buffer: context
-                        .frame_context
-                        .camera_uniforms
-                        .as_ref()
-                        .unwrap()
-                        .get_camera_buffer(),
+                    buffer: context.frame_context.camera_uniforms.get_camera_buffer(),
                 })),
                 _ => {
                     todo!()

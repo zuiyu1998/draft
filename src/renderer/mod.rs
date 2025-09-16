@@ -1,8 +1,6 @@
-mod mesh;
 mod observer;
 mod pipeline;
 
-pub use mesh::*;
 pub use observer::*;
 pub use pipeline::*;
 
@@ -12,7 +10,6 @@ use draft_render::{
     frame_graph::{FrameGraph, RenderContext, TransientResourceCache},
     render_pipeline::{FrameGraphContext, RenderPipelineContainer},
 };
-use fyrox_core::err;
 use fyrox_resource::{event::ResourceEvent, manager::ResourceManager};
 use std::sync::mpsc::Receiver;
 
@@ -87,10 +84,6 @@ impl WorldRenderer {
         frame_context: &FrameContext,
         observers_collection: &ObserversCollection,
     ) {
-        if frame_context.camera_uniforms.is_none() {
-            return;
-        }
-
         let mut command_buffers = vec![];
 
         for (index, observer) in observers_collection.cameras.iter().enumerate() {
@@ -130,16 +123,10 @@ impl WorldRenderer {
     pub fn render(&mut self, pipeline_context: &PipelineContext) {
         let mut observers_collection = ObserversCollection::default();
 
-        let frame_context_res =
-            pipeline_context.prepare(&mut observers_collection, &mut self.world);
-
-        match frame_context_res {
-            Ok(frame_context) => {
-                self.render_frame(pipeline_context, &frame_context, &observers_collection);
-            }
-            Err(e) => {
-                err!("renderer prepare error: {}", e)
-            }
+        if let Some(frame_context) =
+            pipeline_context.prepare(&mut observers_collection, &mut self.world)
+        {
+            self.render_frame(pipeline_context, &frame_context, &observers_collection);
         }
     }
 }

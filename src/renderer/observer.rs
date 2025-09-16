@@ -1,4 +1,4 @@
-use draft_render::{CameraUniforms, DynamicUniformBuffer, RenderWorld};
+use draft_render::{CameraUniform, CameraUniforms, DynamicUniformBuffer, RenderWorld};
 use encase::ShaderType;
 use fyrox_core::{
     ImmutableString,
@@ -6,19 +6,6 @@ use fyrox_core::{
 };
 
 use crate::scene::{Camera, DynSceneNode, Projection};
-
-#[derive(ShaderType)]
-pub struct CameraUniform {
-    pub view_projection_matrix: Matrix4<f32>,
-}
-
-impl CameraUniform {
-    pub fn new(position: &ObserverPosition) -> Self {
-        Self {
-            view_projection_matrix: position.view_projection_matrix,
-        }
-    }
-}
 
 #[derive(Default)]
 pub struct ObserversCollection {
@@ -43,7 +30,7 @@ impl ObserversCollection {
                 .unwrap();
 
             for camera in self.cameras.iter() {
-                let uniform = CameraUniform::new(&camera.position);
+                let uniform = camera.position.get_uniform();
                 offsets.push(writer.write(&uniform));
             }
         }
@@ -74,6 +61,12 @@ pub struct ObserverPosition {
 }
 
 impl ObserverPosition {
+    pub fn get_uniform(&self) -> CameraUniform {
+        CameraUniform {
+            view_projection_matrix: self.view_projection_matrix,
+        }
+    }
+
     pub fn from_camera(camera: &Camera) -> Self {
         Self {
             translation: camera.get_ref().global_position(),
