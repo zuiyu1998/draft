@@ -3,7 +3,7 @@ use std::num::NonZero;
 use encase::ShaderType;
 use fyrox_core::algebra::Matrix4;
 
-use crate::{frame_graph::TransientBuffer, render_resource::RenderBuffer};
+use draft_render::{frame_graph::TransientBuffer, render_resource::RenderBuffer};
 
 #[derive(ShaderType)]
 pub struct CameraUniform {

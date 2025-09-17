@@ -5,7 +5,7 @@ mod mesh;
 pub use camera::*;
 pub use mesh::*;
 
-use crate::{GeometryResource, MaterialResource};
+use draft_render::{GeometryResource, MaterialResource, RenderWorld};
 
 pub trait RenderDataBundleStorage: 'static {
     fn push_mesh(
@@ -15,6 +15,8 @@ pub trait RenderDataBundleStorage: 'static {
         sort_index: u64,
         instance_data: MeshInstanceData,
     );
+
+    fn render_frame(&self, render_world: &mut RenderWorld);
 }
 
 pub struct FrameContext {

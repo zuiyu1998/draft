@@ -1,12 +1,55 @@
 use std::ops::{Deref, DerefMut};
 
+use draft_render::{
+    GeometryResource, MaterialResource, RenderWorld,
+    frame_graph::{FrameGraph, TextureView},
+};
 use fxhash::FxHashMap;
 use fyrox_core::ImmutableString;
 
-use crate::{
-    FrameContext, RenderWorld,
-    frame_graph::{FrameGraph, TextureView},
-};
+use crate::renderer::{FrameContext, MeshInstanceData, RenderDataBundleStorage};
+
+#[derive(Clone)]
+pub struct Batch {
+    pub geometry: GeometryResource,
+    pub material: MaterialResource,
+    pub instance_data: MeshInstanceData,
+}
+
+impl Batch {
+    pub fn new(
+        geometry: GeometryResource,
+        material: MaterialResource,
+        instance_data: MeshInstanceData,
+    ) -> Self {
+        Self {
+            geometry,
+            material,
+            instance_data,
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct BatchContainer {
+    pub batches: FxHashMap<u64, Batch>,
+}
+
+impl RenderDataBundleStorage for BatchContainer {
+    fn push_mesh(
+        &mut self,
+        _geometry: GeometryResource,
+        _material: MaterialResource,
+        _sort_index: u64,
+        _instance_data: MeshInstanceData,
+    ) {
+        todo!()
+    }
+
+    fn render_frame(&self, _render_world: &mut RenderWorld) {
+        todo!()
+    }
+}
 
 pub struct RenderPipelineContainer(FxHashMap<ImmutableString, RenderPipeline>);
 
@@ -46,7 +89,7 @@ pub struct FrameGraphContext<'a> {
     pub texture_view: TextureView,
 }
 
-pub trait Node: 'static {
+pub trait RenderPipelineNode: 'static {
     fn run(
         &mut self,
         frame_graph: &mut FrameGraph,
@@ -56,7 +99,7 @@ pub trait Node: 'static {
 }
 
 pub struct RenderPipeline {
-    nodes: Vec<Box<dyn Node>>,
+    nodes: Vec<Box<dyn RenderPipelineNode>>,
 }
 
 impl RenderPipeline {
@@ -64,7 +107,7 @@ impl RenderPipeline {
         RenderPipeline { nodes: vec![] }
     }
 
-    pub fn push_node<T: Node>(&mut self, node: T) {
+    pub fn push_node<T: RenderPipelineNode>(&mut self, node: T) {
         self.nodes.push(Box::new(node));
     }
 

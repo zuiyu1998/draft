@@ -1,17 +1,21 @@
+mod frame_context;
+mod material;
 mod observer;
-mod pipeline;
+mod render_pipeline;
 
+pub use frame_context::*;
+pub use material::*;
 pub use observer::*;
-pub use pipeline::*;
+pub use render_pipeline::*;
 
 use draft_render::{
-    FrameContext, MaterialEffect, MaterialEffectLoader, RenderServer, RenderWorld, Texture,
-    TextureLoader,
-    frame_graph::{FrameGraph, RenderContext, TransientResourceCache},
-    render_pipeline::{FrameGraphContext, RenderPipelineContainer},
+    MaterialEffect, MaterialEffectLoader, RenderServer, RenderWorld, Texture, TextureLoader,
+    frame_graph::{FrameGraph, RenderContext, TextureView, TransientResourceCache},
 };
 use fyrox_resource::{event::ResourceEvent, manager::ResourceManager};
 use std::sync::mpsc::Receiver;
+
+use crate::scene::{DrawContext, SceneContainer};
 
 pub struct WorldRenderer {
     pub world: RenderWorld,
@@ -78,11 +82,30 @@ impl WorldRenderer {
         }
     }
 
+    pub fn prepare(
+        &mut self,
+        observers_collection: &mut ObserversCollection,
+        scene_container: &SceneContainer,
+    ) -> Option<FrameContext> {
+        let mut batch_container = BatchContainer::default();
+
+        let mut draw_context: DrawContext<'_> = DrawContext {
+            observers_collection,
+            render_data_bundle_storage: &mut batch_container,
+        };
+
+        draw_context.collect_render_data(scene_container);
+
+        observers_collection
+            .prepare(&self.world)
+            .map(|camera_uniforms| FrameContext::new(camera_uniforms, batch_container))
+    }
+
     pub fn render_frame(
         &mut self,
-        pipeline_context: &PipelineContext,
         frame_context: &FrameContext,
         observers_collection: &ObserversCollection,
+        texture_view: &TextureView,
     ) {
         let mut command_buffers = vec![];
 
@@ -96,7 +119,7 @@ impl WorldRenderer {
                 let frame_context = FrameGraphContext {
                     camera: Some(index),
                     frame_context,
-                    texture_view: pipeline_context.texture_view.clone(),
+                    texture_view: texture_view.clone(),
                 };
 
                 pipeline.run(&mut frame_graph, &mut self.world, &frame_context);
@@ -120,13 +143,11 @@ impl WorldRenderer {
         self.world.server.queue.submit(command_buffers);
     }
 
-    pub fn render(&mut self, pipeline_context: &PipelineContext) {
+    pub fn render(&mut self, scene_container: &SceneContainer, texture_view: &TextureView) {
         let mut observers_collection = ObserversCollection::default();
 
-        if let Some(frame_context) =
-            pipeline_context.prepare(&mut observers_collection, &mut self.world)
-        {
-            self.render_frame(pipeline_context, &frame_context, &observers_collection);
+        if let Some(frame_context) = self.prepare(&mut observers_collection, scene_container) {
+            self.render_frame(&frame_context, &observers_collection, texture_view);
         }
     }
 }

@@ -1,11 +1,14 @@
-use draft_render::{CameraUniform, CameraUniforms, DynamicUniformBuffer, RenderWorld};
+use draft_render::{DynamicUniformBuffer, RenderWorld};
 use encase::ShaderType;
 use fyrox_core::{
     ImmutableString,
     algebra::{Matrix4, Vector3},
 };
 
-use crate::scene::{Camera, DynSceneNode, Projection};
+use crate::{
+    renderer::{CameraUniform, CameraUniforms},
+    scene::{Camera, DynSceneNode, Projection},
+};
 
 #[derive(Default)]
 pub struct ObserversCollection {

@@ -2,14 +2,13 @@ mod builder;
 
 pub use builder::*;
 
-use draft_render::RenderDataBundleStorage;
 use fyrox_core::{
     algebra::{Matrix4, Vector3},
     math::Matrix4Ext,
 };
 use std::cell::Cell;
 
-use crate::{renderer::ObserversCollection, scene::DynSceneObject};
+use crate::scene::{DrawContext, DynSceneObject};
 
 #[derive(Default)]
 pub struct Node {
@@ -54,15 +53,10 @@ pub struct NodeMut<'a> {
     pub global_transform: &'a mut Cell<Matrix4<f32>>,
 }
 
-pub struct NodeContext<'a> {
-    pub render_data_bundle_storage: &'a mut dyn RenderDataBundleStorage,
-    pub observers_collection: &'a mut ObserversCollection,
-}
-
 pub trait DynSceneNode: DynSceneObject {
     fn get_ref(&self) -> NodeRef;
 
     fn get_mut<'a>(&'a mut self) -> NodeMut<'a>;
 
-    fn collect_render_data(&self, _context: &mut NodeContext) {}
+    fn draw(&self, _context: &mut DrawContext) {}
 }

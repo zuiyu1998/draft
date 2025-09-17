@@ -6,17 +6,10 @@ pub use container::*;
 pub use loader::*;
 pub use resource_bindings::*;
 
-use std::{error::Error, fs::File, io::Write, num::NonZero, path::Path};
+use std::{error::Error, fs::File, io::Write, path::Path};
 
-use crate::{
-    BindGroupLayout, FrameContext, FrameworkError, MaterialBufferHandle, MaterialError,
-    MaterialResourceBinding, MaterialResourceHandle, MaterialSamplerHandle, MaterialTextureBinding,
-    MaterialTextureHandle, RenderWorld, TextureCache,
-};
-use draft_gfx_base::{
-    BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingTypeKind, RenderDevice, RenderQueue,
-    TextureViewDescriptor,
-};
+use crate::{BindGroupLayout, FrameworkError, MaterialResourceHandle};
+use draft_gfx_base::{BindGroupLayoutDescriptor, BindGroupLayoutEntry};
 use fyrox_core::{ImmutableString, TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
 use fyrox_resource::{Resource, ResourceData, io::ResourceIo};
 use serde::{Deserialize, Serialize};
@@ -33,42 +26,6 @@ pub struct MaterialBindGroupHandle {
 pub struct MaterialEffect {
     pub effect_name: ImmutableString,
     pub resource_binding_definitions: Vec<ResourceBindingDefinition>,
-}
-
-impl MaterialEffect {
-    pub fn process(
-        &self,
-        mut context: MaterialEffectContext,
-    ) -> Result<MaterialBindGroupHandle, FrameworkError> {
-        let mut material_resource_handles = vec![];
-        let mut entries = vec![];
-
-        for definition in self.resource_binding_definitions.iter() {
-            material_resource_handles.push(definition.extra(&mut context)?);
-            entries.push(definition.entry.clone());
-        }
-
-        let desc = BindGroupLayoutDescriptor { entries };
-
-        let layout = context
-            .world
-            .pipeline_cache
-            .get_or_create_bind_group_layout(&desc)
-            .clone();
-
-        Ok(MaterialBindGroupHandle {
-            bind_group_layout: layout,
-            material_resource_handles,
-        })
-    }
-}
-
-pub struct MaterialEffectContext<'a> {
-    pub resource_bindings: &'a ResourceBindings,
-    pub frame_context: &'a FrameContext,
-    pub camera_offset: u32,
-    pub camera_size: NonZero<u64>,
-    pub world: &'a mut RenderWorld,
 }
 
 #[derive(Default, Reflect, Visit, Debug, Clone, Deserialize, Serialize)]
@@ -126,110 +83,9 @@ pub struct ResourceBindingDefinition {
     pub entry: BindGroupLayoutEntry,
 }
 
-fn extra_texture(
-    resource_binding: &MaterialTextureBinding,
-    device: &RenderDevice,
-    queue: &RenderQueue,
-    texture_cache: &mut TextureCache,
-) -> Result<MaterialTextureHandle, FrameworkError> {
-    let texture = resource_binding.value.as_ref().unwrap();
-    let texture_data = texture_cache.get_or_create(device, queue, texture)?;
-
-    Ok(MaterialTextureHandle {
-        texture: texture_data.get_texture(),
-        texture_view_desc: TextureViewDescriptor::default(),
-    })
-}
-
-fn extra_sampler(
-    resource_binding: &MaterialTextureBinding,
-    device: &RenderDevice,
-    queue: &RenderQueue,
-    texture_cache: &mut TextureCache,
-) -> Result<MaterialSamplerHandle, FrameworkError> {
-    let texture = resource_binding.value.as_ref().unwrap();
-    let texture_data = texture_cache.get_or_create(device, queue, texture)?;
-
-    Ok(MaterialSamplerHandle {
-        sampler: texture_data.sampler.clone(),
-    })
-}
-
 impl ResourceBindingDefinition {
     pub fn is_internal(&self) -> bool {
         self.name.starts_with("internal/")
-    }
-
-    pub fn extra(
-        &self,
-        context: &mut MaterialEffectContext,
-    ) -> Result<MaterialResourceHandle, FrameworkError> {
-        if self.is_internal() {
-            let name = self.name.as_str();
-
-            match name {
-                "internal/camera" => Ok(MaterialResourceHandle::Buffer(MaterialBufferHandle {
-                    offset: context.camera_offset,
-                    size: Some(context.camera_size),
-                    buffer: context.frame_context.camera_uniforms.get_camera_buffer(),
-                })),
-                _ => {
-                    todo!()
-                }
-            }
-        } else {
-            let kind = self.entry.ty.get_binding_type_kind();
-            let resource_binding = context.resource_bindings.get(&self.name).ok_or(
-                MaterialError::ResourceBindingDefinitionNotFound {
-                    name: self.name.to_string(),
-                },
-            )?;
-
-            match kind {
-                BindingTypeKind::Texture => {
-                    if let MaterialResourceBinding::Texture(resource_binding) = resource_binding {
-                        Ok(MaterialResourceHandle::Texture(extra_texture(
-                            resource_binding,
-                            &context.world.server.device,
-                            &context.world.server.queue,
-                            &mut context.world.texture_cache,
-                        )?))
-                    } else {
-                        let target_kind = resource_binding.get_binding_type_kind();
-
-                        Err(MaterialError::ResourceBindingDefinitionNotMatch {
-                            name: self.name.to_string(),
-                            target_kind,
-                            source_kind: kind,
-                        }
-                        .into())
-                    }
-                }
-                BindingTypeKind::Sampler => {
-                    if let MaterialResourceBinding::Texture(resource_binding) = resource_binding {
-                        Ok(MaterialResourceHandle::Sampler(extra_sampler(
-                            resource_binding,
-                            &context.world.server.device,
-                            &context.world.server.queue,
-                            &mut context.world.texture_cache,
-                        )?))
-                    } else {
-                        let target_kind = resource_binding.get_binding_type_kind();
-
-                        Err(MaterialError::ResourceBindingDefinitionNotMatch {
-                            name: self.name.to_string(),
-                            target_kind,
-                            source_kind: kind,
-                        }
-                        .into())
-                    }
-                }
-
-                _ => {
-                    todo!()
-                }
-            }
-        }
     }
 }
 

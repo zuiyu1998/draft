@@ -10,7 +10,6 @@ use draft_render::{
         BlendComponent, BlendState, ColorTargetState, ColorWrites, GpuTextureView,
         RawTextureFormat, TextureFormat, VertexFormat, WgpuSurface, initialize_resources,
     },
-    render_pipeline::{FrameGraphContext, Node, RenderPipeline},
     wgpu::{
         self, Color, CompositeAlphaMode, Instance, InstanceDescriptor, LoadOp, Operations,
         PresentMode, StoreOp, SurfaceConfiguration, SurfaceTexture, TextureUsages,
@@ -20,10 +19,9 @@ use draft_render::{
 
 use draft::{
     renderer::{
-        Observer, ObserverPosition, ObserversCollection, PipelineContext, WorldRenderer,
-        initialize_renderer,
+        FrameGraphContext, RenderPipeline, RenderPipelineNode, WorldRenderer, initialize_renderer,
     },
-    scene::{CameraBuilder, Mesh, Surface},
+    scene::{CameraBuilder, Mesh, SceneContainer, Surface},
 };
 
 use fyrox_core::{futures, task::TaskPool, uuid, variable::InheritableVariable};
@@ -97,7 +95,7 @@ impl ErasedMaterial for TestMaterial {
 
 pub struct TestNode;
 
-impl Node for TestNode {
+impl RenderPipelineNode for TestNode {
     fn run(
         &mut self,
         frame_graph: &mut FrameGraph,
@@ -295,7 +293,7 @@ struct State {
     size: winit::dpi::PhysicalSize<u32>,
     _resource_manager: ResourceManager,
     renderer: WorldRenderer,
-    mesh: Mesh,
+    scene_container: SceneContainer,
 }
 
 impl State {
@@ -325,13 +323,15 @@ impl State {
 
         let image = resource_manager.request::<Texture>("data/happy-tree.png");
         let mesh = new_mesh(&image);
+        let camera = CameraBuilder::new("test".into()).build();
+        let scene_container = SceneContainer::new(camera, mesh);
 
         State {
             windows,
             size,
             _resource_manager: resource_manager,
             renderer,
-            mesh,
+            scene_container,
         }
     }
 
@@ -350,23 +350,9 @@ impl State {
             .swap_chain_texture_view
             .clone()
         {
-            let camera = CameraBuilder::new("test".into()).build();
+            let texture_view = TextureView::new(texture_view);
 
-            let mut observers: ObserversCollection = ObserversCollection::default();
-            let observer = Observer {
-                pipeline_name: camera.pipeline_name.clone(),
-                position: ObserverPosition::from_camera(&camera),
-                projection: camera.projection().clone(),
-            };
-
-            observers.cameras.push(observer);
-
-            let pipeline_context = PipelineContext {
-                texture_view: TextureView::new(texture_view),
-                mesh: &self.mesh,
-            };
-
-            self.renderer.render(&pipeline_context);
+            self.renderer.render(&self.scene_container, &texture_view);
         }
 
         self.windows.present();
