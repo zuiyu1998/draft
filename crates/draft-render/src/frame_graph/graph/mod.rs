@@ -71,7 +71,7 @@ pub struct FrameGraph {
 }
 
 impl FrameGraph {
-    fn reset(&mut self) {
+    pub fn reset(&mut self) {
         self.pass_nodes = vec![];
         self.resource_nodes = vec![];
         self.compiled_frame_graph = None;

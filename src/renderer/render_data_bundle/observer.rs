@@ -1,50 +1,12 @@
-use draft_render::{DynamicUniformBuffer, RenderWorld};
-use encase::ShaderType;
 use fyrox_core::{
     ImmutableString,
     algebra::{Matrix4, Vector3},
 };
 
 use crate::{
-    renderer::{CameraUniform, CameraUniforms},
+    renderer::CameraUniform,
     scene::{Camera, DynSceneNode, Projection},
 };
-
-#[derive(Default)]
-pub struct ObserversCollection {
-    pub cameras: Vec<Observer>,
-}
-
-impl ObserversCollection {
-    pub fn prepare(&self, render_world: &RenderWorld) -> Option<CameraUniforms> {
-        if self.cameras.is_empty() {
-            return None;
-        }
-
-        let mut buffer = DynamicUniformBuffer::<CameraUniform>::default();
-        let mut offsets = vec![];
-        {
-            let mut writer = buffer
-                .get_writer(
-                    self.cameras.len(),
-                    &render_world.server.device,
-                    &render_world.server.queue,
-                )
-                .unwrap();
-
-            for camera in self.cameras.iter() {
-                let uniform = camera.position.get_uniform();
-                offsets.push(writer.write(&uniform));
-            }
-        }
-
-        let buffer = buffer.into_inner().unwrap();
-
-        let size = CameraUniform::min_size();
-
-        Some(CameraUniforms::new(offsets, size, buffer))
-    }
-}
 
 #[derive(Default)]
 pub struct Observer {

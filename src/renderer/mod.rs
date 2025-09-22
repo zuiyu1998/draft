@@ -1,11 +1,9 @@
-mod frame_context;
 mod material;
-mod observer;
+mod render_data_bundle;
 mod render_pipeline;
 
-pub use frame_context::*;
 pub use material::*;
-pub use observer::*;
+pub use render_data_bundle::*;
 pub use render_pipeline::*;
 
 use draft_render::{
@@ -15,7 +13,7 @@ use draft_render::{
 use fyrox_resource::{event::ResourceEvent, manager::ResourceManager};
 use std::sync::mpsc::Receiver;
 
-use crate::scene::{DrawContext, SceneContainer};
+use crate::scene::{DrawContext, DynRenderObject, SceneContainer};
 
 pub struct WorldRenderer {
     pub world: RenderWorld,
@@ -82,47 +80,46 @@ impl WorldRenderer {
         }
     }
 
-    pub fn prepare(
-        &mut self,
-        observers_collection: &mut ObserversCollection,
-        scene_container: &SceneContainer,
-    ) -> Option<FrameContext> {
-        let mut batch_container = BatchContainer::default();
+    pub fn prepare(&mut self, scene_container: &SceneContainer) -> RenderDataBundleStorage {
+        let batch_container = BatchContainer::default();
+        let cameras = vec![];
+        let mut render_data_bundle_storage = RenderDataBundleStorage::new(cameras, batch_container);
 
         let mut draw_context: DrawContext<'_> = DrawContext {
-            observers_collection,
-            render_data_bundle_storage: &mut batch_container,
+            cameras: &mut render_data_bundle_storage.cameras,
+            mesh_render_data_bundle_storage: render_data_bundle_storage
+                .mesh_render_data_bundle_storage
+                .as_mut(),
         };
 
-        draw_context.collect_render_data(scene_container);
-
-        observers_collection
-            .prepare(&self.world)
-            .map(|camera_uniforms| FrameContext::new(camera_uniforms, batch_container))
+        scene_container.draw(&mut draw_context);
+        render_data_bundle_storage
     }
 
     pub fn render_frame(
         &mut self,
-        frame_context: &FrameContext,
-        observers_collection: &ObserversCollection,
+        render_data_bundle_storage: RenderDataBundleStorage,
         texture_view: &TextureView,
     ) {
-        let mut command_buffers = vec![];
+        if render_data_bundle_storage.cameras.is_empty() {
+            return;
+        }
 
-        for (index, observer) in observers_collection.cameras.iter().enumerate() {
+        let mut command_buffers = vec![];
+        let mut frame_graph = FrameGraph::default();
+        let mut frame_graph_context =
+            FrameGraphContext::new(&render_data_bundle_storage, texture_view.clone());
+
+        frame_graph_context.alloc_camera_buffer(&mut self.world);
+
+        for (index, observer) in render_data_bundle_storage.cameras.iter().enumerate() {
             if let Some(pipeline) = self
                 .render_pipeline_container
                 .get_mut(&observer.pipeline_name)
             {
-                let mut frame_graph = FrameGraph::default();
+                frame_graph_context.set_camera(index);
 
-                let frame_context = FrameGraphContext {
-                    camera: Some(index),
-                    frame_context,
-                    texture_view: texture_view.clone(),
-                };
-
-                pipeline.run(&mut frame_graph, &mut self.world, &frame_context);
+                pipeline.run(&mut frame_graph, &mut self.world, &frame_graph_context);
 
                 frame_graph.compile();
 
@@ -134,6 +131,8 @@ impl WorldRenderer {
 
                 frame_graph.execute(&mut context);
 
+                frame_graph.reset();
+
                 let mut camera_command_buffers = context.finish();
 
                 command_buffers.append(&mut camera_command_buffers);
@@ -144,11 +143,9 @@ impl WorldRenderer {
     }
 
     pub fn render(&mut self, scene_container: &SceneContainer, texture_view: &TextureView) {
-        let mut observers_collection = ObserversCollection::default();
+        let render_data_bundle_storage = self.prepare(scene_container);
 
-        if let Some(frame_context) = self.prepare(&mut observers_collection, scene_container) {
-            self.render_frame(&frame_context, &observers_collection, texture_view);
-        }
+        self.render_frame(render_data_bundle_storage, texture_view);
     }
 }
 

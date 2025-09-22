@@ -3,7 +3,7 @@ use fyrox_core::variable::InheritableVariable;
 
 use crate::{
     renderer::MeshInstanceData,
-    scene::{DrawContext, DynSceneNode, DynSceneObject, Node, NodeMut, NodeRef},
+    scene::{DrawContext, DynRenderObject, DynSceneNode, DynSceneObject, Node, NodeMut, NodeRef},
 };
 
 pub struct Surface {
@@ -27,10 +27,12 @@ impl DynSceneNode for Mesh {
     fn get_ref(&self) -> NodeRef {
         self.node.get_ref()
     }
+}
 
+impl DynRenderObject for Mesh {
     fn draw(&self, context: &mut DrawContext) {
         for surface in self.surfaces.iter() {
-            context.render_data_bundle_storage.push_mesh(
+            context.mesh_render_data_bundle_storage.push_mesh(
                 surface.geometry.clone_inner(),
                 surface.material.clone_inner(),
                 0,

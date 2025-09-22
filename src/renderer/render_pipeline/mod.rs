@@ -1,55 +1,14 @@
 use std::ops::{Deref, DerefMut};
 
 use draft_render::{
-    GeometryResource, MaterialResource, RenderWorld,
+    RenderWorld,
     frame_graph::{FrameGraph, TextureView},
+    render_resource::RenderBuffer,
 };
 use fxhash::FxHashMap;
 use fyrox_core::ImmutableString;
 
-use crate::renderer::{FrameContext, MeshInstanceData, RenderDataBundleStorage};
-
-#[derive(Clone)]
-pub struct Batch {
-    pub geometry: GeometryResource,
-    pub material: MaterialResource,
-    pub instance_data: MeshInstanceData,
-}
-
-impl Batch {
-    pub fn new(
-        geometry: GeometryResource,
-        material: MaterialResource,
-        instance_data: MeshInstanceData,
-    ) -> Self {
-        Self {
-            geometry,
-            material,
-            instance_data,
-        }
-    }
-}
-
-#[derive(Default)]
-pub struct BatchContainer {
-    pub batches: FxHashMap<u64, Batch>,
-}
-
-impl RenderDataBundleStorage for BatchContainer {
-    fn push_mesh(
-        &mut self,
-        _geometry: GeometryResource,
-        _material: MaterialResource,
-        _sort_index: u64,
-        _instance_data: MeshInstanceData,
-    ) {
-        todo!()
-    }
-
-    fn render_frame(&self, _render_world: &mut RenderWorld) {
-        todo!()
-    }
-}
+use crate::renderer::{CameraUniforms, RenderDataBundleStorage};
 
 pub struct RenderPipelineContainer(FxHashMap<ImmutableString, RenderPipeline>);
 
@@ -83,10 +42,52 @@ impl DerefMut for RenderPipelineContainer {
     }
 }
 
+pub struct CameraContext {
+    uniforms: CameraUniforms,
+    index: Option<usize>,
+}
+
 pub struct FrameGraphContext<'a> {
-    pub frame_context: &'a FrameContext,
-    pub camera: Option<usize>,
+    camera: Option<CameraContext>,
     pub texture_view: TextureView,
+    pub render_data_bundle_storage: &'a RenderDataBundleStorage,
+}
+
+impl<'a> FrameGraphContext<'a> {
+    pub fn new(
+        render_data_bundle_storage: &'a RenderDataBundleStorage,
+        texture_view: TextureView,
+    ) -> Self {
+        Self {
+            camera: None,
+            texture_view,
+            render_data_bundle_storage,
+        }
+    }
+
+    pub fn alloc_camera_buffer(&mut self, render_world: &mut RenderWorld) {
+        let camera_uniforms = self
+            .render_data_bundle_storage
+            .get_camera_uniforms(render_world)
+            .unwrap();
+        self.camera = Some(CameraContext {
+            uniforms: camera_uniforms,
+            index: None,
+        })
+    }
+
+    pub fn get_camera_buffer(&self) -> RenderBuffer {
+        self.camera
+            .as_ref()
+            .map(|v| v.uniforms.get_camera_buffer())
+            .unwrap()
+    }
+
+    pub fn set_camera(&mut self, index: usize) {
+        if let Some(ref mut camera) = self.camera {
+            camera.index = Some(index);
+        }
+    }
 }
 
 pub trait RenderPipelineNode: 'static {

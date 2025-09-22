@@ -8,7 +8,7 @@ use fyrox_core::{
 };
 use std::cell::Cell;
 
-use crate::scene::{DrawContext, DynSceneObject};
+use crate::scene::{DrawContext, DynRenderObject, DynSceneObject};
 
 #[derive(Default)]
 pub struct Node {
@@ -16,6 +16,10 @@ pub struct Node {
 }
 
 impl DynSceneObject for Node {}
+
+impl DynRenderObject for Node {
+    fn draw(&self, _context: &mut DrawContext) {}
+}
 
 impl DynSceneNode for Node {
     fn get_ref(&self) -> NodeRef {
@@ -53,10 +57,8 @@ pub struct NodeMut<'a> {
     pub global_transform: &'a mut Cell<Matrix4<f32>>,
 }
 
-pub trait DynSceneNode: DynSceneObject {
+pub trait DynSceneNode: DynSceneObject + DynRenderObject {
     fn get_ref(&self) -> NodeRef;
 
     fn get_mut<'a>(&'a mut self) -> NodeMut<'a>;
-
-    fn draw(&self, _context: &mut DrawContext) {}
 }

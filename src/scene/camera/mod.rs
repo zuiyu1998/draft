@@ -4,7 +4,7 @@ pub use builder::*;
 
 use crate::{
     renderer::{Observer, ObserverPosition},
-    scene::{DrawContext, DynSceneObject},
+    scene::{DrawContext, DynRenderObject, DynSceneObject},
 };
 
 use super::{DynSceneNode, Node, NodeMut, NodeRef};
@@ -171,9 +171,11 @@ impl DynSceneNode for Camera {
     fn get_mut<'a>(&'a mut self) -> NodeMut<'a> {
         self.node.get_mut()
     }
+}
 
+impl DynRenderObject for Camera {
     fn draw(&self, context: &mut DrawContext) {
-        context.observers_collection.cameras.push(Observer {
+        context.cameras.push(Observer {
             pipeline_name: self.pipeline_name.clone(),
             position: ObserverPosition::from_camera(self),
             projection: self.projection.clone_inner(),

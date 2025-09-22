@@ -1,5 +1,7 @@
 use downcast_rs::{Downcast, impl_downcast};
 
+use crate::renderer::{MeshRenderDataBundleStorage, Observer};
+
 pub trait DynSceneObject: 'static + Downcast {}
 
 pub struct SceneObject(Box<dyn DynSceneObject>);
@@ -19,3 +21,12 @@ impl SceneObject {
 }
 
 impl_downcast!(DynSceneObject);
+
+pub struct DrawContext<'a> {
+    pub mesh_render_data_bundle_storage: &'a mut dyn MeshRenderDataBundleStorage,
+    pub cameras: &'a mut Vec<Observer>,
+}
+
+pub trait DynRenderObject {
+    fn draw(&self, _context: &mut DrawContext) {}
+}

@@ -10,11 +10,11 @@ use draft_render::{
     },
 };
 
-use crate::renderer::FrameContext;
+use crate::renderer::FrameGraphContext;
 
-pub struct MaterialEffectContext<'a> {
+pub struct MaterialEffectContext<'a, 'b> {
     pub resource_bindings: &'a ResourceBindings,
-    pub frame_context: &'a FrameContext,
+    pub frame_graph_context: &'a FrameGraphContext<'b>,
     pub camera_offset: u32,
     pub camera_size: NonZero<u64>,
     pub world: &'a mut RenderWorld,
@@ -49,7 +49,7 @@ fn extra_sampler(
     })
 }
 
-impl MaterialEffectContext<'_> {
+impl<'a, 'b> MaterialEffectContext<'a, 'b> {
     pub fn extra(
         &mut self,
         resource_binding_definition: &ResourceBindingDefinition,
@@ -61,7 +61,7 @@ impl MaterialEffectContext<'_> {
                 "internal/camera" => Ok(MaterialResourceHandle::Buffer(MaterialBufferHandle {
                     offset: self.camera_offset,
                     size: Some(self.camera_size),
-                    buffer: self.frame_context.camera_uniforms.get_camera_buffer(),
+                    buffer: self.frame_graph_context.get_camera_buffer(),
                 })),
                 _ => {
                     todo!()
