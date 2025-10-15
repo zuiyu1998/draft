@@ -324,7 +324,9 @@ impl State {
         let image = resource_manager.request::<Texture>("data/happy-tree.png");
         let mesh = new_mesh(&image);
         let camera = CameraBuilder::new("test".into()).build();
-        let scene_container = SceneContainer::new(camera, mesh);
+        let mut scene_container = SceneContainer::default();
+        scene_container.cameras.push(camera);
+        scene_container.meshs.push(mesh);
 
         State {
             windows,
@@ -399,7 +401,7 @@ fn new_mesh(image: &TextureResource) -> Mesh {
         .into(),
     );
 
-    let mut mesh = Mesh::default();
+    let mut mesh: Mesh = Mesh::default();
     mesh.surfaces.push(Surface {
         geometry: InheritableVariable::new_modified(GeometryResource::new_embedded(geometry)),
         material: InheritableVariable::new_modified(MaterialResource::new_embedded(material)),

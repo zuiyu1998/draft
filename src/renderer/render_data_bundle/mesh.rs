@@ -1,8 +1,10 @@
+use std::hash::Hasher;
+
 use draft_render::{
     GeometryResource, MaterialResource,
     gfx_base::{VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode},
 };
-use fxhash::FxHashMap;
+use fxhash::{FxHashMap, FxHasher};
 use fyrox_core::algebra::Matrix4;
 
 use crate::scene::Node;
@@ -20,7 +22,6 @@ pub trait MeshRenderDataBundleStorage: 'static {
 #[derive(Clone)]
 pub struct MeshInstanceData {
     pub view_projection_matrix: Matrix4<f32>,
-    pub layout: VertexBufferLayout,
 }
 
 pub fn vertex_buffer_layout() -> VertexBufferLayout {
@@ -56,7 +57,6 @@ impl MeshInstanceData {
     pub fn from_node(node: &Node) -> Self {
         MeshInstanceData {
             view_projection_matrix: node.global_transform.clone().into_inner(),
-            layout: vertex_buffer_layout(),
         }
     }
 }
@@ -65,7 +65,7 @@ impl MeshInstanceData {
 pub struct Batch {
     pub geometry: GeometryResource,
     pub material: MaterialResource,
-    pub instance_data: Vec<MaterialResource>,
+    pub instance_data: Vec<MeshInstanceData>,
 }
 
 impl Batch {
@@ -86,11 +86,20 @@ pub struct BatchContainer {
 impl MeshRenderDataBundleStorage for BatchContainer {
     fn push_mesh(
         &mut self,
-        _geometry: GeometryResource,
-        _material: MaterialResource,
+        geometry: GeometryResource,
+        material: MaterialResource,
         _sort_index: u64,
-        _instance_data: MeshInstanceData,
+        instance_data: MeshInstanceData,
     ) {
-        todo!()
+        let mut hashser = FxHasher::default();
+        hashser.write_u64(geometry.key());
+        hashser.write_u64(material.key());
+        let key = hashser.finish();
+
+        self.batches
+            .entry(key)
+            .or_insert_with(|| Batch::new(geometry, material))
+            .instance_data
+            .push(instance_data);
     }
 }
