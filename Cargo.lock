@@ -5,3 +5,7 @@ version = 4
 [[package]]
 name = "draft"
 version = "0.1.0"
+
+[[package]]
+name = "draft_app"
+version = "0.1.0"
