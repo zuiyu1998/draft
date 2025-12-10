@@ -6,4 +6,8 @@ edition = "2024"
 [workspace]
 members = [".", "./crates/*"]
 
+[workspace.dependencies]
+fyrox-resource = { git = "https://github.com/zuiyu1998/Fyrox.git" }
+frame-graph = { git = "https://github.com/zuiyu1998/frame-graph.git" }
+
 [dependencies]
