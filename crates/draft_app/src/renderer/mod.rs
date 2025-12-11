@@ -1,4 +1,4 @@
-use draft_render::{RenderDataBundle, RenderServer};
+use draft_render::{RenderDataBundle, RenderServer, RenderWindows};
 
 pub struct WorldRenderer {
     render_server: RenderServer,
@@ -7,8 +7,8 @@ pub struct WorldRenderer {
 impl WorldRenderer {
     pub fn update(&mut self) {}
 
-    fn prepare_frame<W: World>(&mut self, world: &W) -> Frame {
-        let mut frame = Frame::empty();
+    fn prepare_frame<W: World>(&mut self, world: &W, windows: RenderWindows) -> Frame {
+        let mut frame = Frame::new(windows);
 
         let mut context = RenderContext {
             render_data_bundle: &mut frame.render_data_bundle,
@@ -21,8 +21,8 @@ impl WorldRenderer {
 
     fn render_frame(&mut self, _frame: Frame) {}
 
-    pub fn render<W: World>(&mut self, world: &W) {
-        let frame = self.prepare_frame(world);
+    pub fn render<W: World>(&mut self, world: &W, windows: RenderWindows) {
+        let frame = self.prepare_frame(world, windows);
         self.render_frame(frame);
     }
 }
@@ -32,9 +32,9 @@ pub struct Frame {
 }
 
 impl Frame {
-    pub fn empty() -> Self {
+    pub fn new(windows: RenderWindows) -> Self {
         Self {
-            render_data_bundle: RenderDataBundle::empty(),
+            render_data_bundle: RenderDataBundle::new(windows),
         }
     }
 }

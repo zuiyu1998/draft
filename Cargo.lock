@@ -404,7 +404,7 @@ checksum = "aa9a19cbb55df58761df49b23516a86d432839add4af60fc256da840f66ed35b"
 [[package]]
 name = "frame-graph"
 version = "0.1.0"
-source = "git+https://github.com/zuiyu1998/frame-graph.git#062a19bf005ed1801c50e246b7fe2900b19618e2"
+source = "git+https://github.com/zuiyu1998/frame-graph.git#f2ebfce41711f2055bb1b1a39c2ce19ba07f5b33"
 dependencies = [
  "wgpu",
 ]
