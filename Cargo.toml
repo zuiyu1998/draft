@@ -4,7 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace]
-members = [".", "./crates/*", "crates/draft_window"]
+members = [
+    ".",
+    "crates/draft_render",
+    "crates/draft_app",
+    "crates/draft_internal",
+    "crates/draft_window",
+]
 
 [workspace.dependencies]
 fyrox-resource = { git = "https://github.com/zuiyu1998/Fyrox.git" }

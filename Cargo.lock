@@ -342,6 +342,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "draft_internal"
+version = "0.1.0"
+dependencies = [
+ "draft_app",
+]
+
+[[package]]
 name = "draft_render"
 version = "0.1.0"
 dependencies = [
