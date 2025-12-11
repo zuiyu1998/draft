@@ -335,6 +335,10 @@ version = "0.1.0"
 dependencies = [
  "downcast-rs",
  "draft_render",
+ "fyrox-core",
+ "log",
+ "thiserror 2.0.17",
+ "variadics_please",
 ]
 
 [[package]]
@@ -1825,6 +1829,17 @@ dependencies = [
  "js-sys",
  "serde_core",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "variadics_please"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "41b6d82be61465f97d42bd1d15bf20f3b0a3a0905018f38f9d6f6962055b0b5c"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.111",
 ]
 
 [[package]]

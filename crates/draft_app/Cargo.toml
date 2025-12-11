@@ -6,3 +6,7 @@ edition = "2024"
 [dependencies]
 draft_render = { path = "../draft_render" }
 downcast-rs = { workspace = true }
+variadics_please = { workspace = true }
+thiserror = { workspace = true }
+fyrox-core = { workspace = true }
+log = { workspace = true, default-features = false }
