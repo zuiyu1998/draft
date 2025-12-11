@@ -320,6 +320,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "downcast-rs"
+version = "2.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "117240f60069e65410b3ae1bb213295bd828f707b5bec6596a1afc8793ce0cbc"
+
+[[package]]
 name = "draft"
 version = "0.1.0"
 
@@ -327,6 +333,7 @@ version = "0.1.0"
 name = "draft_app"
 version = "0.1.0"
 dependencies = [
+ "downcast-rs",
  "draft_render",
 ]
 

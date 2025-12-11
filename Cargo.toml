@@ -10,4 +10,6 @@ members = [".", "./crates/*", "crates/draft_window"]
 fyrox-resource = { git = "https://github.com/zuiyu1998/Fyrox.git" }
 frame-graph = { git = "https://github.com/zuiyu1998/frame-graph.git" }
 
+downcast-rs = { version = "2.0"}
+
 [dependencies]
