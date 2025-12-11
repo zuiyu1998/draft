@@ -3,7 +3,7 @@ use downcast_rs::Downcast;
 
 use crate::App;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PluginsState {
     Adding,
     Ready,
@@ -19,6 +19,8 @@ pub trait Plugin: Downcast + Any + Send + Sync {
     }
 
     fn finish(&self, _app: &mut App) {}
+
+    fn cleanup(&self, _app: &mut App) {}
 
     fn name(&self) -> &str {
         core::any::type_name::<Self>()

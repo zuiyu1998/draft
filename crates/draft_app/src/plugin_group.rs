@@ -3,7 +3,7 @@ use std::{
     collections::{HashMap, hash_map::Entry},
 };
 
-use log::debug;
+use log::{debug, warn};
 
 use crate::{App, AppError, Plugin};
 
@@ -25,6 +25,49 @@ impl PluginGroupBuilder {
             plugins: Default::default(),
             order: Default::default(),
         }
+    }
+
+    fn upsert_plugin_entry_state(
+        &mut self,
+        key: TypeId,
+        plugin: PluginEntry,
+        added_at_index: usize,
+    ) {
+        if let Some(entry) = self.plugins.insert(key, plugin) {
+            if entry.enabled {
+                warn!(
+                    "You are replacing plugin '{}' that was not disabled.",
+                    entry.plugin.name()
+                );
+            }
+            if let Some(to_remove) = self
+                .order
+                .iter()
+                .enumerate()
+                .find(|(i, ty)| *i != added_at_index && **ty == key)
+                .map(|(i, _)| i)
+            {
+                self.order.remove(to_remove);
+            }
+        }
+    }
+
+    fn upsert_plugin_state<T: Plugin>(&mut self, plugin: T, added_at_index: usize) {
+        self.upsert_plugin_entry_state(
+            TypeId::of::<T>(),
+            PluginEntry {
+                plugin: Box::new(plugin),
+                enabled: true,
+            },
+            added_at_index,
+        );
+    }
+
+    pub fn add<T: Plugin>(mut self, plugin: T) -> Self {
+        let target_index = self.order.len();
+        self.order.push(TypeId::of::<T>());
+        self.upsert_plugin_state(plugin, target_index);
+        self
     }
 
     pub fn finish(mut self, app: &mut App) {

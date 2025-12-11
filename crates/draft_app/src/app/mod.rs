@@ -1,6 +1,6 @@
 use log::debug;
 
-use crate::{PlaceholderPlugin, Plugin, Plugins, PluginsState};
+use crate::{HokeyPokey, PlaceholderPlugin, Plugin, Plugins, PluginsState};
 use std::{collections::HashSet, num::NonZero};
 
 #[derive(Debug, thiserror::Error)]
@@ -17,6 +17,12 @@ pub enum AppExit {
     Error(NonZero<u8>),
 }
 
+impl AppExit {
+    pub const fn error() -> Self {
+        Self::Error(NonZero::<u8>::MIN)
+    }
+}
+
 type RunnerFn = Box<dyn FnOnce(App) -> AppExit>;
 
 pub struct App {
@@ -29,6 +35,10 @@ pub struct App {
 }
 
 impl App {
+    pub fn new() -> App {
+        App::empty()
+    }
+
     pub fn empty() -> App {
         Self {
             plugin_registry: Vec::default(),
@@ -73,11 +83,23 @@ impl App {
     }
 
     pub fn finish(&mut self) {
-        let mut hokeypokey: Box<dyn Plugin> = Box::new(crate::HokeyPokey);
+        let mut hokeypokey: Box<dyn Plugin> = Box::new(HokeyPokey);
 
         for i in 0..self.plugin_registry.len() {
             core::mem::swap(&mut self.plugin_registry[i], &mut hokeypokey);
             hokeypokey.finish(self);
+
+            core::mem::swap(&mut self.plugin_registry[i], &mut hokeypokey);
+        }
+
+        self.plugins_state = PluginsState::Finished;
+    }
+
+    pub fn cleanup(&mut self) {
+        let mut hokeypokey: Box<dyn Plugin> = Box::new(HokeyPokey);
+        for i in 0..self.plugin_registry.len() {
+            core::mem::swap(&mut self.plugin_registry[i], &mut hokeypokey);
+            hokeypokey.cleanup(self);
 
             core::mem::swap(&mut self.plugin_registry[i], &mut hokeypokey);
         }

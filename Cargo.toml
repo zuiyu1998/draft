@@ -10,6 +10,7 @@ members = [
     "crates/draft_app",
     "crates/draft_internal",
     "crates/draft_window",
+    "crates/draft_winit",
 ]
 
 [workspace.dependencies]
@@ -23,3 +24,4 @@ variadics_please = "1.1"
 thiserror = "2.0"
 
 [dependencies]
+draft_internal = { path = "./crates/draft_internal" }

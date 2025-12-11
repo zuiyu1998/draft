@@ -1,5 +1,8 @@
 use draft_app::plugin_group;
 
 plugin_group! {
-    pub struct DefaultPlugins {}
+    pub struct DefaultPlugins {
+        draft_winit:::WinitPlugin,
+
+    }
 }
