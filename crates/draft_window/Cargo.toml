@@ -1,0 +1,9 @@
+[package]
+name = "draft_window"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+raw-window-handle = { version = "0.6", features = [
+    "alloc",
+], default-features = false }

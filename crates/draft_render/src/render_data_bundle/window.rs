@@ -10,6 +10,8 @@ pub struct RenderWindow {
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub struct WindowId(usize);
 
+
+#[derive(Default)]
 pub struct RenderWindows {
     primary: Option<WindowId>,
     data: HashMap<WindowId, RenderWindow>,
