@@ -437,7 +437,6 @@ version = "0.1.0"
 dependencies = [
  "downcast-rs",
  "draft_render",
- "draft_window",
  "fyrox-core",
  "log",
  "thiserror 2.0.17",
@@ -449,6 +448,7 @@ name = "draft_internal"
 version = "0.1.0"
 dependencies = [
  "draft_app",
+ "draft_render",
  "draft_winit",
 ]
 
@@ -456,6 +456,7 @@ dependencies = [
 name = "draft_render"
 version = "0.1.0"
 dependencies = [
+ "draft_window",
  "frame-graph",
  "fyrox-resource",
 ]
@@ -464,6 +465,7 @@ dependencies = [
 name = "draft_window"
 version = "0.1.0"
 dependencies = [
+ "fyrox-core",
  "raw-window-handle",
 ]
 
@@ -472,6 +474,7 @@ name = "draft_winit"
 version = "0.1.0"
 dependencies = [
  "draft_app",
+ "draft_render",
  "draft_window",
  "log",
  "winit",

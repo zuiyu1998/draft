@@ -4,5 +4,9 @@ use winit::event_loop::ActiveEventLoop;
 pub struct WinitWindows {}
 
 impl WinitWindows {
+    pub const fn new() -> Self {
+        WinitWindows {}
+    }
+
     pub fn create_window(&mut self, _event_loop: &ActiveEventLoop, _window: &Window) {}
 }

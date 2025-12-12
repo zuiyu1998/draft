@@ -1,10 +1,5 @@
 mod app;
-mod plugin;
-mod plugin_group;
+mod executor;
 
 pub use app::*;
-pub use plugin::*;
-pub use plugin_group::*;
-
-pub mod renderer;
-
+pub use executor::*;

@@ -1,8 +1,7 @@
-use draft::{DefaultPlugins, app::App};
+use draft::{app::App, run};
 
 fn main() {
-    let mut app = App::new();
-    app.add_plugins(DefaultPlugins);
+    let app = App::new();
 
-    app.run();
+    run(app);
 }

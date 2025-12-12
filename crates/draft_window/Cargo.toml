@@ -7,3 +7,4 @@ edition = "2024"
 raw-window-handle = { version = "0.6", features = [
     "alloc",
 ], default-features = false }
+fyrox-core = { workspace = true }

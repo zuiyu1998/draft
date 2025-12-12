@@ -4,5 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+draft_window = { path = "../draft_window" }
+
 fyrox-resource = { workspace = true }
 frame-graph = { workspace = true }

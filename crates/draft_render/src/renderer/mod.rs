@@ -1,8 +1,8 @@
-use draft_render::{RenderDataBundle, RenderServer};
+use crate::{RenderDataBundle, RenderServer};
 use draft_window::Window;
 
 pub struct WorldRenderer {
-    render_server: RenderServer,
+    _render_server: RenderServer,
 }
 
 impl WorldRenderer {
@@ -12,7 +12,7 @@ impl WorldRenderer {
         let mut frame = Frame::empty();
 
         let mut context = RenderContext {
-            render_data_bundle: &mut frame.render_data_bundle,
+            _render_data_bundle: &mut frame.render_data_bundle,
         };
 
         world.prepare(&mut context);
@@ -41,7 +41,7 @@ impl Frame {
 }
 
 pub struct RenderContext<'a> {
-    render_data_bundle: &'a mut RenderDataBundle,
+    _render_data_bundle: &'a mut RenderDataBundle,
 }
 
 pub trait World {
@@ -50,24 +50,28 @@ pub trait World {
 
 pub struct InitializedGraphicsContext {
     pub renderer: WorldRenderer,
-    params: GraphicsContextParams,
+    _params: GraphicsContextParams,
 }
 
 impl InitializedGraphicsContext {
     pub fn new(renderer: WorldRenderer, params: GraphicsContextParams) -> Self {
-        Self { renderer, params }
+        Self {
+            renderer,
+            _params: params,
+        }
     }
 }
 
 #[derive(Default, Clone)]
 pub struct GraphicsContextParams {
-    window: Window
+    _window: Window,
 }
 
 pub enum GraphicsContext {
     Initialized(InitializedGraphicsContext),
     Uninitialized(GraphicsContextParams),
 }
+
 
 impl Default for GraphicsContext {
     fn default() -> Self {

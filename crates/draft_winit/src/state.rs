@@ -1,9 +1,8 @@
 use std::marker::PhantomData;
 
-use draft_app::{
-    App, AppError, AppExit, PluginsState,
-    renderer::{GraphicsContext, InitializedGraphicsContext, WorldRenderer},
-};
+use draft_app::{App, AppError, AppExit};
+use draft_render::GraphicsContext;
+
 use log::error;
 use winit::{
     application::ApplicationHandler,
@@ -22,28 +21,18 @@ pub(crate) struct WinitAppRunnerState<T: Message> {
 
 fn initialize_graphics_context(
     app: &mut App,
-    event_loop: &ActiveEventLoop,
+    _event_loop: &ActiveEventLoop,
 ) -> Result<(), AppError> {
-    if let GraphicsContext::Uninitialized(params) = &app.graphics_context {
-        // let (window, server) = params.graphics_server_constructor.0(
-        //     params,
-        //     event_loop,
-        //     params.window_attributes.clone(),
-        //     params.named_objects,
-        // )?;
+    let _params = match &app.graphics_context {
+        GraphicsContext::Uninitialized(params) => params.clone(),
+        _ => {
+            return Err(AppError::Custom(
+                "Graphics context is already initialized!".to_string(),
+            ));
+        }
+    };
 
-        // let frame_size = (window.inner_size().width, window.inner_size().height);
-
-        // let renderer = WorldRenderer::new(server, frame_size, &self.resource_manager)?;
-
-        // app.graphics_context = GraphicsContext::Initialized(InitializedGraphicsContex::);
-
-        Ok(())
-    } else {
-        Err(AppError::Custom(
-            "Graphics context is already initialized!".to_string(),
-        ))
-    }
+    Ok(())
 }
 
 impl<M: Message> ApplicationHandler<M> for WinitAppRunnerState<M> {
@@ -75,12 +64,7 @@ impl<M: Message> WinitAppRunnerState<M> {
     }
 }
 
-pub fn winit_runner<M: Message>(mut app: App, event_loop: EventLoop<M>) -> AppExit {
-    if app.plugins_state() == PluginsState::Ready {
-        app.finish();
-        app.cleanup();
-    }
-
+pub fn winit_runner<M: Message>(app: App, event_loop: EventLoop<M>) -> AppExit {
     let mut runner_state = WinitAppRunnerState::new(app);
 
     if let Err(err) = event_loop.run_app(&mut runner_state) {
