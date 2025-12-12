@@ -27,6 +27,12 @@ impl WinitWindows {
         }
     }
 
+    pub fn request_redraw(&self) {
+        for window in self.windows.values() {
+            window.request_redraw();
+        }
+    }
+
     pub fn create_window(
         &mut self,
         event_loop: &ActiveEventLoop,

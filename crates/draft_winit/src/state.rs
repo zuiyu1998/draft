@@ -24,8 +24,11 @@ pub(crate) struct WinitAppRunnerState<T: Message> {
     app: App,
     app_exit: Option<AppExit>,
     lag: f32,
-    fixed_time_step: f32,
+    desired_update_rate: f32,
     previous: Instant,
+    last_throttle_frame_number: usize,
+    throttle_threshold: f32,
+    throttle_frame_interval: usize,
     _marker: PhantomData<T>,
 }
 
@@ -97,11 +100,18 @@ impl<M: Message> ApplicationHandler<M> for WinitAppRunnerState<M> {
     }
 
     fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
+        let frame_count = self.app.frame_count;
+        let fixed_time_step = 1.0 / self.desired_update_rate;
+
         game_loop_iteration(
             &mut self.app,
-            &mut self.lag,
             &mut self.previous,
-            self.fixed_time_step,
+            &mut self.lag,
+            fixed_time_step,
+            self.throttle_threshold,
+            self.throttle_frame_interval,
+            frame_count,
+            &mut self.last_throttle_frame_number,
         );
     }
 
@@ -113,18 +123,61 @@ impl<M: Message> ApplicationHandler<M> for WinitAppRunnerState<M> {
     ) {
         match event {
             WindowEvent::RedrawRequested => {
-                println!("render");
                 self.app.render();
+                self.app.frame_count += 1;
             }
             _ => {}
         }
     }
 }
 
-fn game_loop_iteration(app: &mut App, lag: &mut f32, previous: &mut Instant, fixed_time_step: f32) {
+fn game_loop_iteration(
+    app: &mut App,
+    previous: &mut Instant,
+    lag: &mut f32,
+    fixed_time_step: f32,
+    throttle_threshold: f32,
+    throttle_frame_interval: usize,
+    frame_counter: usize,
+    last_throttle_frame_number: &mut usize,
+) {
     let elapsed = previous.elapsed();
     *previous = Instant::now();
     *lag += elapsed.as_secs_f32();
+
+    // Update rate stabilization loop.
+    while *lag >= fixed_time_step {
+        let time_step;
+        if *lag >= throttle_threshold
+            && (frame_counter - *last_throttle_frame_number >= throttle_frame_interval)
+        {
+            // Modify the delta time to let the game internals to fast-forward the
+            // logic by the current lag.
+            time_step = *lag;
+            // Reset the lag to exit early from the loop, thus preventing its
+            // potential infinite increase, that in its turn could hang up the game.
+            *lag = 0.0;
+
+            *last_throttle_frame_number = frame_counter;
+        } else {
+            time_step = fixed_time_step;
+        }
+
+        app.update(time_step, lag);
+
+        // Additional check is needed, because the `update` call above could modify
+        // the lag.
+        if *lag >= fixed_time_step {
+            *lag -= fixed_time_step;
+        } else if *lag < 0.0 {
+            // Prevent from going back in time.
+            *lag = 0.0;
+        }
+    }
+
+    WINIT_WINDOWS.with_borrow_mut(|winit_windows| {
+        winit_windows.request_redraw();
+    });
 }
 
 impl<M: Message> WinitAppRunnerState<M> {
@@ -132,10 +185,13 @@ impl<M: Message> WinitAppRunnerState<M> {
         Self {
             app,
             app_exit: None,
-            fixed_time_step: 0.0,
-            _marker: PhantomData,
+            desired_update_rate: 1.0 / DEFAULT_UPDATE_RATE,
+            throttle_threshold: 2.0 * DEFAULT_TIME_STEP,
+            throttle_frame_interval: 5,
             lag: 0.0,
             previous: Instant::now(),
+            last_throttle_frame_number: 0,
+            _marker: PhantomData,
         }
     }
 }

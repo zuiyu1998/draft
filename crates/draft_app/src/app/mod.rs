@@ -34,12 +34,12 @@ impl App {
         App::empty()
     }
 
+    pub fn update(&mut self, _dt: f32, _lag: &mut f32) {}
+
     pub fn render(&mut self) {
         if let GraphicsContext::Initialized(graphics_context) = &mut self.graphics_context {
             graphics_context.renderer.render(&EmptyWorld);
         }
-
-        self.frame_count += 1;
     }
 
     pub fn empty() -> App {
