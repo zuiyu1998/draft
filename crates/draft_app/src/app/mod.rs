@@ -1,6 +1,6 @@
 use std::num::NonZero;
 
-use draft_render::GraphicsContext;
+use draft_render::{EmptyWorld, GraphicsContext};
 use draft_window::Windows;
 
 #[derive(Debug, thiserror::Error)]
@@ -24,8 +24,9 @@ impl AppExit {
 }
 
 pub struct App {
+    pub frame_count: usize,
     pub graphics_context: GraphicsContext,
-    pub windows: Windows
+    pub windows: Windows,
 }
 
 impl App {
@@ -33,10 +34,19 @@ impl App {
         App::empty()
     }
 
+    pub fn render(&mut self) {
+        if let GraphicsContext::Initialized(graphics_context) = &mut self.graphics_context {
+            graphics_context.renderer.render(&EmptyWorld);
+        }
+
+        self.frame_count += 1;
+    }
+
     pub fn empty() -> App {
         Self {
             graphics_context: Default::default(),
-            windows: Default::default()
+            windows: Default::default(),
+            frame_count: 0,
         }
     }
 }

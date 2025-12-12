@@ -6,6 +6,12 @@ pub struct WorldRenderer {
 }
 
 impl WorldRenderer {
+    pub fn new(render_server: RenderServer) -> Self {
+        Self {
+            _render_server: render_server,
+        }
+    }
+
     pub fn update(&mut self) {}
 
     fn prepare_frame<W: World>(&mut self, world: &W) -> Frame {
@@ -48,17 +54,20 @@ pub trait World {
     fn prepare(&self, context: &mut RenderContext);
 }
 
+pub struct EmptyWorld;
+
+impl World for EmptyWorld {
+    fn prepare(&self, _context: &mut RenderContext) {}
+}
+
 pub struct InitializedGraphicsContext {
     pub renderer: WorldRenderer,
-    _params: GraphicsContextParams,
+    pub params: GraphicsContextParams,
 }
 
 impl InitializedGraphicsContext {
     pub fn new(renderer: WorldRenderer, params: GraphicsContextParams) -> Self {
-        Self {
-            renderer,
-            _params: params,
-        }
+        Self { renderer, params }
     }
 }
 
@@ -71,7 +80,6 @@ pub enum GraphicsContext {
     Initialized(InitializedGraphicsContext),
     Uninitialized(GraphicsContextParams),
 }
-
 
 impl Default for GraphicsContext {
     fn default() -> Self {
