@@ -1,8 +1,5 @@
 mod raw_handle;
+mod windows;
 
 pub use raw_handle::*;
-
-#[derive(Default, Clone)]
-pub struct Window {}
-
-pub struct Windows {}
+pub use windows::*;

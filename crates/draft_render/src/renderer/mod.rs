@@ -64,7 +64,7 @@ impl InitializedGraphicsContext {
 
 #[derive(Default, Clone)]
 pub struct GraphicsContextParams {
-    _window: Window,
+    pub window: Window,
 }
 
 pub enum GraphicsContext {

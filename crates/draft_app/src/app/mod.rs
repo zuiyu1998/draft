@@ -1,6 +1,7 @@
 use std::num::NonZero;
 
 use draft_render::GraphicsContext;
+use draft_window::Windows;
 
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
@@ -24,6 +25,7 @@ impl AppExit {
 
 pub struct App {
     pub graphics_context: GraphicsContext,
+    pub windows: Windows
 }
 
 impl App {
@@ -34,6 +36,7 @@ impl App {
     pub fn empty() -> App {
         Self {
             graphics_context: Default::default(),
+            windows: Default::default()
         }
     }
 }

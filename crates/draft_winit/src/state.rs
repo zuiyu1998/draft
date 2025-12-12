@@ -23,7 +23,7 @@ fn initialize_graphics_context(
     app: &mut App,
     _event_loop: &ActiveEventLoop,
 ) -> Result<(), AppError> {
-    let _params = match &app.graphics_context {
+    let params = match &app.graphics_context {
         GraphicsContext::Uninitialized(params) => params.clone(),
         _ => {
             return Err(AppError::Custom(
@@ -31,6 +31,8 @@ fn initialize_graphics_context(
             ));
         }
     };
+
+    let _handle = app.windows.spawn_primary(params.window.clone());
 
     Ok(())
 }
