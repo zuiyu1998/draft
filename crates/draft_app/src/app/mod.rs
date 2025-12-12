@@ -1,12 +1,16 @@
 use log::debug;
 
-use crate::{HokeyPokey, PlaceholderPlugin, Plugin, Plugins, PluginsState};
+use crate::{
+    HokeyPokey, PlaceholderPlugin, Plugin, Plugins, PluginsState, renderer::GraphicsContext,
+};
 use std::{collections::HashSet, num::NonZero};
 
 #[derive(Debug, thiserror::Error)]
-pub(crate) enum AppError {
+pub enum AppError {
     #[error("duplicate plugin {plugin_name:?}")]
     DuplicatePlugin { plugin_name: String },
+    #[error("custom error: {0}")]
+    Custom(String),
 }
 
 #[derive(Default)]
@@ -32,6 +36,8 @@ pub struct App {
     pub(crate) plugins_state: PluginsState,
 
     pub(crate) runner: RunnerFn,
+
+    pub graphics_context: GraphicsContext,
 }
 
 impl App {
@@ -46,6 +52,7 @@ impl App {
             plugin_build_depth: 0,
             plugins_state: PluginsState::Adding,
             runner: Box::new(run_once),
+            graphics_context: GraphicsContext::default(),
         }
     }
 

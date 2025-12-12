@@ -1,4 +1,5 @@
 use draft_render::{RenderDataBundle, RenderServer};
+use draft_window::Window;
 
 pub struct WorldRenderer {
     render_server: RenderServer,
@@ -45,4 +46,31 @@ pub struct RenderContext<'a> {
 
 pub trait World {
     fn prepare(&self, context: &mut RenderContext);
+}
+
+pub struct InitializedGraphicsContext {
+    pub renderer: WorldRenderer,
+    params: GraphicsContextParams,
+}
+
+impl InitializedGraphicsContext {
+    pub fn new(renderer: WorldRenderer, params: GraphicsContextParams) -> Self {
+        Self { renderer, params }
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct GraphicsContextParams {
+    window: Window
+}
+
+pub enum GraphicsContext {
+    Initialized(InitializedGraphicsContext),
+    Uninitialized(GraphicsContextParams),
+}
+
+impl Default for GraphicsContext {
+    fn default() -> Self {
+        GraphicsContext::Uninitialized(Default::default())
+    }
 }

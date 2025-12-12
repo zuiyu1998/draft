@@ -437,6 +437,7 @@ version = "0.1.0"
 dependencies = [
  "downcast-rs",
  "draft_render",
+ "draft_window",
  "fyrox-core",
  "log",
  "thiserror 2.0.17",
@@ -471,6 +472,7 @@ name = "draft_winit"
 version = "0.1.0"
 dependencies = [
  "draft_app",
+ "draft_window",
  "log",
  "winit",
 ]

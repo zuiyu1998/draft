@@ -1,4 +1,4 @@
-use alloc::sync::Arc;
+use std::sync::Arc;
 use core::{any::Any, marker::PhantomData, ops::Deref};
 
 #[derive(Debug)]

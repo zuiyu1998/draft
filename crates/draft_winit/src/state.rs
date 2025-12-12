@@ -1,10 +1,13 @@
 use std::marker::PhantomData;
 
-use draft_app::{App, AppExit, PluginsState};
+use draft_app::{
+    App, AppError, AppExit, PluginsState,
+    renderer::{GraphicsContext, InitializedGraphicsContext, WorldRenderer},
+};
 use log::error;
 use winit::{
     application::ApplicationHandler,
-    event::WindowEvent,
+    event::{StartCause, WindowEvent},
     event_loop::{ActiveEventLoop, EventLoop},
     window::WindowId,
 };
@@ -17,8 +20,41 @@ pub(crate) struct WinitAppRunnerState<T: Message> {
     _marker: PhantomData<T>,
 }
 
+fn initialize_graphics_context(
+    app: &mut App,
+    event_loop: &ActiveEventLoop,
+) -> Result<(), AppError> {
+    if let GraphicsContext::Uninitialized(params) = &app.graphics_context {
+        // let (window, server) = params.graphics_server_constructor.0(
+        //     params,
+        //     event_loop,
+        //     params.window_attributes.clone(),
+        //     params.named_objects,
+        // )?;
+
+        // let frame_size = (window.inner_size().width, window.inner_size().height);
+
+        // let renderer = WorldRenderer::new(server, frame_size, &self.resource_manager)?;
+
+        // app.graphics_context = GraphicsContext::Initialized(InitializedGraphicsContex::);
+
+        Ok(())
+    } else {
+        Err(AppError::Custom(
+            "Graphics context is already initialized!".to_string(),
+        ))
+    }
+}
+
 impl<M: Message> ApplicationHandler<M> for WinitAppRunnerState<M> {
-    fn resumed(&mut self, _event_loop: &ActiveEventLoop) {}
+    fn new_events(&mut self, _event_loop: &ActiveEventLoop, _cause: StartCause) {
+        println!("new_events");
+    }
+
+    fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+        initialize_graphics_context(&mut self.app, event_loop)
+            .expect("Unable to initialize graphics context!");
+    }
 
     fn window_event(
         &mut self,
