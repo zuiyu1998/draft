@@ -1,11 +1,44 @@
-use frame_graph::gfx_base::RenderDevice;
+use draft_window::RawHandleWrapper;
+use frame_graph::gfx_base::{RenderDevice, RenderQueue};
+use wgpu::{Instance, InstanceDescriptor, RequestAdapterOptions, wgt::DeviceDescriptor};
 
 pub struct RenderServer {
-    decice: RenderDevice,
+    pub decice: RenderDevice,
+    pub queue: RenderQueue,
 }
 
-impl RenderServer {
-    pub fn decice(&self) -> &RenderDevice {
-        &self.decice
+pub fn initialize_render_server(primary_window: RawHandleWrapper) -> RenderServer {
+    futures_lite::future::block_on(async { initialize_render_server_async(primary_window).await })
+}
+
+pub async fn initialize_render_server_async(primary_window: RawHandleWrapper) -> RenderServer {
+    let instance = Instance::new(&InstanceDescriptor::default());
+
+    // SAFETY: Plugins should be set up on the main thread.
+    let handle = unsafe { primary_window.get_handle() };
+
+    let surface = instance
+        .create_surface(handle)
+        .expect("Failed to create wgpu surface");
+
+    let request_adapter_options = RequestAdapterOptions {
+        compatible_surface: Some(&surface),
+        ..Default::default()
+    };
+
+    let adapter = instance
+        .request_adapter(&request_adapter_options)
+        .await
+        .ok()
+        .expect("Failed to create adapter");
+
+    let (device, queue) = adapter
+        .request_device(&DeviceDescriptor::default())
+        .await
+        .unwrap();
+
+    RenderServer {
+        decice: RenderDevice::new(device),
+        queue: RenderQueue::new(queue),
     }
 }

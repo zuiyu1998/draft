@@ -484,7 +484,10 @@ version = "0.1.0"
 dependencies = [
  "draft_window",
  "frame-graph",
+ "futures-lite",
+ "fyrox-core",
  "fyrox-resource",
+ "wgpu",
 ]
 
 [[package]]
@@ -529,6 +532,12 @@ dependencies = [
  "libc",
  "windows-sys 0.61.2",
 ]
+
+[[package]]
+name = "fastrand"
+version = "2.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "37909eebbb50d72f9059c3b6d82c0463f2ff062c9e95845c43a6c9c0355411be"
 
 [[package]]
 name = "find-msvc-tools"
@@ -584,7 +593,7 @@ checksum = "aa9a19cbb55df58761df49b23516a86d432839add4af60fc256da840f66ed35b"
 [[package]]
 name = "frame-graph"
 version = "0.1.0"
-source = "git+https://github.com/zuiyu1998/frame-graph.git#f2ebfce41711f2055bb1b1a39c2ce19ba07f5b33"
+source = "git+https://github.com/zuiyu1998/frame-graph.git#310f9f9c04159262671f54edd110e8a064bff630"
 dependencies = [
  "wgpu",
 ]
@@ -646,6 +655,19 @@ name = "futures-io"
 version = "0.3.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e5c1b78ca4aae1ac06c48a526a655760685149f0d465d21f37abfe57ce075c6"
+
+[[package]]
+name = "futures-lite"
+version = "2.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f78e10609fe0e0b3f4157ffab1876319b5b0db102a2c60dc4626306dc46b44ad"
+dependencies = [
+ "fastrand",
+ "futures-core",
+ "futures-io",
+ "parking",
+ "pin-project-lite",
+]
 
 [[package]]
 name = "futures-macro"
@@ -1724,6 +1746,12 @@ checksum = "7f4779c6901a562440c3786d08192c6fbda7c1c2060edd10006b05ee35d10f2d"
 dependencies = [
  "num-traits",
 ]
+
+[[package]]
+name = "parking"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f38d5652c16fde515bb1ecef450ab0f6a219d619a7274976324d5e377f7dceba"
 
 [[package]]
 name = "parking_lot"
