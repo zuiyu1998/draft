@@ -1,6 +1,8 @@
-use crate::{RenderDataBundle, RenderServer};
+use crate::{GeometryInstanceData, Material, MaterialResource, RenderDataBundle, RenderServer};
+use draft_geometry::{Circle, GeometryResource};
 use draft_window::Window;
-use fyrox_resource::manager::ResourceManager;
+use fyrox_core::uuid;
+use fyrox_resource::{manager::ResourceManager, untyped::ResourceKind};
 
 pub struct WorldRenderer {
     _render_server: RenderServer,
@@ -16,15 +18,17 @@ impl WorldRenderer {
     pub fn update(&mut self) {}
 
     fn prepare_frame<W: World>(&mut self, world: &W) -> Frame {
-        let mut frame = Frame::empty();
+        let mut render_data_bundle = RenderDataBundle::empty();
 
         let mut context = RenderContext {
-            _render_data_bundle: &mut frame.render_data_bundle,
+            render_data_bundle: &mut render_data_bundle,
         };
 
         world.prepare(&mut context);
 
-        frame
+        Frame {
+            _render_data_bundle: render_data_bundle,
+        }
     }
 
     fn render_frame(&mut self, _frame: Frame) {}
@@ -36,29 +40,61 @@ impl WorldRenderer {
 }
 
 pub struct Frame {
-    render_data_bundle: RenderDataBundle,
-}
-
-impl Frame {
-    pub fn empty() -> Self {
-        Self {
-            render_data_bundle: RenderDataBundle::empty(),
-        }
-    }
+    _render_data_bundle: RenderDataBundle,
 }
 
 pub struct RenderContext<'a> {
-    _render_data_bundle: &'a mut RenderDataBundle,
+    render_data_bundle: &'a mut RenderDataBundle,
+}
+
+impl RenderContext<'_> {
+    pub fn push(
+        &mut self,
+        geometry: GeometryResource,
+        material: MaterialResource,
+        instance: GeometryInstanceData,
+    ) {
+        self.render_data_bundle
+            .mesh
+            .push(geometry, material, instance);
+    }
 }
 
 pub trait World {
     fn prepare(&self, context: &mut RenderContext);
 }
 
-pub struct EmptyWorld;
+pub struct EmptyWorld {
+    geometry: GeometryResource,
+    material: MaterialResource,
+}
+
+impl Default for EmptyWorld {
+    fn default() -> Self {
+        let geometry = GeometryResource::new_ok(
+            uuid!("33ee0142-f345-4c0a-9aca-d1f684a3485b"),
+            ResourceKind::External,
+            Circle::default().into(),
+        );
+
+        let material = MaterialResource::new_ok(
+            uuid!("33ee0142-f345-4c0a-9aca-d1f684a34856"),
+            ResourceKind::External,
+            Material::default(),
+        );
+
+        EmptyWorld { geometry, material }
+    }
+}
 
 impl World for EmptyWorld {
-    fn prepare(&self, _context: &mut RenderContext) {}
+    fn prepare(&self, context: &mut RenderContext) {
+        context.push(
+            self.geometry.clone(),
+            self.material.clone(),
+            GeometryInstanceData {},
+        );
+    }
 }
 
 pub struct InitializedGraphicsContext {

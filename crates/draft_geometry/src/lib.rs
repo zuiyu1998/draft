@@ -8,7 +8,9 @@ use draft_graphics::VertexFormat;
 use fyrox_core::{
     ImmutableString, TypeUuidProvider, Uuid, reflect::*, sparse::AtomicIndex, uuid, visitor::*,
 };
-use fyrox_resource::ResourceData;
+use fyrox_resource::{Resource, ResourceData};
+
+pub type GeometryResource = Resource<Geometry>;
 
 #[derive(Debug, Clone, Default, Reflect, Visit)]
 pub enum PrimitiveTopology {

@@ -66,7 +66,7 @@ impl App {
 
     pub fn render(&mut self) {
         if let GraphicsContext::Initialized(graphics_context) = &mut self.graphics_context {
-            graphics_context.renderer.render(&EmptyWorld);
+            graphics_context.renderer.render(&EmptyWorld::default());
         }
     }
 }

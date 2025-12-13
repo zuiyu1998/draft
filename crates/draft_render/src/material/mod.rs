@@ -11,7 +11,7 @@ use std::{error::Error, path::Path};
 
 pub type MaterialResource = Resource<Material>;
 
-#[derive(Debug, Clone, Reflect, Visit)]
+#[derive(Debug, Clone, Reflect, Visit, Default)]
 pub struct Material {
     pub name: String,
     pub info: MaterialInfo,
@@ -53,7 +53,7 @@ impl Material {
     }
 }
 
-#[derive(Debug, Clone, Reflect, Visit)]
+#[derive(Debug, Clone, Reflect, Visit, Default)]
 pub struct MaterialInfo {
     pub effect_name: Option<String>,
     pub technique: usize,
