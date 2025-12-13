@@ -1,0 +1,10 @@
+[package]
+name = "draft_scene"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+draft_render = { path = "../draft_render" }
+draft_geometry = { path = "../draft_geometry" }
+fyrox-resource = { workspace = true }
+fyrox-core = { workspace = true }

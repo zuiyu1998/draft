@@ -6,7 +6,8 @@ use std::{
     },
 };
 
-use draft_render::{EmptyWorld, GraphicsContext, MaterialEffectLoader};
+use draft_render::{GraphicsContext, MaterialEffectLoader};
+use draft_scene::SceneContainer;
 use draft_window::Windows;
 use fyrox_core::task::TaskPool;
 use fyrox_resource::{event::ResourceEvent, io::FsResourceIo, manager::ResourceManager};
@@ -36,6 +37,7 @@ pub struct App {
     pub graphics_context: GraphicsContext,
     pub windows: Windows,
     pub resource_manager: ResourceManager,
+    pub scene_container: SceneContainer,
 
     _model_events_receiver: Receiver<ResourceEvent>,
 }
@@ -56,6 +58,7 @@ impl App {
         Self {
             graphics_context: Default::default(),
             windows: Default::default(),
+            scene_container: Default::default(),
             frame_count: 0,
             resource_manager,
             _model_events_receiver: tx,
@@ -66,7 +69,7 @@ impl App {
 
     pub fn render(&mut self) {
         if let GraphicsContext::Initialized(graphics_context) = &mut self.graphics_context {
-            graphics_context.renderer.render(&EmptyWorld::default());
+            graphics_context.renderer.render(&self.scene_container);
         }
     }
 }

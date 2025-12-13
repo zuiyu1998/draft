@@ -1,8 +1,7 @@
-use crate::{GeometryInstanceData, Material, MaterialResource, RenderDataBundle, RenderServer};
-use draft_geometry::{Circle, GeometryResource};
+use crate::{GeometryInstanceData, MaterialResource, RenderDataBundle, RenderServer};
+use draft_geometry::GeometryResource;
 use draft_window::Window;
-use fyrox_core::uuid;
-use fyrox_resource::{manager::ResourceManager, untyped::ResourceKind};
+use fyrox_resource::manager::ResourceManager;
 
 pub struct WorldRenderer {
     _render_server: RenderServer,
@@ -62,39 +61,6 @@ impl RenderContext<'_> {
 
 pub trait World {
     fn prepare(&self, context: &mut RenderContext);
-}
-
-pub struct EmptyWorld {
-    geometry: GeometryResource,
-    material: MaterialResource,
-}
-
-impl Default for EmptyWorld {
-    fn default() -> Self {
-        let geometry = GeometryResource::new_ok(
-            uuid!("33ee0142-f345-4c0a-9aca-d1f684a3485b"),
-            ResourceKind::External,
-            Circle::default().into(),
-        );
-
-        let material = MaterialResource::new_ok(
-            uuid!("33ee0142-f345-4c0a-9aca-d1f684a34856"),
-            ResourceKind::External,
-            Material::default(),
-        );
-
-        EmptyWorld { geometry, material }
-    }
-}
-
-impl World for EmptyWorld {
-    fn prepare(&self, context: &mut RenderContext) {
-        context.push(
-            self.geometry.clone(),
-            self.material.clone(),
-            GeometryInstanceData {},
-        );
-    }
 }
 
 pub struct InitializedGraphicsContext {

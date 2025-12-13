@@ -468,6 +468,7 @@ version = "0.1.0"
 dependencies = [
  "downcast-rs",
  "draft_render",
+ "draft_scene",
  "draft_window",
  "fyrox-core",
  "fyrox-resource",
@@ -517,6 +518,16 @@ dependencies = [
  "serde_pretty_yaml",
  "thiserror 2.0.17",
  "wgpu",
+]
+
+[[package]]
+name = "draft_scene"
+version = "0.1.0"
+dependencies = [
+ "draft_geometry",
+ "draft_render",
+ "fyrox-core",
+ "fyrox-resource",
 ]
 
 [[package]]
