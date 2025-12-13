@@ -1,31 +1,37 @@
-use core::{any::Any, marker::PhantomData, ops::Deref};
+use core::any::Any;
+use downcast_rs::{Downcast, impl_downcast};
 use raw_window_handle::{
     DisplayHandle, HandleError, HasDisplayHandle, HasWindowHandle, RawDisplayHandle,
     RawWindowHandle, WindowHandle,
 };
-use std::sync::Arc;
+use std::{fmt::Debug, sync::Arc};
 
-#[derive(Debug)]
-pub struct WindowWrapper<W> {
-    reference: Arc<dyn Any + Send + Sync>,
-    ty: PhantomData<W>,
+pub trait ISystemWindow:
+    Send + Sync + 'static + Debug + Downcast + HasWindowHandle + HasDisplayHandle
+{
 }
 
-impl<W: Send + Sync + 'static> WindowWrapper<W> {
-    /// Creates a `WindowWrapper` from a window.
-    pub fn new(window: W) -> WindowWrapper<W> {
+impl<T: Send + Sync + 'static + Debug + Downcast + HasWindowHandle + HasDisplayHandle> ISystemWindow
+    for T
+{
+}
+
+impl_downcast!(ISystemWindow);
+
+#[derive(Debug, Clone)]
+pub struct WindowWrapper {
+    reference: Arc<dyn ISystemWindow>,
+}
+
+impl WindowWrapper {
+    pub fn new<W: ISystemWindow>(window: W) -> WindowWrapper {
         WindowWrapper {
             reference: Arc::new(window),
-            ty: PhantomData,
         }
     }
-}
 
-impl<W: 'static> Deref for WindowWrapper<W> {
-    type Target = W;
-
-    fn deref(&self) -> &Self::Target {
-        self.reference.downcast_ref::<W>().unwrap()
+    pub fn get_system_window<W: ISystemWindow>(&self) -> &W {
+        self.reference.downcast_ref().unwrap()
     }
 }
 
@@ -49,13 +55,11 @@ pub struct RawHandleWrapper {
 
 impl RawHandleWrapper {
     /// Creates a `RawHandleWrapper` from a `WindowWrapper`.
-    pub fn new<W: HasWindowHandle + HasDisplayHandle + 'static>(
-        window: &WindowWrapper<W>,
-    ) -> Result<RawHandleWrapper, HandleError> {
+    pub fn new<W: ISystemWindow>(window: &WindowWrapper) -> Result<RawHandleWrapper, HandleError> {
         Ok(RawHandleWrapper {
             _window: window.reference.clone(),
-            window_handle: window.window_handle()?.as_raw(),
-            display_handle: window.display_handle()?.as_raw(),
+            window_handle: window.get_system_window::<W>().window_handle()?.as_raw(),
+            display_handle: window.get_system_window::<W>().display_handle()?.as_raw(),
         })
     }
 

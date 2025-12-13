@@ -1,5 +1,5 @@
 mod raw_handle;
-mod windows;
+mod manager;
 
 pub use raw_handle::*;
-pub use windows::*;
+pub use manager::*;

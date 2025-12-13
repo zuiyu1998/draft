@@ -8,21 +8,14 @@ use std::{
 
 use draft_render::{GraphicsContext, MaterialEffectLoader};
 use draft_scene::SceneContainer;
-use draft_window::Windows;
+use draft_window::SystemWindowManager;
 use fyrox_core::task::TaskPool;
 use fyrox_resource::{event::ResourceEvent, io::FsResourceIo, manager::ResourceManager};
-
-#[derive(Debug, thiserror::Error)]
-pub enum AppError {
-    #[error("custom error: {0}")]
-    Custom(String),
-}
 
 #[derive(Default)]
 pub enum AppExit {
     #[default]
     Success,
-
     Error(NonZero<u8>),
 }
 
@@ -35,7 +28,7 @@ impl AppExit {
 pub struct App {
     pub frame_count: usize,
     pub graphics_context: GraphicsContext,
-    pub windows: Windows,
+    pub system_window_manager: SystemWindowManager,
     pub resource_manager: ResourceManager,
     pub scene_container: SceneContainer,
 
@@ -57,7 +50,7 @@ impl App {
 
         Self {
             graphics_context: Default::default(),
-            windows: Default::default(),
+            system_window_manager: Default::default(),
             scene_container: Default::default(),
             frame_count: 0,
             resource_manager,

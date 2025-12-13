@@ -5,20 +5,27 @@ use draft_render::{
     GraphicsContext, InitializedGraphicsContext, WorldRenderer, initialize_render_server,
 };
 
-use draft_window::{RawHandleWrapper, Windows};
+use draft_window::{RawHandleWrapper, SystemWindowManager};
 use log::error;
+use thiserror::Error;
 use winit::{
     application::ApplicationHandler,
     event::WindowEvent,
     event_loop::{ActiveEventLoop, ControlFlow, EventLoop},
-    window::WindowId,
+    window::{Window, WindowId},
 };
 
-use crate::{Message, WINIT_WINDOWS, winit_windows::WinitWindows};
+use crate::{Message, winit_windows::create_window};
 
 pub const DEFAULT_UPDATE_RATE: f32 = 60.0;
 /// Default time step (in seconds).
 pub const DEFAULT_TIME_STEP: f32 = 1.0 / DEFAULT_UPDATE_RATE;
+
+#[derive(Debug, Error)]
+pub enum WinitError {
+    #[error("winit error: {0}")]
+    Custom(String),
+}
 
 pub(crate) struct WinitAppRunnerState<T: Message> {
     app: App,
@@ -33,11 +40,11 @@ pub(crate) struct WinitAppRunnerState<T: Message> {
 }
 
 impl<M: Message> WinitAppRunnerState<M> {
-    fn destroy_graphics_context(&mut self) -> Result<(), AppError> {
+    fn destroy_graphics_context(&mut self) -> Result<(), WinitError> {
         let graphics_context = match &self.app.graphics_context {
             GraphicsContext::Initialized(params) => params,
             _ => {
-                return Err(AppError::Custom(
+                return Err(WinitError::Custom(
                     "Graphics context is already destroyed!".to_string(),
                 ));
             }
@@ -45,11 +52,7 @@ impl<M: Message> WinitAppRunnerState<M> {
         let params = graphics_context.params.clone();
         self.app.graphics_context = GraphicsContext::Uninitialized(params);
 
-        self.app.windows = Windows::default();
-
-        WINIT_WINDOWS.with_borrow_mut(|winit_windows| {
-            *winit_windows = WinitWindows::new();
-        });
+        self.app.system_window_manager = SystemWindowManager::default();
 
         Ok(())
     }
@@ -61,27 +64,31 @@ impl<M: Message> WinitAppRunnerState<M> {
         let params = match &self.app.graphics_context {
             GraphicsContext::Uninitialized(params) => params.clone(),
             _ => {
-                return Err(AppError::Custom(
+                return Err(WinitError::Custom(
                     "Graphics context is already initialized!".to_string(),
-                ));
+                )
+                .into());
             }
         };
 
-        let handle = self.app.windows.spawn_primary(params.window.clone());
+        let handle = self
+            .app
+            .system_window_manager
+            .spawn_primary(params.window.clone());
 
-        WINIT_WINDOWS.with_borrow_mut(|winit_windows| {
-            let winit_window = winit_windows.create_window(event_loop, &params.window, handle);
+        let winit_window = create_window(event_loop, &params.window);
 
-            let wrapper = RawHandleWrapper::new(winit_window).unwrap();
+        let wrapper = RawHandleWrapper::new::<Window>(&winit_window).unwrap();
+        let render_server = initialize_render_server(wrapper);
 
-            let render_server = initialize_render_server(wrapper);
+        self.app
+            .system_window_manager
+            .initialize_system_window(handle, winit_window)?;
 
-            self.app.graphics_context =
-                GraphicsContext::Initialized(InitializedGraphicsContext::new(
-                    WorldRenderer::new(render_server, &self.app.resource_manager),
-                    params,
-                ))
-        });
+        self.app.graphics_context = GraphicsContext::Initialized(InitializedGraphicsContext::new(
+            WorldRenderer::new(render_server, &self.app.resource_manager),
+            params,
+        ));
 
         Ok(())
     }
@@ -177,9 +184,11 @@ fn game_loop_iteration(
         }
     }
 
-    WINIT_WINDOWS.with_borrow_mut(|winit_windows| {
-        winit_windows.request_redraw();
-    });
+    for system_window in app.system_window_manager.iter() {
+        if let Some(window) = system_window.get_system_window::<Window>() {
+            window.request_redraw();
+        }
+    }
 }
 
 impl<M: Message> WinitAppRunnerState<M> {

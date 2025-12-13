@@ -534,8 +534,10 @@ dependencies = [
 name = "draft_window"
 version = "0.1.0"
 dependencies = [
+ "downcast-rs",
  "fyrox-core",
  "raw-window-handle",
+ "thiserror 2.0.17",
 ]
 
 [[package]]
@@ -548,6 +550,7 @@ dependencies = [
  "draft_window",
  "fyrox-core",
  "log",
+ "thiserror 2.0.17",
  "winit",
 ]
 

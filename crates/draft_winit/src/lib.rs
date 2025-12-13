@@ -3,16 +3,8 @@ mod winit_windows;
 
 use draft_app::{App, Executor};
 use state::winit_runner;
-use std::{cell::RefCell, marker::PhantomData};
+use std::marker::PhantomData;
 use winit::{event_loop::EventLoop, platform::windows::EventLoopBuilderExtWindows};
-
-use crate::winit_windows::WinitWindows;
-
-thread_local! {
-    /// Temporary storage of WinitWindows data to replace usage of `!Send` resources. This will be replaced with proper
-    /// storage of `!Send` data after issue #17667 is complete.
-    pub static WINIT_WINDOWS: RefCell<WinitWindows> = const { RefCell::new(WinitWindows::new()) };
-}
 
 pub trait Message: Send + Sync + 'static {}
 
