@@ -6,7 +6,7 @@ use std::{
     },
 };
 
-use draft_render::{EmptyWorld, GraphicsContext};
+use draft_render::{EmptyWorld, GraphicsContext, MaterialEffectLoader};
 use draft_window::Windows;
 use fyrox_core::task::TaskPool;
 use fyrox_resource::{event::ResourceEvent, io::FsResourceIo, manager::ResourceManager};
@@ -47,6 +47,8 @@ impl App {
 
         let resource_manager = ResourceManager::new(io, task_pool.clone());
 
+        initialize_resource_manager_loaders(&resource_manager);
+
         let (rx, tx) = channel();
 
         resource_manager.state().event_broadcaster.add(rx);
@@ -67,4 +69,8 @@ impl App {
             graphics_context.renderer.render(&EmptyWorld);
         }
     }
+}
+
+pub(crate) fn initialize_resource_manager_loaders(resource_manager: &ResourceManager) {
+    resource_manager.add_loader(MaterialEffectLoader);
 }

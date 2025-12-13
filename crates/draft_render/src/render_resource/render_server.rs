@@ -1,5 +1,5 @@
+use draft_graphics::frame_graph::gfx_base::{RenderDevice, RenderQueue};
 use draft_window::RawHandleWrapper;
-use frame_graph::gfx_base::{RenderDevice, RenderQueue};
 use fyrox_core::futures::executor::block_on;
 use wgpu::{Instance, InstanceDescriptor, RequestAdapterOptions, wgt::DeviceDescriptor};
 

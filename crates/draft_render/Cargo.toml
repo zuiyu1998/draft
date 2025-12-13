@@ -5,10 +5,10 @@ edition = "2024"
 
 [dependencies]
 draft_window = { path = "../draft_window" }
+draft_graphics = { path = "../draft_graphics" }
 
 fyrox-resource = { workspace = true }
 fyrox-core = { workspace = true }
-frame-graph = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
 fxhash = { workspace = true }

@@ -11,12 +11,14 @@ members = [
     "crates/draft_internal",
     "crates/draft_window",
     "crates/draft_winit",
+    "crates/draft_geometry",
+    "crates/draft_graphics",
 ]
 
 [workspace.dependencies]
 fyrox-resource = { git = "https://github.com/zuiyu1998/Fyrox.git" }
 fyrox-core = { git = "https://github.com/zuiyu1998/Fyrox.git" }
-frame-graph = { git = "https://github.com/zuiyu1998/frame-graph.git" }
+fyrox-math = { git = "https://github.com/zuiyu1998/Fyrox.git" }
 
 log = { version = "0.4", default-features = false }
 downcast-rs = { version = "2.0" }
