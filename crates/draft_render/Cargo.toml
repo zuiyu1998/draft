@@ -9,7 +9,10 @@ draft_window = { path = "../draft_window" }
 fyrox-resource = { workspace = true }
 fyrox-core = { workspace = true }
 frame-graph = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
 
+serde_pretty_yaml = { version = "0.9" }
 wgpu = { version = "27" }
-
 futures-lite = { version = "2.6" }
+bitflags = { version = "2.10" }

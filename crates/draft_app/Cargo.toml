@@ -7,8 +7,10 @@ edition = "2024"
 draft_render = { path = "../draft_render" }
 draft_window = { path = "../draft_window" }
 
+fyrox-core = { workspace = true }
+fyrox-resource = { workspace = true }
+
 downcast-rs = { workspace = true }
 variadics_please = { workspace = true }
 thiserror = { workspace = true }
-fyrox-core = { workspace = true }
 log = { workspace = true, default-features = false }

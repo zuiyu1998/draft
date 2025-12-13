@@ -1,12 +1,15 @@
-use crate::{RenderDataBundle, RenderServer};
+use crate::{MaterialEffectLoader, RenderDataBundle, RenderServer};
 use draft_window::Window;
+use fyrox_resource::manager::ResourceManager;
 
 pub struct WorldRenderer {
     _render_server: RenderServer,
 }
 
 impl WorldRenderer {
-    pub fn new(render_server: RenderServer) -> Self {
+    pub fn new(render_server: RenderServer, resource_manager: &ResourceManager) -> Self {
+        resource_manager.add_loader(MaterialEffectLoader);
+        
         Self {
             _render_server: render_server,
         }

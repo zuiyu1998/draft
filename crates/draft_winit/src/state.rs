@@ -76,9 +76,11 @@ impl<M: Message> WinitAppRunnerState<M> {
 
             let render_server = initialize_render_server(wrapper);
 
-            self.app.graphics_context = GraphicsContext::Initialized(
-                InitializedGraphicsContext::new(WorldRenderer::new(render_server), params),
-            )
+            self.app.graphics_context =
+                GraphicsContext::Initialized(InitializedGraphicsContext::new(
+                    WorldRenderer::new(render_server, &self.app.resource_manager),
+                    params,
+                ))
         });
 
         Ok(())
