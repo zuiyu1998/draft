@@ -4,10 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+draft_graphics = { path = "../draft_graphics" }
+
 fyrox-resource = { workspace = true }
 fyrox-core = { workspace = true }
 thiserror = { workspace = true }
 serde = { workspace = true }
+tracing = { version = "0.1", default-features = false, features = ["std"] }
 
-naga = { version = "27"}
+naga = { version = "27" }
 naga_oil = "0.20.0"

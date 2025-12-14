@@ -549,12 +549,14 @@ dependencies = [
 name = "draft_shader"
 version = "0.1.0"
 dependencies = [
+ "draft_graphics",
  "fyrox-core",
  "fyrox-resource",
  "naga",
  "naga_oil",
  "serde",
  "thiserror 2.0.17",
+ "tracing",
 ]
 
 [[package]]
@@ -657,7 +659,7 @@ checksum = "aa9a19cbb55df58761df49b23516a86d432839add4af60fc256da840f66ed35b"
 [[package]]
 name = "frame-graph"
 version = "0.1.0"
-source = "git+https://github.com/zuiyu1998/frame-graph.git#310f9f9c04159262671f54edd110e8a064bff630"
+source = "git+https://github.com/zuiyu1998/frame-graph.git#5f7f5ff9d433e634bee05401347c76a29797bb65"
 dependencies = [
  "wgpu",
 ]

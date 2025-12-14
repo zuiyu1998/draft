@@ -1,3 +1,7 @@
+mod cache;
+
+pub use cache::*;
+
 use fyrox_core::{TypeUuidProvider, Uuid, io::FileError, reflect::*, uuid, visitor::*};
 use fyrox_resource::{
     Resource, ResourceData,
@@ -33,6 +37,36 @@ pub enum Source {
     Glsl(String, ShaderStage),
 }
 
+impl Source {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Source::Wgsl(s) | Source::Glsl(s, _) => s,
+        }
+    }
+}
+
+impl From<&Source> for naga_oil::compose::ShaderLanguage {
+    fn from(value: &Source) -> Self {
+        match value {
+            Source::Wgsl(_) => naga_oil::compose::ShaderLanguage::Wgsl,
+            Source::Glsl(_, _) => panic!(
+                "GLSL is not supported in this configuration; use the feature `shader_format_glsl`"
+            ),
+        }
+    }
+}
+
+impl From<&Source> for naga_oil::compose::ShaderType {
+    fn from(value: &Source) -> Self {
+        match value {
+            Source::Wgsl(_) => naga_oil::compose::ShaderType::Wgsl,
+            Source::Glsl(_, _) => panic!(
+                "GLSL is not supported in this configuration; use the feature `shader_format_glsl`"
+            ),
+        }
+    }
+}
+
 impl Default for Source {
     fn default() -> Self {
         Self::Wgsl("".to_string())
@@ -43,6 +77,15 @@ impl Default for Source {
 pub enum ShaderImport {
     AssetPath(String),
     Custom(String),
+}
+
+impl ShaderImport {
+    pub fn module_name(&self) -> String {
+        match self {
+            ShaderImport::AssetPath(s) => format!("\"{s}\""),
+            ShaderImport::Custom(s) => s.to_string(),
+        }
+    }
 }
 
 impl Default for ShaderImport {
@@ -60,16 +103,48 @@ pub enum ShaderError {
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
+pub struct ImportDefinition {
+    pub import: String,
+    pub items: Vec<String>,
+}
+
+impl ImportDefinition {
+    pub fn get_naga_import_definition(&self) -> naga_oil::compose::ImportDefinition {
+        naga_oil::compose::ImportDefinition {
+            import: self.import.clone(),
+            items: self.items.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Default)]
 pub struct Shader {
     pub path: String,
     pub source: Source,
     pub import_path: ShaderImport,
     pub imports: Vec<ShaderImport>,
+    // extra imports not specified in the source string
+    pub additional_imports: Vec<ImportDefinition>,
     // any shader defs that will be included when this module is used
     pub shader_defs: Vec<ShaderDefVal>,
 }
 
+impl<'a> From<&'a Shader> for naga_oil::compose::NagaModuleDescriptor<'a> {
+    fn from(shader: &'a Shader) -> Self {
+        naga_oil::compose::NagaModuleDescriptor {
+            source: shader.source.as_str(),
+            file_path: &shader.path,
+            shader_type: (&shader.source).into(),
+            ..Default::default()
+        }
+    }
+}
+
 impl Shader {
+    pub fn imports(&self) -> impl ExactSizeIterator<Item = &ShaderImport> {
+        self.imports.iter()
+    }
+
     fn preprocess(source: &str, path: &str) -> (ShaderImport, Vec<ShaderImport>) {
         let (import_path, imports, _) = naga_oil::compose::get_preprocessor_data(source);
 
@@ -106,6 +181,7 @@ impl Shader {
             import_path,
             source: Source::Wgsl(source),
             shader_defs: Default::default(),
+            additional_imports: Default::default(),
         }
     }
 

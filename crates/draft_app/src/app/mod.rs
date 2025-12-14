@@ -58,7 +58,9 @@ impl App {
         }
     }
 
-    pub fn update(&mut self, _dt: f32, _lag: &mut f32) {}
+    pub fn update(&mut self, _dt: f32, _lag: &mut f32) {
+        self.graphics_context.update();
+    }
 
     pub fn render(&mut self) {
         if let GraphicsContext::Initialized(graphics_context) = &mut self.graphics_context {

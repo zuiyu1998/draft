@@ -4,7 +4,7 @@ use fyrox_core::futures::executor::block_on;
 use wgpu::{Instance, InstanceDescriptor, RequestAdapterOptions, wgt::DeviceDescriptor};
 
 pub struct RenderServer {
-    pub decice: RenderDevice,
+    pub device: RenderDevice,
     pub queue: RenderQueue,
 }
 
@@ -39,7 +39,7 @@ pub async fn initialize_render_server_async(primary_window: RawHandleWrapper) ->
         .unwrap();
 
     RenderServer {
-        decice: RenderDevice::new(device),
+        device: RenderDevice::new(device),
         queue: RenderQueue::new(queue),
     }
 }
