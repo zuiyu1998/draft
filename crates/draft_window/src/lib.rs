@@ -1,5 +1,5 @@
-mod raw_handle;
 mod manager;
+mod raw_handle;
 
-pub use raw_handle::*;
 pub use manager::*;
+pub use raw_handle::*;

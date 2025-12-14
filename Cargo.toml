@@ -13,7 +13,7 @@ members = [
     "crates/draft_winit",
     "crates/draft_geometry",
     "crates/draft_graphics",
-    "crates/draft_scene",
+    "crates/draft_scene", "crates/draft_shader",
 ]
 
 [workspace.dependencies]
