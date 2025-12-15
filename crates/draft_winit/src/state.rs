@@ -211,7 +211,7 @@ pub fn winit_runner<M: Message>(app: App, event_loop: EventLoop<M>) -> AppExit {
     let mut runner_state = WinitAppRunnerState::new(app);
 
     if let Err(err) = event_loop.run_app(&mut runner_state) {
-        error!("winit event loop returned an error: {err}");
+        error!("Winit event loop returned an error: {err}");
     }
     // If everything is working correctly then the event loop only exits after it's sent an exit code.
     runner_state.app_exit.unwrap_or_else(|| {

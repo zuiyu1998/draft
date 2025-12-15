@@ -145,6 +145,10 @@ impl Shader {
         self.imports.iter()
     }
 
+    pub fn import_path(&self) -> &ShaderImport {
+        &self.import_path
+    }
+
     fn preprocess(source: &str, path: &str) -> (ShaderImport, Vec<ShaderImport>) {
         let (import_path, imports, _) = naga_oil::compose::get_preprocessor_data(source);
 

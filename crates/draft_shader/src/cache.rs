@@ -1,9 +1,12 @@
 use std::{
+    borrow::Cow,
     collections::{HashMap, HashSet, hash_map::Entry},
     sync::Arc,
 };
 
-use draft_graphics::frame_graph::gfx_base::{CachedPipelineId, GpuShaderModule, RenderDevice};
+use draft_graphics::frame_graph::gfx_base::{
+    CachedPipelineId, GpuShaderModule, RenderDevice, ShaderModuleDescriptor, ShaderSource,
+};
 use thiserror::Error;
 use tracing::debug;
 
@@ -53,6 +56,7 @@ pub struct ShaderCache {
     shaders: HashMap<ShaderId, Shader>,
     pub composer: naga_oil::compose::Composer,
     import_path_shaders: HashMap<ShaderImport, ShaderId>,
+    waiting_on_import: HashMap<ShaderImport, Vec<ShaderId>>,
 }
 
 impl ShaderCache {
@@ -64,7 +68,74 @@ impl ShaderCache {
             shaders: Default::default(),
             composer,
             import_path_shaders: Default::default(),
+            waiting_on_import: Default::default(),
         }
+    }
+
+    fn clear(&mut self, id: ShaderId) -> Vec<CachedPipelineId> {
+        let mut shaders_to_clear = vec![id];
+        let mut pipelines_to_queue = Vec::new();
+        while let Some(handle) = shaders_to_clear.pop() {
+            if let Some(data) = self.data.get_mut(&handle) {
+                data.processed_shaders.clear();
+                pipelines_to_queue.extend(data.pipelines.iter().copied());
+                shaders_to_clear.extend(data.dependents.iter().copied());
+
+                if let Some(Shader { import_path, .. }) = self.shaders.get(&handle) {
+                    self.composer
+                        .remove_composable_module(&import_path.module_name());
+                }
+            }
+        }
+
+        pipelines_to_queue
+    }
+
+    pub fn remove(&mut self, shader: &ShaderResource) -> Vec<CachedPipelineId> {
+        let id = shader.key();
+
+        let pipelines_to_queue = self.clear(id);
+        if let Some(shader) = self.shaders.remove(&id) {
+            self.import_path_shaders.remove(shader.import_path());
+        }
+
+        pipelines_to_queue
+    }
+
+    pub fn set_shader(&mut self, shader: &ShaderResource) -> Vec<CachedPipelineId> {
+        let id = shader.key();
+        let shader = shader.data_ref().clone();
+
+        let pipelines_to_queue = self.clear(id);
+        let path = shader.import_path();
+        self.import_path_shaders.insert(path.clone(), id);
+        if let Some(waiting_shaders) = self.waiting_on_import.get_mut(path) {
+            for waiting_shader in waiting_shaders.drain(..) {
+                // resolve waiting shader import
+                let data = self.data.entry(waiting_shader).or_default();
+                data.resolved_imports.insert(path.clone(), id);
+                // add waiting shader as dependent of this shader
+                let data = self.data.entry(id).or_default();
+                data.dependents.insert(waiting_shader);
+            }
+        }
+
+        for import in shader.imports() {
+            if let Some(import_id) = self.import_path_shaders.get(import).copied() {
+                // resolve import because it is currently available
+                let data = self.data.entry(id).or_default();
+                data.resolved_imports.insert(import.clone(), import_id);
+                // add this shader as a dependent of the import
+                let data = self.data.entry(import_id).or_default();
+                data.dependents.insert(id);
+            } else {
+                let waiting = self.waiting_on_import.entry(import.clone()).or_default();
+                waiting.push(id);
+            }
+        }
+
+        self.shaders.insert(id, shader);
+        pipelines_to_queue
     }
 
     fn add_import_to_composer(
@@ -168,7 +239,7 @@ impl ShaderCache {
                     "processing shader {}, with shader defs {:?}",
                     id, shader_defs
                 );
-                let shader_source = match &shader.source {
+                let naga = match &shader.source {
                     _ => {
                         for import in shader.imports() {
                             Self::add_import_to_composer(
@@ -202,21 +273,19 @@ impl ShaderCache {
                             },
                         )?;
 
-                        ShaderCacheSource::Naga(naga)
+                        naga
                     }
                 };
 
-                todo!()
+                let shader_module = render_device.create_shader_module(ShaderModuleDescriptor {
+                    label: None,
+                    source: ShaderSource::Naga(Cow::Owned(naga)),
+                });
 
-                // let shader_module = render_device.create_shader_module(&ShaderModuleDescriptor {
-                //     label: None,
-                //     source: ShaderSource::N,
-                // });
-
-                // entry.insert(Arc::new(shader_module))
+                entry.insert(Arc::new(shader_module))
             }
         };
 
-        todo!()
+        Ok(module.clone())
     }
 }
