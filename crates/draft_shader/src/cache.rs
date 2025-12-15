@@ -5,7 +5,7 @@ use std::{
 };
 
 use draft_graphics::frame_graph::gfx_base::{
-    CachedPipelineId, GpuShaderModule, RenderDevice, ShaderModuleDescriptor, ShaderSource,
+    CachedPipelineId, RenderDevice, ShaderModule, ShaderModuleDescriptor, ShaderSource,
 };
 use thiserror::Error;
 use tracing::debug;
@@ -28,7 +28,7 @@ type ShaderId = u64;
 
 struct ShaderData {
     pipelines: HashSet<CachedPipelineId>,
-    processed_shaders: HashMap<Box<[ShaderDefVal]>, Arc<GpuShaderModule>>,
+    processed_shaders: HashMap<Box<[ShaderDefVal]>, Arc<ShaderModule>>,
     resolved_imports: HashMap<ShaderImport, ShaderId>,
     dependents: HashSet<ShaderId>,
 }
@@ -208,7 +208,7 @@ impl ShaderCache {
         pipeline: CachedPipelineId,
         resource: &ShaderResource,
         shader_defs: &[ShaderDefVal],
-    ) -> Result<Arc<GpuShaderModule>, ShaderCacheError> {
+    ) -> Result<Arc<ShaderModule>, ShaderCacheError> {
         let id = resource.key();
         let shader = self
             .shaders
@@ -282,7 +282,7 @@ impl ShaderCache {
                     source: ShaderSource::Naga(Cow::Owned(naga)),
                 });
 
-                entry.insert(Arc::new(shader_module))
+                entry.insert(Arc::new(ShaderModule::new(shader_module)))
             }
         };
 

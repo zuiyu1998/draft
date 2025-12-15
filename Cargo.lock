@@ -525,6 +525,7 @@ dependencies = [
  "bitflags 2.10.0",
  "draft_geometry",
  "draft_graphics",
+ "draft_shader",
  "draft_window",
  "fxhash",
  "fyrox-core",
@@ -659,7 +660,7 @@ checksum = "aa9a19cbb55df58761df49b23516a86d432839add4af60fc256da840f66ed35b"
 [[package]]
 name = "frame-graph"
 version = "0.1.0"
-source = "git+https://github.com/zuiyu1998/frame-graph.git#f061830b4275031251302558a620195e3ac7fd64"
+source = "git+https://github.com/zuiyu1998/frame-graph.git#100fb217b3a36d2dc16e0395113fec05dc042bfc"
 dependencies = [
  "wgpu",
 ]

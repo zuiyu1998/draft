@@ -7,6 +7,7 @@ edition = "2024"
 draft_window = { path = "../draft_window" }
 draft_graphics = { path = "../draft_graphics" }
 draft_geometry = { path = "../draft_geometry" }
+draft_shader = { path = "../draft_shader" }
 
 fyrox-resource = { workspace = true }
 fyrox-core = { workspace = true }
