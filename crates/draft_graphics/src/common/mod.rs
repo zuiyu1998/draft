@@ -1,8 +1,204 @@
 use fyrox_core::{reflect::*, visitor::*};
+use serde::{Deserialize, Serialize};
 use wgpu::{
-    BufferAddress, ShaderLocation, VertexAttribute as WgpuVertexAttribute,
+    BlendComponent as WgpuBlendComponent, BlendFactor as WgpuBlendFactor,
+    BlendOperation as WgpuBlendOperation, BlendState as WgpuBlendState, BufferAddress,
+    ColorTargetState as WgpuColorTargetState, ColorWrites as WgpuColorWrites, ShaderLocation,
+    TextureFormat as WgpuTextureFormat, VertexAttribute as WgpuVertexAttribute,
     VertexFormat as WgpuVertexFormat, VertexStepMode as WgpuVertexStepMode,
 };
+
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize)]
+pub struct ColorWrites(u32);
+
+bitflags::bitflags! {
+    impl ColorWrites: u32 {
+        /// Enable red channel writes
+        const RED = 1 << 0;
+        /// Enable green channel writes
+        const GREEN = 1 << 1;
+        /// Enable blue channel writes
+        const BLUE = 1 << 2;
+        /// Enable alpha channel writes
+        const ALPHA = 1 << 3;
+        /// Enable red, green, and blue channel writes
+        const COLOR = Self::RED.bits() | Self::GREEN.bits() | Self::BLUE.bits();
+        /// Enable writes to all channels.
+        const ALL = Self::RED.bits() | Self::GREEN.bits() | Self::BLUE.bits() | Self::ALPHA.bits();
+    }
+}
+
+impl Default for ColorWrites {
+    fn default() -> Self {
+        Self::ALL
+    }
+}
+
+impl ColorWrites {
+    pub fn get_wgpu_color_writes(&self) -> WgpuColorWrites {
+        WgpuColorWrites::from_bits(self.0).unwrap()
+    }
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
+pub enum BlendOperation {
+    /// Src + Dst
+    #[default]
+    Add = 0,
+    /// Src - Dst
+    Subtract = 1,
+    /// Dst - Src
+    ReverseSubtract = 2,
+    /// min(Src, Dst)
+    Min = 3,
+    /// max(Src, Dst)
+    Max = 4,
+}
+
+impl BlendOperation {
+    pub fn get_wgpu_blend_operation(&self) -> WgpuBlendOperation {
+        match self {
+            BlendOperation::Add => WgpuBlendOperation::Add,
+            BlendOperation::Subtract => WgpuBlendOperation::Subtract,
+            BlendOperation::ReverseSubtract => WgpuBlendOperation::ReverseSubtract,
+            BlendOperation::Min => WgpuBlendOperation::Min,
+            BlendOperation::Max => WgpuBlendOperation::Max,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
+pub enum BlendFactor {
+    /// 0.0
+    #[default]
+    Zero = 0,
+    /// 1.0
+    One = 1,
+    /// S.component
+    Src = 2,
+    /// 1.0 - S.component
+    OneMinusSrc = 3,
+    /// S.alpha
+    SrcAlpha = 4,
+    /// 1.0 - S.alpha
+    OneMinusSrcAlpha = 5,
+    /// D.component
+    Dst = 6,
+    /// 1.0 - D.component
+    OneMinusDst = 7,
+    /// D.alpha
+    DstAlpha = 8,
+    /// 1.0 - D.alpha
+    OneMinusDstAlpha = 9,
+    /// min(S.alpha, 1.0 - D.alpha)
+    SrcAlphaSaturated = 10,
+    /// Constant
+    Constant = 11,
+    /// 1.0 - Constant
+    OneMinusConstant = 12,
+    /// S1.component
+    Src1 = 13,
+    /// 1.0 - S1.component
+    OneMinusSrc1 = 14,
+    /// S1.alpha
+    Src1Alpha = 15,
+    /// 1.0 - S1.alpha
+    OneMinusSrc1Alpha = 16,
+}
+
+impl BlendFactor {
+    pub fn get_wgpu_blend_factor(&self) -> WgpuBlendFactor {
+        match self {
+            BlendFactor::Zero => WgpuBlendFactor::Zero,
+            BlendFactor::One => WgpuBlendFactor::One,
+            BlendFactor::Src => WgpuBlendFactor::Src,
+            BlendFactor::OneMinusSrc => WgpuBlendFactor::OneMinusSrc,
+            BlendFactor::SrcAlpha => WgpuBlendFactor::SrcAlpha,
+            BlendFactor::OneMinusSrcAlpha => WgpuBlendFactor::OneMinusSrcAlpha,
+            BlendFactor::Dst => WgpuBlendFactor::Dst,
+            BlendFactor::OneMinusDst => WgpuBlendFactor::OneMinusDst,
+            BlendFactor::DstAlpha => WgpuBlendFactor::DstAlpha,
+            BlendFactor::OneMinusDstAlpha => WgpuBlendFactor::OneMinusDstAlpha,
+            BlendFactor::SrcAlphaSaturated => WgpuBlendFactor::SrcAlphaSaturated,
+            BlendFactor::Constant => WgpuBlendFactor::Constant,
+            BlendFactor::OneMinusConstant => WgpuBlendFactor::OneMinusConstant,
+            BlendFactor::Src1 => WgpuBlendFactor::Src1,
+            BlendFactor::OneMinusSrc1 => WgpuBlendFactor::OneMinusSrc1,
+            BlendFactor::Src1Alpha => WgpuBlendFactor::Src1Alpha,
+            BlendFactor::OneMinusSrc1Alpha => WgpuBlendFactor::OneMinusSrc1Alpha,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
+pub struct BlendComponent {
+    /// Multiplier for the source, which is produced by the fragment shader.
+    pub src_factor: BlendFactor,
+    /// Multiplier for the destination, which is stored in the target.
+    pub dst_factor: BlendFactor,
+    /// The binary operation applied to the source and destination,
+    /// multiplied by their respective factors.
+    pub operation: BlendOperation,
+}
+
+impl BlendComponent {
+    pub fn get_wgpu_blend_component(&self) -> WgpuBlendComponent {
+        WgpuBlendComponent {
+            src_factor: self.src_factor.get_wgpu_blend_factor(),
+            dst_factor: self.dst_factor.get_wgpu_blend_factor(),
+            operation: self.operation.get_wgpu_blend_operation(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
+pub struct BlendState {
+    /// Color equation.
+    pub color: BlendComponent,
+    /// Alpha equation.
+    pub alpha: BlendComponent,
+}
+
+impl BlendState {
+    pub fn get_blend_state(&self) -> WgpuBlendState {
+        WgpuBlendState {
+            color: self.color.get_wgpu_blend_component(),
+            alpha: self.alpha.get_wgpu_blend_component(),
+        }
+    }
+}
+
+//todo impl more TextureFormat
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
+pub enum TextureFormat {
+    #[default]
+    R8Unorm,
+}
+
+impl TextureFormat {
+    pub fn get_wgpu_texture_format(&self) -> WgpuTextureFormat {
+        match self {
+            TextureFormat::R8Unorm => WgpuTextureFormat::R8Unorm,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Visit, Reflect, Default)]
+pub struct ColorTargetState {
+    pub format: TextureFormat,
+    pub blend: Option<BlendState>,
+    pub write_mask: ColorWrites,
+}
+
+impl ColorTargetState {
+    pub fn get_color_target_state(&self) -> WgpuColorTargetState {
+        WgpuColorTargetState {
+            format: self.format.get_wgpu_texture_format(),
+            blend: self.blend.as_ref().map(|blend| blend.get_blend_state()),
+            write_mask: self.write_mask.get_wgpu_color_writes(),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Visit, Reflect, Default)]
 pub struct VertexAttribute {
@@ -48,13 +244,9 @@ pub struct VertexBufferLayout {
     pub attributes: Vec<VertexAttribute>,
 }
 
-/// Vertex Format for a [`VertexAttribute`] (input).
-///
-/// Corresponds to [WebGPU `GPUVertexFormat`](
-/// https://gpuweb.github.io/gpuweb/#enumdef-gpuvertexformat).
+//todo more VertexFormat
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, Visit, Reflect, Default)]
 pub enum VertexFormat {
-    /// One unsigned byte (u8). `u32` in shaders.
     #[default]
     Uint8 = 0,
     /// Two unsigned bytes (u8). `vec2<u32>` in shaders.
@@ -145,6 +337,50 @@ pub enum VertexFormat {
 
 impl VertexFormat {
     pub fn get_wgpu_vertex_format(&self) -> WgpuVertexFormat {
-        todo!()
+        match self {
+            VertexFormat::Uint8 => WgpuVertexFormat::Uint8,
+            VertexFormat::Uint8x2 => WgpuVertexFormat::Uint8x2,
+            VertexFormat::Uint8x4 => WgpuVertexFormat::Uint8x4,
+            VertexFormat::Sint8 => WgpuVertexFormat::Sint8,
+            VertexFormat::Sint8x2 => WgpuVertexFormat::Sint8x2,
+            VertexFormat::Sint8x4 => WgpuVertexFormat::Sint8x4,
+            VertexFormat::Unorm8 => WgpuVertexFormat::Unorm8,
+            VertexFormat::Unorm8x2 => WgpuVertexFormat::Unorm8x2,
+            VertexFormat::Unorm8x4 => WgpuVertexFormat::Unorm8x4,
+            VertexFormat::Snorm8 => WgpuVertexFormat::Snorm8,
+            VertexFormat::Snorm8x2 => WgpuVertexFormat::Snorm8x2,
+            VertexFormat::Snorm8x4 => WgpuVertexFormat::Snorm8x4,
+            VertexFormat::Uint16 => WgpuVertexFormat::Uint16,
+            VertexFormat::Uint16x2 => WgpuVertexFormat::Uint16x2,
+            VertexFormat::Uint16x4 => WgpuVertexFormat::Uint16x4,
+            VertexFormat::Sint16 => WgpuVertexFormat::Sint16,
+            VertexFormat::Sint16x2 => WgpuVertexFormat::Sint16x2,
+            VertexFormat::Sint16x4 => WgpuVertexFormat::Sint16x4,
+            VertexFormat::Unorm16 => WgpuVertexFormat::Unorm16,
+            VertexFormat::Unorm16x2 => WgpuVertexFormat::Unorm16x2,
+            VertexFormat::Unorm16x4 => WgpuVertexFormat::Unorm16x4,
+            VertexFormat::Snorm16 => WgpuVertexFormat::Snorm16,
+            VertexFormat::Snorm16x2 => WgpuVertexFormat::Snorm16x2,
+            VertexFormat::Snorm16x4 => WgpuVertexFormat::Snorm16x4,
+            VertexFormat::Float16 => WgpuVertexFormat::Float16,
+            VertexFormat::Float16x2 => WgpuVertexFormat::Float16x2,
+            VertexFormat::Float16x4 => WgpuVertexFormat::Float16x4,
+            VertexFormat::Float32 => WgpuVertexFormat::Float32,
+            VertexFormat::Float32x2 => WgpuVertexFormat::Float32x2,
+            VertexFormat::Float32x3 => WgpuVertexFormat::Float32x3,
+            VertexFormat::Float32x4 => WgpuVertexFormat::Float32x4,
+            VertexFormat::Uint32 => WgpuVertexFormat::Uint32,
+            VertexFormat::Uint32x2 => WgpuVertexFormat::Uint32x2,
+            VertexFormat::Uint32x3 => WgpuVertexFormat::Uint32x3,
+            VertexFormat::Uint32x4 => WgpuVertexFormat::Uint32x4,
+            VertexFormat::Sint32 => WgpuVertexFormat::Sint32,
+            VertexFormat::Sint32x2 => WgpuVertexFormat::Sint32x2,
+            VertexFormat::Sint32x3 => WgpuVertexFormat::Sint32x3,
+            VertexFormat::Sint32x4 => WgpuVertexFormat::Sint32x4,
+            VertexFormat::Float64 => WgpuVertexFormat::Float64,
+            VertexFormat::Float64x2 => WgpuVertexFormat::Float64x2,
+            VertexFormat::Float64x3 => WgpuVertexFormat::Float64x3,
+            VertexFormat::Float64x4 => WgpuVertexFormat::Float64x4,
+        }
     }
 }

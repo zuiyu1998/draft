@@ -8,6 +8,6 @@ pub use wgpu;
 pub use common::*;
 
 pub use wgpu::{
-    ColorTargetState, DepthStencilState, MultisampleState, PipelineCompilationOptions,
-    PrimitiveState, PushConstantRange,
+    DepthStencilState, MultisampleState, PipelineCompilationOptions, PrimitiveState,
+    PushConstantRange,
 };

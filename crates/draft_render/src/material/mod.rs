@@ -20,7 +20,7 @@ pub struct VertexState {
     pub shader_defs: Vec<ShaderDefVal>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Reflect, Visit, Default)]
 pub struct FragmentState {
     pub shader: ShaderResource,
     pub entry_point: Option<String>,

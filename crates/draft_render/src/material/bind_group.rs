@@ -1,7 +1,8 @@
 use std::ops::Range;
-
 use fyrox_core::{reflect::*, visitor::*};
 use serde::{Deserialize, Serialize};
+use draft_graphics::TextureFormat;
+
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default, Visit, Reflect)]
 pub struct ShaderStages(u32);
@@ -71,13 +72,6 @@ pub enum StorageTextureAccess {
     WriteOnly,
     ReadOnly,
     Atomic,
-}
-
-//todo impl more TextureFormat
-#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
-pub enum TextureFormat {
-    #[default]
-    R8Unorm,
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]

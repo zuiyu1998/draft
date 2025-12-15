@@ -14,6 +14,6 @@ fyrox-core = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
 fxhash = { workspace = true }
+bitflags = { workspace = true }
 
 serde_pretty_yaml = { version = "0.9" }
-bitflags = { version = "2.10" }

@@ -216,7 +216,14 @@ impl PipelineCache {
                         .map(|(module, entry_point, targets)| GpuFragmentState {
                             entry_point: entry_point.clone(),
                             module: module.value().clone(),
-                            targets: targets.to_vec(),
+                            targets: targets
+                                .iter()
+                                .map(|target| {
+                                    target
+                                        .as_ref()
+                                        .map(|target| target.get_color_target_state())
+                                })
+                                .collect::<Vec<_>>(),
                             // TODO: Should this be the same as the vertex compilation options?
                             compilation_options,
                         }),

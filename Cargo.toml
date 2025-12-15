@@ -29,6 +29,7 @@ thiserror = "2.0"
 bevy_platform = { version = "0.17.0" }
 serde = { version = "1.0" }
 fxhash = "0.2.1"
+bitflags = { version = "2.10" }
 
 
 [dependencies]
