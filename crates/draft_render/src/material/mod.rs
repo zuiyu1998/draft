@@ -30,6 +30,8 @@ pub struct FragmentState {
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
 pub struct PipelineState {
+    pub vertex: VertexState,
+    pub fragment: Option<FragmentState>,
     pub push_constant_ranges: Vec<PushConstantRange>,
 }
 

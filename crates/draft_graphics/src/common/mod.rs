@@ -3,10 +3,115 @@ use serde::{Deserialize, Serialize};
 use wgpu::{
     BlendComponent as WgpuBlendComponent, BlendFactor as WgpuBlendFactor,
     BlendOperation as WgpuBlendOperation, BlendState as WgpuBlendState, BufferAddress,
-    ColorTargetState as WgpuColorTargetState, ColorWrites as WgpuColorWrites, ShaderLocation,
+    ColorTargetState as WgpuColorTargetState, ColorWrites as WgpuColorWrites,
+    CompareFunction as WgpuCompareFunction, DepthStencilState as WgpuDepthStencilState,
+    ShaderLocation, StencilFaceState as WgpuStencilFaceState,
+    StencilOperation as WgpuStencilOperation, StencilState as WgpuStencilState,
     TextureFormat as WgpuTextureFormat, VertexAttribute as WgpuVertexAttribute,
     VertexFormat as WgpuVertexFormat, VertexStepMode as WgpuVertexStepMode,
 };
+
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
+pub enum StencilOperation {
+    /// Keep stencil value unchanged.
+    #[default]
+    Keep = 0,
+    /// Set stencil value to zero.
+    Zero = 1,
+    /// Replace stencil value with value provided in most recent call to
+    /// [`RenderPass::set_stencil_reference`][RPssr].
+    ///
+    /// [RPssr]: ../wgpu/struct.RenderPass.html#method.set_stencil_reference
+    Replace = 2,
+    /// Bitwise inverts stencil value.
+    Invert = 3,
+    /// Increments stencil value by one, clamping on overflow.
+    IncrementClamp = 4,
+    /// Decrements stencil value by one, clamping on underflow.
+    DecrementClamp = 5,
+    /// Increments stencil value by one, wrapping on overflow.
+    IncrementWrap = 6,
+    /// Decrements stencil value by one, wrapping on underflow.
+    DecrementWrap = 7,
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize)]
+pub struct StencilFaceState {
+    pub compare: CompareFunction,
+    pub fail_op: StencilOperation,
+    pub depth_fail_op: StencilOperation,
+    pub pass_op: StencilOperation,
+}
+
+impl Default for StencilFaceState {
+    fn default() -> Self {
+        Self {
+            compare: CompareFunction::Always,
+            fail_op: StencilOperation::Keep,
+            depth_fail_op: StencilOperation::Keep,
+            pass_op: StencilOperation::Keep,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
+pub struct StencilState {
+    pub front: StencilFaceState,
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
+pub enum CompareFunction {
+    /// Function never passes
+    Never = 1,
+    /// Function passes if new value less than existing value
+    #[default]
+    Less = 2,
+    /// Function passes if new value is equal to existing value. When using
+    /// this compare function, make sure to mark your Vertex Shader's `@builtin(position)`
+    /// output as `@invariant` to prevent artifacting.
+    Equal = 3,
+    /// Function passes if new value is less than or equal to existing value
+    LessEqual = 4,
+    /// Function passes if new value is greater than existing value
+    Greater = 5,
+    /// Function passes if new value is not equal to existing value. When using
+    /// this compare function, make sure to mark your Vertex Shader's `@builtin(position)`
+    /// output as `@invariant` to prevent artifacting.
+    NotEqual = 6,
+    /// Function passes if new value is greater than or equal to existing value
+    GreaterEqual = 7,
+    /// Function always passes
+    Always = 8,
+}
+
+impl CompareFunction {
+    pub fn get_wgpu_compare_function(&self) -> WgpuCompareFunction {
+        match self {
+            CompareFunction::Never => WgpuCompareFunction::Never,
+            CompareFunction::Less => WgpuCompareFunction::Less,
+            CompareFunction::Equal => WgpuCompareFunction::Equal,
+            CompareFunction::LessEqual => WgpuCompareFunction::LessEqual,
+            CompareFunction::Greater => WgpuCompareFunction::Greater,
+            CompareFunction::NotEqual => WgpuCompareFunction::NotEqual,
+            CompareFunction::GreaterEqual => WgpuCompareFunction::GreaterEqual,
+            CompareFunction::Always => WgpuCompareFunction::Always,
+        }
+    }
+}
+
+pub struct DepthStencilState {
+    pub format: TextureFormat,
+    pub depth_write_enabled: bool,
+    pub depth_compare: CompareFunction,
+    pub stencil: StencilState,
+    // pub bias: DepthBiasState,
+}
+
+impl DepthStencilState {
+    pub fn get_wgpu_depth_stencil_state(&self) -> DepthStencilState {
+        todo!()
+    }
+}
 
 #[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize)]
 pub struct ColorWrites(u32);
