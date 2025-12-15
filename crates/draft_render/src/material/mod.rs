@@ -1,15 +1,32 @@
 mod bind_group;
-
 mod effect;
 
 pub use bind_group::*;
 pub use effect::*;
 
+use draft_graphics::{ColorTargetState, VertexBufferLayout};
+use draft_shader::{ShaderDefVal, ShaderResource};
 use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
 use fyrox_resource::{Resource, ResourceData};
 use std::{error::Error, path::Path};
 
 pub type MaterialResource = Resource<Material>;
+
+#[derive(Debug, Clone, Reflect, Visit, Default)]
+pub struct VertexState {
+    pub shader: ShaderResource,
+    pub entry_point: Option<String>,
+    pub buffers: Vec<VertexBufferLayout>,
+    pub shader_defs: Vec<ShaderDefVal>,
+}
+
+#[derive(Debug, Clone)]
+pub struct FragmentState {
+    pub shader: ShaderResource,
+    pub entry_point: Option<String>,
+    pub targets: Vec<Option<ColorTargetState>>,
+    pub shader_defs: Vec<ShaderDefVal>,
+}
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
 pub struct PipelineState {

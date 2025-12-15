@@ -1,25 +1,12 @@
 use wgpu::{
-    BufferAddress, ColorTargetState, DepthStencilState, MultisampleState, PipelineCompilationOptions, PrimitiveState, VertexAttribute, VertexStepMode
+    ColorTargetState, DepthStencilState, MultisampleState, PipelineCompilationOptions,
+    PrimitiveState,
 };
 
-use crate::gfx_base::{GpuShaderModule, PipelineLayout};
-
-#[derive(Debug, Clone)]
-pub struct VertexBufferLayout {
-    pub array_stride: BufferAddress,
-    pub step_mode: VertexStepMode,
-    pub attributes: Vec<VertexAttribute>,
-}
-
-impl VertexBufferLayout {
-    pub fn get_wgpu_vertex_buffer_layout(&self) -> wgpu::VertexBufferLayout<'_> {
-        wgpu::VertexBufferLayout {
-            array_stride: self.array_stride,
-            step_mode: self.step_mode,
-            attributes: &self.attributes,
-        }
-    }
-}
+use crate::{
+    VertexBufferLayout,
+    gfx_base::{GpuShaderModule, PipelineLayout},
+};
 
 pub struct VertexState<'a> {
     pub module: GpuShaderModule,

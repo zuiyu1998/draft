@@ -33,7 +33,28 @@ impl RenderDevice {
             .vertex
             .buffers
             .iter()
-            .map(|layout| layout.get_wgpu_vertex_buffer_layout())
+            .map(|layout| {
+                (
+                    layout.array_stride,
+                    layout.step_mode.get_wgu_vertex_step_mode(),
+                    layout
+                        .attributes
+                        .iter()
+                        .map(|attribute| attribute.get_wgpu_vertex_attribute())
+                        .collect::<Vec<_>>(),
+                )
+            })
+            .collect::<Vec<_>>();
+
+        let buffers = buffers
+            .iter()
+            .map(
+                |(array_stride, step_mode, attributes)| wgpu::VertexBufferLayout {
+                    array_stride: *array_stride,
+                    step_mode: *step_mode,
+                    attributes: attributes,
+                },
+            )
             .collect::<Vec<_>>();
 
         let vertex = wgpu::VertexState {
