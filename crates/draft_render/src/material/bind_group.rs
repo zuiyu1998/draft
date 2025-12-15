@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use fyrox_core::{reflect::*, visitor::*};
 use serde::{Deserialize, Serialize};
 
@@ -21,6 +23,12 @@ bitflags::bitflags! {
         /// Binding is visible from the mesh shader of a mesh pipeline
         const MESH = 1 << 4;
      }
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
+pub struct PushConstantRange {
+    pub stages: ShaderStages,
+    pub range: Range<u32>,
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]

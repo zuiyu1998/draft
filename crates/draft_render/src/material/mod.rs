@@ -12,9 +12,15 @@ use std::{error::Error, path::Path};
 pub type MaterialResource = Resource<Material>;
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
+pub struct PipelineState {
+    pub push_constant_ranges: Vec<PushConstantRange>,
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Default)]
 pub struct Material {
     pub name: String,
-    pub info: MaterialInfo,
+    pub effct_info: MaterialEffctInfo,
+    pub pipeline_state: PipelineState,
 }
 
 impl TypeUuidProvider for Material {
@@ -46,17 +52,26 @@ impl ResourceData for Material {
 
 impl Material {
     pub fn new<M: IMaterial>() -> Self {
+        let info = M::material_info();
+
         Self {
             name: M::name(),
-            info: M::material_info(),
+            effct_info: info.effct_info,
+            pipeline_state: info.pipeline_state,
         }
     }
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
-pub struct MaterialInfo {
+pub struct MaterialEffctInfo {
     pub effect_name: Option<String>,
     pub technique: usize,
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Default)]
+pub struct MaterialInfo {
+    pub effct_info: MaterialEffctInfo,
+    pub pipeline_state: PipelineState,
 }
 
 pub trait IMaterial {

@@ -1,7 +1,45 @@
-use crate::MaterialResource;
+use crate::{CachedRenderPipelineId, MaterialResource, PipelineCache};
 use draft_geometry::GeometryResource;
 use fxhash::{FxHashMap, FxHasher};
-use std::{collections::hash_map::Entry, hash::Hasher};
+use std::{
+    collections::{HashMap, hash_map::Entry},
+    hash::Hasher,
+};
+
+pub struct SpecializedMeshPipeline {
+    cache: HashMap<u64, CachedRenderPipelineId>,
+}
+
+impl SpecializedMeshPipeline {
+    pub fn specialize(
+        &mut self,
+        batch: &BatchMesh,
+        _pipeline_cache: &mut PipelineCache,
+    ) -> CachedRenderPipelineId {
+        let key = BatchMesh::key(&batch.geometry, &batch.material);
+        if let Some(id) = self.cache.get(&key) {
+            return *id;
+        }
+
+        todo!()
+
+        // let id = pipeline_cache.queue_render_pipeline(RenderPipelineDescriptor {
+        //     label: None,
+        //     layout: (),
+        //     push_constant_ranges: (),
+        //     vertex: (),
+        //     fragment: (),
+        //     depth_stencil: (),
+        //     multisample: (),
+        //     primitive: (),
+        //     zero_initialize_workgroup_memory: false,
+        // });
+
+        // self.cache.insert(key, id);
+
+        // id
+    }
+}
 
 pub struct GeometryInstanceData {}
 
