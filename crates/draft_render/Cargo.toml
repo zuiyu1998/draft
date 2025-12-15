@@ -16,5 +16,4 @@ thiserror = { workspace = true }
 fxhash = { workspace = true }
 
 serde_pretty_yaml = { version = "0.9" }
-wgpu = { version = "27" }
 bitflags = { version = "2.10" }

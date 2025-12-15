@@ -1,4 +1,12 @@
-pub use frame_graph;
+pub mod frame_graph;
+pub mod gfx_base;
+
+pub use wgpu;
+
+pub use wgpu::{
+    ColorTargetState, DepthStencilState, MultisampleState, PipelineCompilationOptions,
+    PrimitiveState, PushConstantRange,
+};
 
 use fyrox_core::{reflect::*, visitor::*};
 

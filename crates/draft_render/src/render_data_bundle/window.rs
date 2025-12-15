@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use draft_graphics::frame_graph::gfx_base::{GpuSurfaceTexture, TextureView};
+use draft_graphics::gfx_base::{GpuSurfaceTexture, TextureView};
 use draft_window::Window;
 use fyrox_resource::core::pool::Handle;
 

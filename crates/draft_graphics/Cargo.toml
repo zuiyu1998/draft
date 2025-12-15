@@ -4,5 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-frame-graph = { git = "https://github.com/zuiyu1998/frame-graph.git" }
 fyrox-core = { workspace = true }
+wgpu = { version = "27", default-features = false, features = ["naga-ir"] }

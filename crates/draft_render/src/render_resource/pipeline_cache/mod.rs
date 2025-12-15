@@ -3,15 +3,15 @@ mod layout;
 pub use layout::*;
 
 use std::{collections::HashSet, mem, ops::Deref, sync::Arc};
-use wgpu::{
+
+use draft_graphics::{
     ColorTargetState, DepthStencilState, MultisampleState, PipelineCompilationOptions,
     PrimitiveState, PushConstantRange,
-};
-
-use draft_graphics::frame_graph::gfx_base::{
-    BindGroupLayout, CachedPipelineId, FragmentState as GpuFragmentState, GpuPipeline,
-    RenderDevice, RenderPipelineDescriptor as GpuRenderPipelineDescriptor, VertexBufferLayout,
-    VertexState as GpuVertexState,
+    gfx_base::{
+        BindGroupLayout, CachedPipelineId, FragmentState as GpuFragmentState, GpuPipeline,
+        RenderDevice, RenderPipelineDescriptor as GpuRenderPipelineDescriptor, VertexBufferLayout,
+        VertexState as GpuVertexState,
+    },
 };
 use draft_shader::{ShaderCache, ShaderCacheError, ShaderDefVal, ShaderResource};
 use fyrox_core::{futures::executor::block_on, parking_lot::Mutex};

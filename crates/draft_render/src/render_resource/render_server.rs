@@ -1,7 +1,9 @@
-use draft_graphics::frame_graph::gfx_base::{RenderDevice, RenderQueue};
+use draft_graphics::gfx_base::{RenderDevice, RenderQueue};
+use draft_graphics::wgpu::{
+    Instance, InstanceDescriptor, RequestAdapterOptions, wgt::DeviceDescriptor,
+};
 use draft_window::RawHandleWrapper;
 use fyrox_core::futures::executor::block_on;
-use wgpu::{Instance, InstanceDescriptor, RequestAdapterOptions, wgt::DeviceDescriptor};
 
 pub struct RenderServer {
     pub device: RenderDevice,

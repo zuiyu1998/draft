@@ -4,7 +4,7 @@ use std::{
     sync::Arc,
 };
 
-use draft_graphics::frame_graph::gfx_base::{
+use draft_graphics::gfx_base::{
     CachedPipelineId, RenderDevice, ShaderModule, ShaderModuleDescriptor, ShaderSource,
 };
 use thiserror::Error;

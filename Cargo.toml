@@ -13,7 +13,8 @@ members = [
     "crates/draft_winit",
     "crates/draft_geometry",
     "crates/draft_graphics",
-    "crates/draft_scene", "crates/draft_shader",
+    "crates/draft_scene",
+    "crates/draft_shader",
 ]
 
 [workspace.dependencies]
@@ -28,6 +29,7 @@ thiserror = "2.0"
 bevy_platform = { version = "0.17.0" }
 serde = { version = "1.0" }
 fxhash = "0.2.1"
+
 
 [dependencies]
 draft_internal = { path = "./crates/draft_internal" }

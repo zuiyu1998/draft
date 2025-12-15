@@ -1,9 +1,11 @@
 use std::{collections::HashMap, sync::Arc};
 
-use draft_graphics::frame_graph::gfx_base::{
-    BindGroupLayout, BindGroupLayoutId, PipelineLayout, PipelineLayoutDescriptor, RenderDevice,
+use draft_graphics::{
+    PushConstantRange,
+    gfx_base::{
+        BindGroupLayout, BindGroupLayoutId, PipelineLayout, PipelineLayoutDescriptor, RenderDevice,
+    },
 };
-use wgpu::PushConstantRange;
 
 pub type LayoutCacheKey = (Vec<BindGroupLayoutId>, Vec<PushConstantRange>);
 
