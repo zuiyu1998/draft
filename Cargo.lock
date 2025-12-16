@@ -482,6 +482,7 @@ name = "draft_app"
 version = "0.1.0"
 dependencies = [
  "downcast-rs",
+ "draft_material",
  "draft_render",
  "draft_scene",
  "draft_window",
@@ -497,8 +498,10 @@ name = "draft_geometry"
 version = "0.1.0"
 dependencies = [
  "draft_graphics",
+ "fxhash",
  "fyrox-core",
  "fyrox-resource",
+ "thiserror 2.0.17",
 ]
 
 [[package]]
@@ -521,19 +524,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "draft_material"
+version = "0.1.0"
+dependencies = [
+ "bitflags 2.10.0",
+ "draft_graphics",
+ "draft_shader",
+ "fyrox-core",
+ "fyrox-resource",
+ "serde",
+ "serde_pretty_yaml",
+ "thiserror 2.0.17",
+]
+
+[[package]]
 name = "draft_render"
 version = "0.1.0"
 dependencies = [
  "bitflags 2.10.0",
  "draft_geometry",
  "draft_graphics",
+ "draft_material",
  "draft_shader",
  "draft_window",
  "fxhash",
  "fyrox-core",
  "fyrox-resource",
  "serde",
- "serde_pretty_yaml",
  "thiserror 2.0.17",
  "tracing",
 ]
@@ -543,6 +560,7 @@ name = "draft_scene"
 version = "0.1.0"
 dependencies = [
  "draft_geometry",
+ "draft_material",
  "draft_render",
  "fyrox-core",
  "fyrox-resource",

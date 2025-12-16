@@ -1,9 +1,10 @@
 use crate::{
-    GeometryInstanceData, MaterialResource, PipelineCache, RenderDataBundle, RenderFrameContext,
+    GeometryInstanceData, PipelineCache, RenderDataBundle, RenderFrameContext,
     RenderPipelineManager, RenderServer, SpecializedMeshPipeline, error::FrameworkError,
 };
-use draft_geometry::GeometryResource;
+use draft_geometry::{GeometryResource, GeometryVertexBufferLayouts};
 use draft_graphics::frame_graph::FrameGraph;
+use draft_material::MaterialResource;
 use draft_window::Window;
 use fyrox_resource::manager::ResourceManager;
 use tracing::error;
@@ -13,6 +14,7 @@ pub struct WorldRenderer {
     pipeline_cache: PipelineCache,
     specialized_mesh_pipeline: SpecializedMeshPipeline,
     render_pipeline_manager: RenderPipelineManager,
+    layouts: GeometryVertexBufferLayouts,
 }
 
 impl WorldRenderer {
@@ -22,6 +24,7 @@ impl WorldRenderer {
             _render_server: render_server,
             specialized_mesh_pipeline: Default::default(),
             render_pipeline_manager: Default::default(),
+            layouts: Default::default(),
         }
     }
 
@@ -45,6 +48,7 @@ impl WorldRenderer {
         frame.prepare(
             &mut self.specialized_mesh_pipeline,
             &mut self.pipeline_cache,
+            &mut self.layouts
         )
     }
 
@@ -80,9 +84,10 @@ impl Frame {
         &self,
         specialized_mesh_pipeline: &mut SpecializedMeshPipeline,
         pipeline_cache: &mut PipelineCache,
+        layouts: &mut GeometryVertexBufferLayouts,
     ) -> Result<RenderFrame, FrameworkError> {
         for batch in self.render_data_bundle.mesh.values() {
-            specialized_mesh_pipeline.get(batch, pipeline_cache)?;
+            specialized_mesh_pipeline.get(batch, pipeline_cache, layouts)?;
         }
 
         Ok(RenderFrame {})

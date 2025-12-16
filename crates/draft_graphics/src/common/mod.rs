@@ -16,7 +16,6 @@ use wgpu::{
 };
 
 #[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
-
 pub enum PolygonMode {
     /// Polygons are filled
     #[default]
@@ -546,7 +545,7 @@ impl ColorTargetState {
     }
 }
 
-#[derive(Debug, Clone, Visit, Reflect, Default)]
+#[derive(Debug, Clone, Visit, Reflect, Default, Hash, PartialEq, Eq)]
 pub struct VertexAttribute {
     pub format: VertexFormat,
     /// Byte offset of the start of the input
@@ -565,7 +564,7 @@ impl VertexAttribute {
     }
 }
 
-#[derive(Debug, Clone, Visit, Reflect, Default)]
+#[derive(Debug, Clone, Visit, Reflect, Default, Hash, PartialEq, Eq, Copy)]
 pub enum VertexStepMode {
     /// Vertex data is advanced every vertex.
     #[default]
@@ -583,7 +582,7 @@ impl VertexStepMode {
     }
 }
 
-#[derive(Debug, Clone, Visit, Reflect, Default)]
+#[derive(Debug, Clone, Visit, Reflect, Default, Hash, PartialEq, Eq)]
 pub struct VertexBufferLayout {
     pub array_stride: BufferAddress,
     pub step_mode: VertexStepMode,
@@ -682,6 +681,48 @@ pub enum VertexFormat {
 }
 
 impl VertexFormat {
+    /// Returns the byte size of the format.
+    #[must_use]
+    pub const fn size(&self) -> u64 {
+        match self {
+            Self::Uint8 | Self::Sint8 | Self::Unorm8 | Self::Snorm8 => 1,
+            Self::Uint8x2
+            | Self::Sint8x2
+            | Self::Unorm8x2
+            | Self::Snorm8x2
+            | Self::Uint16
+            | Self::Sint16
+            | Self::Unorm16
+            | Self::Snorm16
+            | Self::Float16 => 2,
+            Self::Uint8x4
+            | Self::Sint8x4
+            | Self::Unorm8x4
+            | Self::Snorm8x4
+            | Self::Uint16x2
+            | Self::Sint16x2
+            | Self::Unorm16x2
+            | Self::Snorm16x2
+            | Self::Float16x2
+            | Self::Float32
+            | Self::Uint32
+            | Self::Sint32 => 4,
+            Self::Uint16x4
+            | Self::Sint16x4
+            | Self::Unorm16x4
+            | Self::Snorm16x4
+            | Self::Float16x4
+            | Self::Float32x2
+            | Self::Uint32x2
+            | Self::Sint32x2
+            | Self::Float64 => 8,
+            Self::Float32x3 | Self::Uint32x3 | Self::Sint32x3 => 12,
+            Self::Float32x4 | Self::Uint32x4 | Self::Sint32x4 | Self::Float64x2 => 16,
+            Self::Float64x3 => 24,
+            Self::Float64x4 => 32,
+        }
+    }
+
     pub fn get_wgpu_vertex_format(&self) -> WgpuVertexFormat {
         match self {
             VertexFormat::Uint8 => WgpuVertexFormat::Uint8,

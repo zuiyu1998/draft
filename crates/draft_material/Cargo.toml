@@ -1,12 +1,15 @@
 [package]
-name = "draft_geometry"
+name = "draft_material"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 draft_graphics = { path = "../draft_graphics" }
+draft_shader = { path = "../draft_shader" }
 
 fyrox-core = { workspace = true }
 fyrox-resource = { workspace = true }
+bitflags = { workspace = true }
+serde = { workspace = true }
+serde_pretty_yaml = { version = "0.9" }
 thiserror = { workspace = true }
-fxhash = { workspace = true }

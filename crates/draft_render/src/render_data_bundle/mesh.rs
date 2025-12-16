@@ -1,8 +1,10 @@
 use crate::{
-    CachedRenderPipelineId, MaterialResource, PipelineCache, PipelineState,
-    RenderPipelineDescriptor, error::FrameworkError,
+    CachedRenderPipelineId, PipelineCache, RenderPipelineDescriptor, error::FrameworkError,
+    render_resource::VertexState,
 };
-use draft_geometry::GeometryResource;
+use draft_material::{MaterialResource, PipelineState};
+
+use draft_geometry::{GeometryResource, GeometryVertexBufferLayouts};
 use fxhash::{FxHashMap, FxHasher};
 use std::{
     collections::{HashMap, hash_map::Entry},
@@ -20,6 +22,7 @@ impl SpecializedMeshPipeline {
         &mut self,
         batch: &BatchMesh,
         pipeline_cache: &mut PipelineCache,
+        layouts: &mut GeometryVertexBufferLayouts,
     ) -> Result<CachedRenderPipelineId, FrameworkError> {
         let key = BatchMesh::key(&batch.geometry, &batch.material);
         if let Some(id) = self.cache.get(&key) {
@@ -35,7 +38,7 @@ impl SpecializedMeshPipeline {
 
         let pipeline_state = batch.material.data_ref().pipeline_state.clone();
 
-        let id = self.specialize(pipeline_state, pipeline_cache)?;
+        let id = self.specialize(pipeline_state, pipeline_cache, layouts)?;
 
         self.cache.insert(key, id);
 
@@ -46,13 +49,19 @@ impl SpecializedMeshPipeline {
         &mut self,
         pipeline_state: PipelineState,
         pipeline_cache: &mut PipelineCache,
+        layouts: &mut GeometryVertexBufferLayouts,
     ) -> Result<CachedRenderPipelineId, FrameworkError> {
         //todo
         let id = pipeline_cache.queue_render_pipeline(RenderPipelineDescriptor {
             label: None,
             layout: vec![],
             push_constant_ranges: vec![],
-            vertex: pipeline_state.vertex,
+            vertex: VertexState {
+                shader: pipeline_state.vertex.shader,
+                entry_point: pipeline_state.vertex.entry_point,
+                shader_defs: pipeline_state.vertex.shader_defs,
+                buffers: vec![],
+            },
             fragment: pipeline_state.fragment,
             depth_stencil: pipeline_state.depth_stencil,
             multisample: pipeline_state.multisample,

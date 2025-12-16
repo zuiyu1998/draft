@@ -6,7 +6,8 @@ use std::{
     },
 };
 
-use draft_render::{GraphicsContext, MaterialEffectLoader};
+use draft_material::MaterialEffectLoader;
+use draft_render::GraphicsContext;
 use draft_scene::SceneContainer;
 use draft_window::SystemWindowManager;
 use fyrox_core::task::TaskPool;
@@ -64,8 +65,6 @@ impl App {
 
     pub fn render(&mut self) {
         self.graphics_context.render(&self.scene_container);
-
-       
     }
 }
 

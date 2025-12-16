@@ -6,18 +6,26 @@ use std::{collections::HashSet, mem, ops::Deref, sync::Arc};
 
 use draft_graphics::{
     DepthStencilState, MultisampleState, PipelineCompilationOptions, PrimitiveState,
-    PushConstantRange,
+    PushConstantRange, VertexBufferLayout,
     gfx_base::{
         BindGroupLayout, CachedPipelineId, FragmentState as GpuFragmentState, GpuPipeline,
         RenderDevice, RenderPipelineDescriptor as GpuRenderPipelineDescriptor,
         VertexState as GpuVertexState,
     },
 };
-use draft_shader::{ShaderCache, ShaderCacheError};
+use draft_shader::{ShaderCache, ShaderCacheError, ShaderDefVal, ShaderResource};
 use fyrox_core::{futures::executor::block_on, parking_lot::Mutex};
 use thiserror::Error;
 
-use crate::{FragmentState, VertexState};
+use draft_material::FragmentState;
+
+#[derive(Debug, Clone)]
+pub struct VertexState {
+    pub shader: ShaderResource,
+    pub entry_point: Option<String>,
+    pub buffers: Vec<VertexBufferLayout>,
+    pub shader_defs: Vec<ShaderDefVal>,
+}
 
 #[derive(Debug, Clone)]
 pub struct RenderPipelineDescriptor {

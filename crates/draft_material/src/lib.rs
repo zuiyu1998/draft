@@ -4,9 +4,7 @@ mod effect;
 pub use bind_group::*;
 pub use effect::*;
 
-use draft_graphics::{
-    ColorTargetState, DepthStencilState, MultisampleState, PrimitiveState, VertexBufferLayout,
-};
+use draft_graphics::{ColorTargetState, DepthStencilState, MultisampleState, PrimitiveState};
 use draft_shader::{ShaderDefVal, ShaderResource};
 use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
 use fyrox_resource::{Resource, ResourceData};
@@ -18,7 +16,6 @@ pub type MaterialResource = Resource<Material>;
 pub struct VertexState {
     pub shader: ShaderResource,
     pub entry_point: Option<String>,
-    pub buffers: Vec<VertexBufferLayout>,
     pub shader_defs: Vec<ShaderDefVal>,
 }
 

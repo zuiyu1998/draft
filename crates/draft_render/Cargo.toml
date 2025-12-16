@@ -7,6 +7,7 @@ edition = "2024"
 draft_window = { path = "../draft_window" }
 draft_graphics = { path = "../draft_graphics" }
 draft_geometry = { path = "../draft_geometry" }
+draft_material = { path = "../draft_material" }
 draft_shader = { path = "../draft_shader" }
 
 fyrox-resource = { workspace = true }
@@ -17,4 +18,3 @@ fxhash = { workspace = true }
 bitflags = { workspace = true }
 tracing = { workspace = true }
 
-serde_pretty_yaml = { version = "0.9" }

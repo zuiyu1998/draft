@@ -1,5 +1,6 @@
 use draft_geometry::{Circle, GeometryResource};
-use draft_render::{GeometryInstanceData, Material, MaterialResource, RenderContext, World};
+use draft_material::{Material, MaterialResource};
+use draft_render::{GeometryInstanceData, RenderContext, World};
 use fyrox_core::uuid;
 use fyrox_resource::untyped::ResourceKind;
 
