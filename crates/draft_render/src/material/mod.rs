@@ -4,7 +4,9 @@ mod effect;
 pub use bind_group::*;
 pub use effect::*;
 
-use draft_graphics::{ColorTargetState, VertexBufferLayout};
+use draft_graphics::{
+    ColorTargetState, DepthStencilState, MultisampleState, PrimitiveState, VertexBufferLayout,
+};
 use draft_shader::{ShaderDefVal, ShaderResource};
 use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
 use fyrox_resource::{Resource, ResourceData};
@@ -33,6 +35,9 @@ pub struct PipelineState {
     pub vertex: VertexState,
     pub fragment: Option<FragmentState>,
     pub push_constant_ranges: Vec<PushConstantRange>,
+    pub depth_stencil: Option<DepthStencilState>,
+    pub multisample: MultisampleState,
+    pub primitive: PrimitiveState,
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]

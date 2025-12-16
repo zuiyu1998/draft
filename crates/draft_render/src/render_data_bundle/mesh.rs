@@ -1,4 +1,7 @@
-use crate::{CachedRenderPipelineId, MaterialResource, PipelineCache};
+use crate::{
+    CachedRenderPipelineId, MaterialResource, PipelineCache, PipelineState,
+    RenderPipelineDescriptor, error::FrameworkError,
+};
 use draft_geometry::GeometryResource;
 use fxhash::{FxHashMap, FxHasher};
 use std::{
@@ -11,33 +14,51 @@ pub struct SpecializedMeshPipeline {
 }
 
 impl SpecializedMeshPipeline {
-    pub fn specialize(
+    pub fn get(
         &mut self,
         batch: &BatchMesh,
-        _pipeline_cache: &mut PipelineCache,
-    ) -> CachedRenderPipelineId {
+        pipeline_cache: &mut PipelineCache,
+    ) -> Result<CachedRenderPipelineId, FrameworkError> {
         let key = BatchMesh::key(&batch.geometry, &batch.material);
         if let Some(id) = self.cache.get(&key) {
-            return *id;
+            return Ok(*id);
+        }
+        if !batch.material.is_ok() {
+            return Err(FrameworkError::MaterialInvalid(batch.material.summary()));
         }
 
-        todo!()
+        if !batch.geometry.is_ok() {
+            return Err(FrameworkError::GeometryInvalid(batch.material.summary()));
+        }
 
-        // let id = pipeline_cache.queue_render_pipeline(RenderPipelineDescriptor {
-        //     label: None,
-        //     layout: (),
-        //     push_constant_ranges: (),
-        //     vertex: (),
-        //     fragment: (),
-        //     depth_stencil: (),
-        //     multisample: (),
-        //     primitive: (),
-        //     zero_initialize_workgroup_memory: false,
-        // });
+        let pipeline_state = batch.material.data_ref().pipeline_state.clone();
 
-        // self.cache.insert(key, id);
+        let id = self.specialize(pipeline_state, pipeline_cache)?;
 
-        // id
+        self.cache.insert(key, id);
+
+        Ok(id)
+    }
+
+    pub fn specialize(
+        &mut self,
+        pipeline_state: PipelineState,
+        pipeline_cache: &mut PipelineCache,
+    ) -> Result<CachedRenderPipelineId, FrameworkError> {
+        //todo
+        let id = pipeline_cache.queue_render_pipeline(RenderPipelineDescriptor {
+            label: None,
+            layout: vec![],
+            push_constant_ranges: vec![],
+            vertex: pipeline_state.vertex,
+            fragment: pipeline_state.fragment,
+            depth_stencil: pipeline_state.depth_stencil,
+            multisample: pipeline_state.multisample,
+            primitive: pipeline_state.primitive,
+            zero_initialize_workgroup_memory: false,
+        });
+
+        Ok(id)
     }
 }
 

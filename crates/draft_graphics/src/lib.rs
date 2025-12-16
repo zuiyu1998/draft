@@ -7,7 +7,4 @@ pub use wgpu;
 
 pub use common::*;
 
-pub use wgpu::{
-    DepthStencilState, MultisampleState, PipelineCompilationOptions, PrimitiveState,
-    PushConstantRange,
-};
+pub use wgpu::{PipelineCompilationOptions, PushConstantRange};

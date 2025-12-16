@@ -4,23 +4,13 @@ pub use primitives::*;
 
 use std::{collections::BTreeMap, error::Error, path::Path, sync::Arc};
 
-use draft_graphics::VertexFormat;
+use draft_graphics::{PrimitiveTopology, VertexFormat};
 use fyrox_core::{
     ImmutableString, TypeUuidProvider, Uuid, reflect::*, sparse::AtomicIndex, uuid, visitor::*,
 };
 use fyrox_resource::{Resource, ResourceData};
 
 pub type GeometryResource = Resource<Geometry>;
-
-#[derive(Debug, Clone, Default, Reflect, Visit)]
-pub enum PrimitiveTopology {
-    PointList = 0,
-    LineList = 1,
-    LineStrip = 2,
-    #[default]
-    TriangleList = 3,
-    TriangleStrip = 4,
-}
 
 #[derive(Debug, Clone, Default, Reflect)]
 pub struct MeshVertexAttribute {

@@ -200,10 +200,13 @@ impl PipelineCache {
 
                 let descriptor = GpuRenderPipelineDescriptor {
                     label: descriptor.label,
-                    depth_stencil: descriptor.depth_stencil.clone(),
+                    depth_stencil: descriptor
+                        .depth_stencil
+                        .as_ref()
+                        .map(|depth_stencil| depth_stencil.get_wgpu_depth_stencil_state()),
                     layout: layout.as_ref().map(|layout| layout.deref().clone()),
-                    multisample: descriptor.multisample,
-                    primitive: descriptor.primitive,
+                    multisample: descriptor.multisample.get_wgpu_multisample_state(),
+                    primitive: descriptor.primitive.get_wgpu_primitive_state(),
                     vertex: GpuVertexState {
                         buffers: descriptor.vertex.buffers.clone(),
                         entry_point: descriptor.vertex.entry_point.clone(),

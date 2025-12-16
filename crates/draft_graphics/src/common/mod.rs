@@ -4,12 +4,206 @@ use wgpu::{
     BlendComponent as WgpuBlendComponent, BlendFactor as WgpuBlendFactor,
     BlendOperation as WgpuBlendOperation, BlendState as WgpuBlendState, BufferAddress,
     ColorTargetState as WgpuColorTargetState, ColorWrites as WgpuColorWrites,
-    CompareFunction as WgpuCompareFunction, DepthStencilState as WgpuDepthStencilState,
-    ShaderLocation, StencilFaceState as WgpuStencilFaceState,
-    StencilOperation as WgpuStencilOperation, StencilState as WgpuStencilState,
-    TextureFormat as WgpuTextureFormat, VertexAttribute as WgpuVertexAttribute,
-    VertexFormat as WgpuVertexFormat, VertexStepMode as WgpuVertexStepMode,
+    CompareFunction as WgpuCompareFunction, DepthBiasState as WgpuDepthBiasState,
+    DepthStencilState as WgpuDepthStencilState, Face as WgpuFace, FrontFace as WgpuFrontFace,
+    IndexFormat as WgpuIndexFormat, MultisampleState as WgpuMultisampleState,
+    PolygonMode as WgpuPolygonMode, PrimitiveState as WgpuPrimitiveState,
+    PrimitiveTopology as WgpuPrimitiveTopology, ShaderLocation,
+    StencilFaceState as WgpuStencilFaceState, StencilOperation as WgpuStencilOperation,
+    StencilState as WgpuStencilState, TextureFormat as WgpuTextureFormat,
+    VertexAttribute as WgpuVertexAttribute, VertexFormat as WgpuVertexFormat,
+    VertexStepMode as WgpuVertexStepMode,
 };
+
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
+
+pub enum PolygonMode {
+    /// Polygons are filled
+    #[default]
+    Fill = 0,
+    /// Polygons are drawn as line segments
+    Line = 1,
+    /// Polygons are drawn as points
+    Point = 2,
+}
+
+impl PolygonMode {
+    pub fn get_wgpu_polygon_mode(&self) -> WgpuPolygonMode {
+        match self {
+            PolygonMode::Fill => WgpuPolygonMode::Fill,
+            PolygonMode::Line => WgpuPolygonMode::Line,
+            PolygonMode::Point => WgpuPolygonMode::Point,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
+pub enum Face {
+    /// Front face
+    #[default]
+    Front = 0,
+    /// Back face
+    Back = 1,
+}
+
+impl Face {
+    pub fn get_wgpu_face(&self) -> WgpuFace {
+        match self {
+            Face::Back => WgpuFace::Back,
+            Face::Front => WgpuFace::Front,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
+pub enum FrontFace {
+    /// Triangles with vertices in counter clockwise order are considered the front face.
+    ///
+    /// This is the default with right handed coordinate spaces.
+    #[default]
+    Ccw = 0,
+    /// Triangles with vertices in clockwise order are considered the front face.
+    ///
+    /// This is the default with left handed coordinate spaces.
+    Cw = 1,
+}
+
+impl FrontFace {
+    pub fn get_wgpu_front_face(&self) -> WgpuFrontFace {
+        match self {
+            FrontFace::Ccw => WgpuFrontFace::Ccw,
+            FrontFace::Cw => WgpuFrontFace::Cw,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
+pub enum IndexFormat {
+    /// Indices are 16 bit unsigned integers.
+    Uint16 = 0,
+    /// Indices are 32 bit unsigned integers.
+    #[default]
+    Uint32 = 1,
+}
+
+impl IndexFormat {
+    pub fn get_wgpu_index_format(&self) -> WgpuIndexFormat {
+        match self {
+            IndexFormat::Uint16 => WgpuIndexFormat::Uint16,
+            IndexFormat::Uint32 => WgpuIndexFormat::Uint32,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
+pub enum PrimitiveTopology {
+    /// Vertex data is a list of points. Each vertex is a new point.
+    PointList = 0,
+    /// Vertex data is a list of lines. Each pair of vertices composes a new line.
+    ///
+    /// Vertices `0 1 2 3` create two lines `0 1` and `2 3`
+    LineList = 1,
+    /// Vertex data is a strip of lines. Each set of two adjacent vertices form a line.
+    ///
+    /// Vertices `0 1 2 3` create three lines `0 1`, `1 2`, and `2 3`.
+    LineStrip = 2,
+    /// Vertex data is a list of triangles. Each set of 3 vertices composes a new triangle.
+    ///
+    /// Vertices `0 1 2 3 4 5` create two triangles `0 1 2` and `3 4 5`
+    #[default]
+    TriangleList = 3,
+    /// Vertex data is a triangle strip. Each set of three adjacent vertices form a triangle.
+    ///
+    /// Vertices `0 1 2 3 4 5` create four triangles `0 1 2`, `2 1 3`, `2 3 4`, and `4 3 5`
+    TriangleStrip = 4,
+}
+
+impl PrimitiveTopology {
+    pub fn get_wgpu_primitive_topology(&self) -> WgpuPrimitiveTopology {
+        match self {
+            PrimitiveTopology::PointList => WgpuPrimitiveTopology::PointList,
+            PrimitiveTopology::LineList => WgpuPrimitiveTopology::LineList,
+            PrimitiveTopology::LineStrip => WgpuPrimitiveTopology::LineStrip,
+            PrimitiveTopology::TriangleList => WgpuPrimitiveTopology::TriangleList,
+            PrimitiveTopology::TriangleStrip => WgpuPrimitiveTopology::TriangleStrip,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
+pub struct PrimitiveState {
+    pub topology: PrimitiveTopology,
+    pub strip_index_format: Option<IndexFormat>,
+    pub front_face: FrontFace,
+    pub cull_mode: Option<Face>,
+    pub unclipped_depth: bool,
+    pub polygon_mode: PolygonMode,
+    pub conservative: bool,
+}
+
+impl PrimitiveState {
+    pub fn get_wgpu_primitive_state(&self) -> WgpuPrimitiveState {
+        WgpuPrimitiveState {
+            topology: self.topology.get_wgpu_primitive_topology(),
+            strip_index_format: self
+                .strip_index_format
+                .as_ref()
+                .map(|strip_index_format| strip_index_format.get_wgpu_index_format()),
+            front_face: self.front_face.get_wgpu_front_face(),
+            cull_mode: self
+                .cull_mode
+                .as_ref()
+                .map(|cull_mode| cull_mode.get_wgpu_face()),
+            unclipped_depth: self.unclipped_depth,
+            polygon_mode: self.polygon_mode.get_wgpu_polygon_mode(),
+            conservative: self.conservative,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize)]
+pub struct MultisampleState {
+    pub count: u32,
+    pub mask: u64,
+    pub alpha_to_coverage_enabled: bool,
+}
+
+impl Default for MultisampleState {
+    fn default() -> Self {
+        MultisampleState {
+            count: 1,
+            mask: !0,
+            alpha_to_coverage_enabled: false,
+        }
+    }
+}
+
+impl MultisampleState {
+    pub fn get_wgpu_multisample_state(&self) -> WgpuMultisampleState {
+        WgpuMultisampleState {
+            count: self.count,
+            mask: self.mask,
+            alpha_to_coverage_enabled: self.alpha_to_coverage_enabled,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
+pub struct DepthBiasState {
+    pub constant: i32,
+    pub slope_scale: f32,
+    pub clamp: f32,
+}
+
+impl DepthBiasState {
+    pub fn get_wgpu_depth_bias_state(&self) -> WgpuDepthBiasState {
+        WgpuDepthBiasState {
+            constant: self.constant,
+            slope_scale: self.slope_scale,
+            clamp: self.clamp,
+        }
+    }
+}
 
 #[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
 pub enum StencilOperation {
@@ -35,12 +229,38 @@ pub enum StencilOperation {
     DecrementWrap = 7,
 }
 
+impl StencilOperation {
+    pub fn get_wgpu_stencil_operation(&self) -> WgpuStencilOperation {
+        match self {
+            StencilOperation::Keep => WgpuStencilOperation::Keep,
+            StencilOperation::Zero => WgpuStencilOperation::Zero,
+            StencilOperation::Replace => WgpuStencilOperation::Replace,
+            StencilOperation::Invert => WgpuStencilOperation::Invert,
+            StencilOperation::IncrementClamp => WgpuStencilOperation::IncrementClamp,
+            StencilOperation::DecrementClamp => WgpuStencilOperation::DecrementClamp,
+            StencilOperation::IncrementWrap => WgpuStencilOperation::IncrementWrap,
+            StencilOperation::DecrementWrap => WgpuStencilOperation::DecrementWrap,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize)]
 pub struct StencilFaceState {
     pub compare: CompareFunction,
     pub fail_op: StencilOperation,
     pub depth_fail_op: StencilOperation,
     pub pass_op: StencilOperation,
+}
+
+impl StencilFaceState {
+    pub fn get_wgpu_stencil_face_state(&self) -> WgpuStencilFaceState {
+        WgpuStencilFaceState {
+            compare: self.compare.get_wgpu_compare_function(),
+            fail_op: self.fail_op.get_wgpu_stencil_operation(),
+            depth_fail_op: self.depth_fail_op.get_wgpu_stencil_operation(),
+            pass_op: self.pass_op.get_wgpu_stencil_operation(),
+        }
+    }
 }
 
 impl Default for StencilFaceState {
@@ -57,6 +277,20 @@ impl Default for StencilFaceState {
 #[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
 pub struct StencilState {
     pub front: StencilFaceState,
+    pub back: StencilFaceState,
+    pub read_mask: u32,
+    pub write_mask: u32,
+}
+
+impl StencilState {
+    pub fn get_wgpu_stencil_state(&self) -> WgpuStencilState {
+        WgpuStencilState {
+            front: self.front.get_wgpu_stencil_face_state(),
+            back: self.front.get_wgpu_stencil_face_state(),
+            read_mask: self.read_mask,
+            write_mask: self.write_mask,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
@@ -99,17 +333,24 @@ impl CompareFunction {
     }
 }
 
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
 pub struct DepthStencilState {
     pub format: TextureFormat,
     pub depth_write_enabled: bool,
     pub depth_compare: CompareFunction,
     pub stencil: StencilState,
-    // pub bias: DepthBiasState,
+    pub bias: DepthBiasState,
 }
 
 impl DepthStencilState {
-    pub fn get_wgpu_depth_stencil_state(&self) -> DepthStencilState {
-        todo!()
+    pub fn get_wgpu_depth_stencil_state(&self) -> WgpuDepthStencilState {
+        WgpuDepthStencilState {
+            format: self.format.get_wgpu_texture_format(),
+            depth_write_enabled: self.depth_write_enabled,
+            depth_compare: self.depth_compare.get_wgpu_compare_function(),
+            stencil: self.stencil.get_wgpu_stencil_state(),
+            bias: self.bias.get_wgpu_depth_bias_state(),
+        }
     }
 }
 
