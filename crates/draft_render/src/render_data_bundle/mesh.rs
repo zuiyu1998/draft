@@ -7,8 +7,10 @@ use fxhash::{FxHashMap, FxHasher};
 use std::{
     collections::{HashMap, hash_map::Entry},
     hash::Hasher,
+    ops::Deref,
 };
 
+#[derive(Default)]
 pub struct SpecializedMeshPipeline {
     cache: HashMap<u64, CachedRenderPipelineId>,
 }
@@ -82,6 +84,14 @@ impl BatchMesh {
 
 #[derive(Default)]
 pub struct BatchMeshContainer(FxHashMap<u64, BatchMesh>);
+
+impl Deref for BatchMeshContainer {
+    type Target = FxHashMap<u64, BatchMesh>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl BatchMeshContainer {
     pub fn push(

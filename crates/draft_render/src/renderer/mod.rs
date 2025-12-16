@@ -1,13 +1,18 @@
 use crate::{
-    GeometryInstanceData, MaterialResource, PipelineCache, RenderDataBundle, RenderServer,
+    GeometryInstanceData, MaterialResource, PipelineCache, RenderDataBundle, RenderFrameContext,
+    RenderPipelineManager, RenderServer, SpecializedMeshPipeline, error::FrameworkError,
 };
 use draft_geometry::GeometryResource;
+use draft_graphics::frame_graph::FrameGraph;
 use draft_window::Window;
 use fyrox_resource::manager::ResourceManager;
+use tracing::error;
 
 pub struct WorldRenderer {
     _render_server: RenderServer,
     pipeline_cache: PipelineCache,
+    specialized_mesh_pipeline: SpecializedMeshPipeline,
+    render_pipeline_manager: RenderPipelineManager,
 }
 
 impl WorldRenderer {
@@ -15,6 +20,8 @@ impl WorldRenderer {
         Self {
             pipeline_cache: PipelineCache::new(render_server.device.clone()),
             _render_server: render_server,
+            specialized_mesh_pipeline: Default::default(),
+            render_pipeline_manager: Default::default(),
         }
     }
 
@@ -22,7 +29,7 @@ impl WorldRenderer {
         self.pipeline_cache.process_queue();
     }
 
-    fn prepare_frame<W: World>(&mut self, world: &W) -> RenderFrame {
+    fn prepare_frame<W: World>(&mut self, world: &W) -> Result<RenderFrame, FrameworkError> {
         let mut render_data_bundle = RenderDataBundle::empty();
 
         let mut context = RenderContext {
@@ -32,27 +39,53 @@ impl WorldRenderer {
         world.prepare(&mut context);
 
         let frame = Frame {
-            _render_data_bundle: render_data_bundle,
+            render_data_bundle: render_data_bundle,
         };
 
-        frame.prepare()
+        frame.prepare(
+            &mut self.specialized_mesh_pipeline,
+            &mut self.pipeline_cache,
+        )
     }
 
-    fn render_frame(&mut self, _frame: RenderFrame) {}
+    fn render_frame(&mut self, frame: RenderFrame) {
+        self.render_pipeline_manager.update();
+
+        let mut frame_graph = FrameGraph::default();
+        let context = RenderFrameContext { frame: &frame };
+
+        if let Some(pipeline) = self.render_pipeline_manager.pipeline_mut("2d") {
+            pipeline.run(&mut frame_graph, &context);
+        }
+    }
 
     pub fn render<W: World>(&mut self, world: &W) {
-        let frame = self.prepare_frame(world);
-        self.render_frame(frame);
+        match self.prepare_frame(world) {
+            Ok(frame) => {
+                self.render_frame(frame);
+            }
+            Err(e) => {
+                error!("Render error: {}", e);
+            }
+        };
     }
 }
 
 pub struct Frame {
-    _render_data_bundle: RenderDataBundle,
+    render_data_bundle: RenderDataBundle,
 }
 
 impl Frame {
-    pub fn prepare(&self) -> RenderFrame {
-        RenderFrame {}
+    pub fn prepare(
+        &self,
+        specialized_mesh_pipeline: &mut SpecializedMeshPipeline,
+        pipeline_cache: &mut PipelineCache,
+    ) -> Result<RenderFrame, FrameworkError> {
+        for batch in self.render_data_bundle.mesh.values() {
+            specialized_mesh_pipeline.get(batch, pipeline_cache)?;
+        }
+
+        Ok(RenderFrame {})
     }
 }
 
@@ -104,6 +137,12 @@ impl GraphicsContext {
     pub fn update(&mut self) {
         if let GraphicsContext::Initialized(graphics_context) = self {
             graphics_context.renderer.update();
+        }
+    }
+
+    pub fn render<W: World>(&mut self, world: &W) {
+        if let GraphicsContext::Initialized(graphics_context) = self {
+            graphics_context.renderer.render(world);
         }
     }
 }

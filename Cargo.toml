@@ -22,7 +22,7 @@ fyrox-resource = { git = "https://github.com/zuiyu1998/Fyrox.git" }
 fyrox-core = { git = "https://github.com/zuiyu1998/Fyrox.git" }
 fyrox-math = { git = "https://github.com/zuiyu1998/Fyrox.git" }
 
-log = { version = "0.4", default-features = false }
+tracing = { version = "0.1", features = ["log"] }
 downcast-rs = { version = "2.0" }
 variadics_please = "1.1"
 thiserror = "2.0"

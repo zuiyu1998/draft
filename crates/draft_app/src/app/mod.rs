@@ -63,9 +63,9 @@ impl App {
     }
 
     pub fn render(&mut self) {
-        if let GraphicsContext::Initialized(graphics_context) = &mut self.graphics_context {
-            graphics_context.renderer.render(&self.scene_container);
-        }
+        self.graphics_context.render(&self.scene_container);
+
+       
     }
 }
 

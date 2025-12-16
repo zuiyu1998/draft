@@ -6,7 +6,7 @@ use draft_render::{
 };
 
 use draft_window::{RawHandleWrapper, SystemWindowManager};
-use log::error;
+use tracing::error;
 use thiserror::Error;
 use winit::{
     application::ApplicationHandler,

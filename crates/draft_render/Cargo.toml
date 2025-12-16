@@ -15,5 +15,6 @@ serde = { workspace = true }
 thiserror = { workspace = true }
 fxhash = { workspace = true }
 bitflags = { workspace = true }
+tracing = { workspace = true }
 
 serde_pretty_yaml = { version = "0.9" }

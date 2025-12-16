@@ -14,4 +14,4 @@ fyrox-resource = { workspace = true }
 downcast-rs = { workspace = true }
 variadics_please = { workspace = true }
 thiserror = { workspace = true }
-log = { workspace = true, default-features = false }
+tracing = { workspace = true }

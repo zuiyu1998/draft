@@ -8,4 +8,10 @@ fyrox-core = { workspace = true }
 serde = { workspace = true }
 bitflags = { workspace = true }
 
-wgpu = { version = "27", default-features = false, features = ["naga-ir"] }
+wgpu = { version = "27", default-features = false, features = [
+    "naga-ir",
+    "wgsl",
+    "dx12",
+    "metal",
+    "vulkan",
+] }
