@@ -4,13 +4,13 @@ mod vertex;
 pub use primitives::*;
 pub use vertex::*;
 
-use std::{collections::BTreeMap, error::Error, path::Path, sync::Arc};
-
+use bytemuck::cast_slice;
 use draft_graphics::{
     PrimitiveTopology, VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode,
 };
-use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, sparse::AtomicIndex, uuid, visitor::*};
+use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*, warn};
 use fyrox_resource::{Resource, ResourceData};
+use std::{collections::BTreeMap, error::Error, path::Path};
 
 pub type GeometryResource = Resource<Geometry>;
 
@@ -33,9 +33,6 @@ pub struct Geometry {
     #[reflect(hidden)]
     attributes: BTreeMap<GeometryVertexAttributeId, MeshAttributeData>,
     indices: Option<Indices>,
-
-    #[reflect(hidden)]
-    pub cache_index: Arc<AtomicIndex>,
 }
 
 impl Geometry {
@@ -44,7 +41,79 @@ impl Geometry {
             primitive_topology,
             attributes: Default::default(),
             indices: None,
-            cache_index: Default::default(),
+        }
+    }
+
+    pub fn count_vertices(&self) -> usize {
+        let mut vertex_count: Option<usize> = None;
+        for (attribute_id, attribute_data) in &self.attributes {
+            let attribute_len = attribute_data.values.len();
+            if let Some(previous_vertex_count) = vertex_count {
+                if previous_vertex_count != attribute_len {
+                    let name = self
+                        .attributes
+                        .get(attribute_id)
+                        .map(|data| data.attribute.name.to_string())
+                        .unwrap_or_else(|| format!("{attribute_id:?}"));
+
+                    warn!(
+                        "{name} has a different vertex count ({attribute_len}) than other attributes ({previous_vertex_count}) in this mesh, \
+                        all attributes will be truncated to match the smallest."
+                    );
+                    vertex_count = Some(core::cmp::min(previous_vertex_count, attribute_len));
+                }
+            } else {
+                vertex_count = Some(attribute_len);
+            }
+        }
+
+        vertex_count.unwrap_or(0)
+    }
+
+    pub fn get_vertex_size(&self) -> u64 {
+        self.attributes
+            .values()
+            .map(|data| data.attribute.format.size())
+            .sum()
+    }
+
+    pub fn get_vertex_buffer_size(&self) -> usize {
+        let vertex_size = self.get_vertex_size() as usize;
+        let vertex_count = self.count_vertices();
+        vertex_count * vertex_size
+    }
+
+    pub fn get_index_buffer_bytes(&self) -> Option<&[u8]> {
+        self.indices.as_ref().map(|indices| match &indices {
+            Indices::U16(indices) => cast_slice(&indices[..]),
+            Indices::U32(indices) => cast_slice(&indices[..]),
+        })
+    }
+
+    pub fn create_packed_vertex_buffer_data(&self) -> Vec<u8> {
+        let mut attributes_interleaved_buffer = vec![0; self.get_vertex_buffer_size()];
+        self.write_packed_vertex_buffer_data(&mut attributes_interleaved_buffer);
+        attributes_interleaved_buffer
+    }
+
+    pub fn write_packed_vertex_buffer_data(&self, slice: &mut [u8]) {
+        let vertex_size = self.get_vertex_size() as usize;
+        let vertex_count = self.count_vertices();
+        // bundle into interleaved buffers
+        let mut attribute_offset = 0;
+        for attribute_data in self.attributes.values() {
+            let attribute_size = attribute_data.attribute.format.size() as usize;
+            let attributes_bytes = attribute_data.values.get_bytes();
+            for (vertex_index, attribute_bytes) in attributes_bytes
+                .chunks_exact(attribute_size)
+                .take(vertex_count)
+                .enumerate()
+            {
+                let offset = vertex_index * vertex_size + attribute_offset;
+                slice[offset..offset + attribute_size].copy_from_slice(attribute_bytes);
+            }
+
+            attribute_offset += attribute_size;
         }
     }
 

@@ -497,11 +497,13 @@ dependencies = [
 name = "draft_geometry"
 version = "0.1.0"
 dependencies = [
+ "bytemuck",
  "draft_graphics",
  "fxhash",
  "fyrox-core",
  "fyrox-resource",
  "thiserror 2.0.17",
+ "tracing",
 ]
 
 [[package]]

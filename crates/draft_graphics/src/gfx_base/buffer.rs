@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use wgpu::{
     Buffer as WgpuBuffer, BufferAddress, BufferDescriptor as WgpuBufferDescriptor, BufferUsages,
 };
@@ -21,9 +19,9 @@ impl GpuBuffer {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct BufferDescriptor {
-    pub label: Option<Cow<'static, str>>,
+    pub label: Option<String>,
     pub size: BufferAddress,
     pub usage: BufferUsages,
     pub mapped_at_creation: bool,
@@ -41,7 +39,7 @@ impl BufferDescriptor {
 }
 
 pub struct BufferInitDescriptor<'a> {
-    pub label: Option<Cow<'static, str>>,
+    pub label: Option<String>,
     pub usage: BufferUsages,
     pub contents: &'a [u8],
 }

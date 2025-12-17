@@ -1,7 +1,7 @@
 use crate::{
-    Frame, GeometryInstanceData, PipelineCache, RenderDataBundle, RenderFrame, RenderFrameContext,
-    RenderPipelineManager, RenderServer, RenderWindow, RenderWindows, SpecializedMeshPipeline,
-    error::FrameworkError,
+    BufferAllocator, Frame, GeometryInstanceData, PipelineCache, RenderDataBundle, RenderFrame,
+    RenderFrameContext, RenderPipelineManager, RenderServer, RenderWindow, RenderWindows,
+    SpecializedMeshPipeline, error::FrameworkError,
 };
 use draft_geometry::{GeometryResource, GeometryVertexBufferLayouts};
 use draft_graphics::{
@@ -14,12 +14,13 @@ use fyrox_resource::manager::ResourceManager;
 use tracing::error;
 
 pub struct WorldRenderer {
-    _render_server: RenderServer,
+    render_server: RenderServer,
     pipeline_cache: PipelineCache,
     specialized_mesh_pipeline: SpecializedMeshPipeline,
     render_pipeline_manager: RenderPipelineManager,
     layouts: GeometryVertexBufferLayouts,
     system_window_manager: SystemWindowManager,
+    buffer_allocator: BufferAllocator,
 }
 
 impl WorldRenderer {
@@ -30,7 +31,8 @@ impl WorldRenderer {
     ) -> Self {
         Self {
             pipeline_cache: PipelineCache::new(render_server.device.clone()),
-            _render_server: render_server,
+            buffer_allocator: BufferAllocator::new(render_server.device.clone()),
+            render_server,
             specialized_mesh_pipeline: Default::default(),
             render_pipeline_manager: Default::default(),
             layouts: Default::default(),
@@ -96,6 +98,8 @@ impl WorldRenderer {
             &mut self.specialized_mesh_pipeline,
             &mut self.pipeline_cache,
             &mut self.layouts,
+            &mut self.buffer_allocator,
+            &self.render_server.queue,
         )
     }
 

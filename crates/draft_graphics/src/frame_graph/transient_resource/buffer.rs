@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use std::sync::Arc;
 
 use crate::gfx_base::{BufferDescriptor, BufferInitDescriptor, GpuBuffer};
@@ -41,7 +40,7 @@ impl TransientResource for TransientBuffer {
 
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub struct TransientBufferDescriptor {
-    pub label: Option<Cow<'static, str>>,
+    pub label: Option<String>,
     pub size: BufferAddress,
     pub usage: BufferUsages,
     pub mapped_at_creation: bool,
@@ -86,7 +85,7 @@ impl TransientBufferDescriptor {
 
     pub fn get_buffer_desc(&self) -> BufferDescriptor {
         BufferDescriptor {
-            label: self.label.clone(),
+            label: self.label.clone().into(),
             size: self.size,
             usage: self.usage,
             mapped_at_creation: self.mapped_at_creation,
