@@ -12,6 +12,10 @@ impl GpuSurfaceTexture {
         GpuSurfaceTexture(value)
     }
 
+    pub fn create_view(&self, desc: &TextureViewDescriptor) -> GpuTextureView {
+        GpuTextureView::new(self.0.texture.create_view(&desc.get_desc()))
+    }
+
     pub fn present(self) {
         self.0.present();
     }

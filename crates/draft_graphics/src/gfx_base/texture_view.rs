@@ -50,6 +50,10 @@ pub struct TextureView {
 }
 
 impl TextureView {
+    pub fn new(value: GpuTextureView) -> Self {
+        TextureView { value }
+    }
+
     pub(crate) fn value(&self) -> &GpuTextureView {
         &self.value
     }

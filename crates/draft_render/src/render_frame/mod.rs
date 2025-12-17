@@ -15,7 +15,7 @@ pub struct Frame {
 
 impl Frame {
     pub fn prepare(
-        &self,
+        self,
         specialized_mesh_pipeline: &mut SpecializedMeshPipeline,
         pipeline_cache: &mut PipelineCache,
         layouts: &mut GeometryVertexBufferLayouts,
@@ -24,8 +24,12 @@ impl Frame {
             specialized_mesh_pipeline.get(batch, pipeline_cache, layouts)?;
         }
 
-        Ok(RenderFrame {})
+        Ok(RenderFrame {
+            windows: self.windows,
+        })
     }
 }
 
-pub struct RenderFrame {}
+pub struct RenderFrame {
+    pub windows: RenderWindows,
+}

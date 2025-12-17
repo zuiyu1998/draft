@@ -21,13 +21,25 @@ pub enum Error {
     SystemWindowAlreadyInitialized,
 }
 
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct Window {
     pub physical_width: u32,
     pub physical_height: u32,
     pub present_mode: PresentMode,
     pub desired_maximum_frame_latency: Option<NonZero<u32>>,
     pub alpha_mode: CompositeAlphaMode,
+}
+
+impl Default for Window {
+    fn default() -> Self {
+        Window {
+            physical_width: 1280,
+            physical_height: 720,
+            present_mode: Default::default(),
+            desired_maximum_frame_latency: None,
+            alpha_mode: Default::default(),
+        }
+    }
 }
 
 pub struct InitializedSystemWindow {
@@ -179,6 +191,11 @@ impl SystemWindowManagerRef<'_> {
 pub struct SystemWindowManager(Arc<Mutex<SystemWindowManagerState>>);
 
 impl SystemWindowManager {
+    pub fn get_primary(&self) -> Handle<SystemWindow> {
+        let guard = self.0.lock();
+        guard.primary.unwrap()
+    }
+
     pub fn get_ref<'a>(&'a self) -> SystemWindowManagerRef<'a> {
         SystemWindowManagerRef {
             guard: self.0.lock(),

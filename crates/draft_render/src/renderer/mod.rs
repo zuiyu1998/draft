@@ -1,10 +1,13 @@
 use crate::{
     Frame, GeometryInstanceData, PipelineCache, RenderDataBundle, RenderFrame, RenderFrameContext,
-    RenderPipelineManager, RenderServer, RenderWindows, SpecializedMeshPipeline,
+    RenderPipelineManager, RenderServer, RenderWindow, RenderWindows, SpecializedMeshPipeline,
     error::FrameworkError,
 };
 use draft_geometry::{GeometryResource, GeometryVertexBufferLayouts};
-use draft_graphics::frame_graph::FrameGraph;
+use draft_graphics::{
+    frame_graph::FrameGraph,
+    gfx_base::{TextureView, TextureViewDescriptor},
+};
 use draft_material::MaterialResource;
 use draft_window::{SystemWindowManager, Window};
 use fyrox_resource::manager::ResourceManager;
@@ -46,11 +49,31 @@ impl WorldRenderer {
             if let Some(current_texture) = window.get_current_texture() {
                 let current_texture = current_texture?;
 
-                todo!()
+                let texure_view = TextureView::new(
+                    current_texture.create_view(&TextureViewDescriptor::default()),
+                );
+
+                windows.insert(
+                    index,
+                    RenderWindow {
+                        surface_texture: current_texture,
+                        surface_texture_view: texure_view,
+                    },
+                );
             }
         }
 
+        let primary = self.system_window_manager.get_primary();
+
+        windows.set_primary(primary.index() as usize);
+
         Ok(windows)
+    }
+
+    fn clear_render_windows(&self, windows: RenderWindows) {
+        for window in windows.into_iter() {
+            window.surface_texture.present();
+        }
     }
 
     fn prepare_frame<W: World>(&mut self, world: &W) -> Result<RenderFrame, FrameworkError> {
@@ -62,9 +85,11 @@ impl WorldRenderer {
 
         world.prepare(&mut context);
 
+        let windows = self.prepare_render_windows()?;
+
         let frame = Frame {
             render_data_bundle: render_data_bundle,
-            windows: RenderWindows::default(),
+            windows,
         };
 
         frame.prepare(
@@ -83,6 +108,8 @@ impl WorldRenderer {
         if let Some(pipeline) = self.render_pipeline_manager.pipeline_mut("2d") {
             pipeline.run(&mut frame_graph, &context);
         }
+
+        self.clear_render_windows(frame.windows);
     }
 
     pub fn render<W: World>(&mut self, world: &W) {
