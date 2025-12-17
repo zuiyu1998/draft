@@ -6,7 +6,9 @@ pub use vertex::*;
 
 use std::{collections::BTreeMap, error::Error, path::Path, sync::Arc};
 
-use draft_graphics::{PrimitiveTopology, VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode};
+use draft_graphics::{
+    PrimitiveTopology, VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode,
+};
 use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, sparse::AtomicIndex, uuid, visitor::*};
 use fyrox_resource::{Resource, ResourceData};
 
@@ -46,9 +48,9 @@ impl Geometry {
         }
     }
 
-    pub fn get_mesh_vertex_buffer_layout(
+    pub fn get_geometry_vertex_buffer_layout(
         &self,
-        mesh_vertex_buffer_layouts: &mut GeometryVertexBufferLayouts,
+        geometry_vertex_buffer_layouts: &mut GeometryVertexBufferLayouts,
     ) -> GeometryVertexBufferLayoutRef {
         let mut attributes = Vec::with_capacity(self.attributes.len());
         let mut attribute_ids = Vec::with_capacity(self.attributes.len());
@@ -71,7 +73,7 @@ impl Geometry {
             },
             attribute_ids,
         };
-        mesh_vertex_buffer_layouts.insert(layout)
+        geometry_vertex_buffer_layouts.insert(layout)
     }
 
     pub fn attribute_position() -> GeometryhVertexAttribute {

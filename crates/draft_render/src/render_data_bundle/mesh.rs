@@ -4,7 +4,9 @@ use crate::{
 };
 use draft_material::{MaterialResource, PipelineState};
 
-use draft_geometry::{GeometryResource, GeometryVertexBufferLayouts};
+use draft_geometry::{
+    GeometryResource, GeometryVertexBufferLayoutRef, GeometryVertexBufferLayouts,
+};
 use fxhash::{FxHashMap, FxHasher};
 use std::{
     collections::{HashMap, hash_map::Entry},
@@ -36,9 +38,14 @@ impl SpecializedMeshPipeline {
             return Err(FrameworkError::GeometryInvalid(batch.material.summary()));
         }
 
+        let layout = batch
+            .geometry
+            .data_ref()
+            .get_geometry_vertex_buffer_layout(layouts);
+
         let pipeline_state = batch.material.data_ref().pipeline_state.clone();
 
-        let id = self.specialize(pipeline_state, pipeline_cache, layouts)?;
+        let id = self.specialize(pipeline_state, pipeline_cache, &layout)?;
 
         self.cache.insert(key, id);
 
@@ -49,8 +56,11 @@ impl SpecializedMeshPipeline {
         &mut self,
         pipeline_state: PipelineState,
         pipeline_cache: &mut PipelineCache,
-        layouts: &mut GeometryVertexBufferLayouts,
+        layout: &GeometryVertexBufferLayoutRef,
     ) -> Result<CachedRenderPipelineId, FrameworkError> {
+
+       let buffer =  layout.0.layout().clone();
+
         //todo
         let id = pipeline_cache.queue_render_pipeline(RenderPipelineDescriptor {
             label: None,
@@ -60,7 +70,7 @@ impl SpecializedMeshPipeline {
                 shader: pipeline_state.vertex.shader,
                 entry_point: pipeline_state.vertex.entry_point,
                 shader_defs: pipeline_state.vertex.shader_defs,
-                buffers: vec![],
+                buffers: vec![buffer],
             },
             fragment: pipeline_state.fragment,
             depth_stencil: pipeline_state.depth_stencil,
