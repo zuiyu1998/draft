@@ -45,6 +45,7 @@ impl GpuTextureView {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct TextureView {
     value: GpuTextureView,
 }

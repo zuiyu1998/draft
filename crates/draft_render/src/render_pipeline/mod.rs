@@ -1,24 +1,31 @@
+mod core_2d;
+
 use std::collections::HashMap;
 
 use draft_graphics::frame_graph::FrameGraph;
 
-use crate::RenderFrame;
+use crate::{RenderFrame, render_pipeline::core_2d::create_core_2d_render_pipiline};
 
 pub struct RenderFrameContext<'a> {
     pub frame: &'a RenderFrame,
 }
 
 pub trait Node: 'static + Sync + Send {
-    fn update(&mut self);
+    fn update(&mut self) {}
 
     fn run(&self, frame_graph: &mut FrameGraph, context: &RenderFrameContext);
 }
 
+#[derive(Default)]
 pub struct RenderPipeline {
     nodes: Vec<Box<dyn Node>>,
 }
 
 impl RenderPipeline {
+    pub fn push_node(&mut self, value: impl Node) {
+        self.nodes.push(Box::new(value));
+    }
+
     pub fn update(&mut self) {
         for node in self.nodes.iter_mut() {
             node.update();
@@ -44,6 +51,14 @@ impl Default for RenderPipelineManager {
 
 impl RenderPipelineManager {
     pub fn new() -> Self {
+        let mut manager = Self::empty();
+
+        manager.insert("core_2d", create_core_2d_render_pipiline());
+
+        manager
+    }
+
+    pub fn empty() -> Self {
         RenderPipelineManager {
             data: Default::default(),
         }

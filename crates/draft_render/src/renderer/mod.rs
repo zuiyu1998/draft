@@ -5,8 +5,8 @@ use crate::{
 };
 use draft_geometry::{GeometryResource, GeometryVertexBufferLayouts};
 use draft_graphics::{
-    frame_graph::FrameGraph,
-    gfx_base::{TextureView, TextureViewDescriptor},
+    frame_graph::{FrameGraph, FrameGraphContext, TransientResourceCache},
+    gfx_base::{GetPipelineContainer, TextureView, TextureViewDescriptor},
 };
 use draft_material::MaterialResource;
 use draft_window::{SystemWindowManager, Window};
@@ -21,6 +21,7 @@ pub struct WorldRenderer {
     layouts: GeometryVertexBufferLayouts,
     system_window_manager: SystemWindowManager,
     buffer_allocator: BufferAllocator,
+    transient_resource_cache: TransientResourceCache,
 }
 
 impl WorldRenderer {
@@ -37,6 +38,7 @@ impl WorldRenderer {
             render_pipeline_manager: Default::default(),
             layouts: Default::default(),
             system_window_manager,
+            transient_resource_cache: Default::default(),
         }
     }
 
@@ -106,12 +108,28 @@ impl WorldRenderer {
     fn render_frame(&mut self, frame: RenderFrame) {
         self.render_pipeline_manager.update();
 
-        let mut frame_graph = FrameGraph::default();
         let context = RenderFrameContext { frame: &frame };
+        let mut frame_graph = FrameGraph::default();
 
-        if let Some(pipeline) = self.render_pipeline_manager.pipeline_mut("2d") {
+        if let Some(pipeline) = self.render_pipeline_manager.pipeline_mut("core_2d") {
             pipeline.run(&mut frame_graph, &context);
         }
+
+        frame_graph.compile();
+
+        let pipeline_container = self.pipeline_cache.get_pipeline_container();
+
+        let mut frame_graph_context = FrameGraphContext::new(
+            pipeline_container,
+            &self.render_server.device,
+            &mut self.transient_resource_cache,
+        );
+
+        frame_graph.execute(&mut frame_graph_context);
+
+        let command_buffers = frame_graph_context.finish();
+
+        self.render_server.queue.submit(command_buffers);
 
         self.clear_render_windows(frame.windows);
     }

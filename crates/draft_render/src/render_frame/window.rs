@@ -18,8 +18,11 @@ impl RenderWindows {
         self.data.into_values()
     }
 
-    pub fn primary(&self) -> Option<&RenderWindow> {
-        self.primary.as_ref().and_then(|id| self.data.get(id))
+    pub fn primary(&self) -> &RenderWindow {
+        self.primary
+            .as_ref()
+            .and_then(|id| self.data.get(id))
+            .expect("Primary render window must have.")
     }
 
     pub fn set_primary(&mut self, index: usize) {

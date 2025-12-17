@@ -31,6 +31,7 @@ fn create_vertext_buffer(
         usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
         mapped_at_creation: false,
     };
+
     let vertext_buffer_handle = buffer_allocator.allocate(desc);
     let buffer = buffer_allocator.get_buffer(vertext_buffer_handle);
     let data = geomertry.create_packed_vertex_buffer_data();
@@ -45,23 +46,22 @@ fn create_index_buffer(
     render_queue: &RenderQueue,
 ) -> Option<GpuBuffer> {
     let geomertry = geomertry.data_ref();
-    let index = geomertry.get_index_buffer_bytes();
+    let data = geomertry.get_index_buffer_bytes();
 
-    if index.is_none() {
+    if data.is_none() {
         return None;
     }
 
-    let index = index.unwrap();
+    let data = data.unwrap();
 
     let desc = BufferDescriptor {
         label: None,
-        size: index.len() as u64,
+        size: data.len() as u64,
         usage: BufferUsages::INDEX | BufferUsages::COPY_DST,
         mapped_at_creation: false,
     };
     let index_buffer_handle = buffer_allocator.allocate(desc);
     let buffer = buffer_allocator.get_buffer(index_buffer_handle);
-    let data = geomertry.create_packed_vertex_buffer_data();
     render_queue.write_buffer(&buffer, 0, &data);
 
     Some(buffer)
@@ -99,10 +99,12 @@ impl Frame {
 
         Ok(RenderFrame {
             windows: self.windows,
+            batchs
         })
     }
 }
 
 pub struct RenderFrame {
     pub windows: RenderWindows,
+    pub batchs: Vec<BatchRenderMesh>
 }

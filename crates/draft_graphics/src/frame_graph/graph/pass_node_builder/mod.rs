@@ -103,7 +103,7 @@ impl<'a> PassNodeBuilderExt for PassNodeBuilder<'a> {
 }
 
 impl<'a> PassNodeBuilder<'a> {
-    pub fn set_pass(&mut self, mut pass: Pass) {
+    pub(crate) fn set_pass(&mut self, mut pass: Pass) {
         pass.label = Some(self.name.clone().into());
         self.pass = Some(pass);
     }

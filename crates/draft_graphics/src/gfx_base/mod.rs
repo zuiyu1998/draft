@@ -29,7 +29,7 @@ pub use texture_view::*;
 
 pub use wgpu::{ShaderModuleDescriptor, ShaderSource};
 
-use wgpu::{Adapter, BufferAddress, Instance, Queue, SurfaceTarget};
+use wgpu::{Adapter, BufferAddress, CommandBuffer, Instance, Queue, SurfaceTarget};
 
 use std::sync::Arc;
 
@@ -43,6 +43,10 @@ impl RenderQueue {
 
     pub fn write_buffer(&self, buffer: &GpuBuffer, offset: BufferAddress, data: &[u8]) {
         self.0.write_buffer(buffer.get_wgpu_buffer(), offset, data);
+    }
+
+    pub fn submit<I: IntoIterator<Item = CommandBuffer>>(&self, command_buffers: I) {
+        self.0.submit(command_buffers);
     }
 }
 

@@ -15,6 +15,12 @@ pub struct RenderPassBuilder<'a, 'b> {
     pass_builder: &'b mut PassBuilder<'a>,
 }
 
+impl Drop for RenderPassBuilder<'_, '_> {
+    fn drop(&mut self) {
+        self.finish();
+    }
+}
+
 impl<'a, 'b> RenderPassBuilder<'a, 'b> {
     pub fn new(pass_builder: &'b mut PassBuilder<'a>, name: &str) -> Self {
         let mut render_pass = RenderPass::default();

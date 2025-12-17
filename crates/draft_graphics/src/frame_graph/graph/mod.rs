@@ -158,6 +158,14 @@ impl FrameGraph {
 }
 
 impl FrameGraph {
+    pub fn create_pass_node_builder(&mut self, name: &str) -> PassNodeBuilder<'_> {
+        PassNodeBuilder::new(name, self)
+    }
+
+    pub fn create_pass_buidlder(&mut self, name: &str) -> PassBuilder<'_> {
+        PassBuilder::new(self.create_pass_node_builder(name))
+    }
+
     pub fn insert(&mut self, key: &str, index: IndexHandle<ResourceNode>) {
         let key = key.into();
         self.resource_board.insert(key, index);

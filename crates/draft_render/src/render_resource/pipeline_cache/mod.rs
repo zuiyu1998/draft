@@ -8,9 +8,9 @@ use draft_graphics::{
     DepthStencilState, MultisampleState, PipelineCompilationOptions, PrimitiveState,
     PushConstantRange, VertexBufferLayout,
     gfx_base::{
-        BindGroupLayout, CachedPipelineId, FragmentState as GpuFragmentState, GpuPipeline,
-        RenderDevice, RenderPipelineDescriptor as GpuRenderPipelineDescriptor,
-        VertexState as GpuVertexState,
+        BindGroupLayout, CachedPipelineId, FragmentState as GpuFragmentState, GetPipelineContainer,
+        GpuPipeline, PipelineContainer, RenderDevice,
+        RenderPipelineDescriptor as GpuRenderPipelineDescriptor, VertexState as GpuVertexState,
     },
 };
 use draft_shader::{ShaderCache, ShaderCacheError, ShaderDefVal, ShaderResource};
@@ -92,6 +92,25 @@ pub struct PipelineCache {
     waiting_pipelines: HashSet<CachedPipelineId>,
     layout_cache: Arc<Mutex<LayoutCache>>,
     shader_cache: Arc<Mutex<ShaderCache>>,
+}
+
+impl GetPipelineContainer for PipelineCache {
+    fn get_pipeline_container(&self) -> PipelineContainer {
+        let mut pipelines = vec![];
+
+        for pipeline in self.pipelines.iter() {
+            match &pipeline.state {
+                CachedPipelineState::Ok(pipeline) => {
+                    pipelines.push(Some(pipeline.clone()));
+                }
+                _ => {
+                    pipelines.push(None);
+                }
+            }
+        }
+
+        PipelineContainer::new(pipelines)
+    }
 }
 
 impl PipelineCache {

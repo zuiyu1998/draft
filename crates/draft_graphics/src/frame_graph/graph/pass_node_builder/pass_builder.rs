@@ -1,11 +1,11 @@
 use std::mem::take;
 
 use crate::frame_graph::{
-    Handle, Pass, PassCommand, PassNodeBuilderExt, Ref, ResourceMaterial, ResourceRead,
-    ResourceWrite, TransientResource,
+    Handle, Pass, PassCommand, PassNodeBuilderExt, Ref, RenderPassBuilder, ResourceMaterial,
+    ResourceRead, ResourceWrite, TransientResource,
 };
 
-use super::{PassNodeBuilder, RenderPassBuilder};
+use super::PassNodeBuilder;
 
 pub struct PassBuilder<'a> {
     pass_node_builder: PassNodeBuilder<'a>,
@@ -57,7 +57,7 @@ impl<'a> PassBuilder<'a> {
         }
     }
 
-    pub fn create_render_pass_builder<'b>(&'b mut self, name: &str) -> RenderPassBuilder<'a, 'b> {
+    pub fn create_render_pass_builder(&mut self, name: &str) -> RenderPassBuilder<'a, '_> {
         RenderPassBuilder::new(self, name)
     }
 
