@@ -29,12 +29,12 @@ pub use texture_view::*;
 
 pub use wgpu::{ShaderModuleDescriptor, ShaderSource};
 
-use wgpu::{Instance, Queue, SurfaceTargetUnsafe};
+use wgpu::{Adapter, Instance, Queue, SurfaceTarget};
 
 use std::sync::Arc;
 
 #[derive(Clone)]
-pub struct RenderQueue(pub Arc<Queue>);
+pub struct RenderQueue(Arc<Queue>);
 
 impl RenderQueue {
     pub fn new(queue: Queue) -> Self {
@@ -42,7 +42,7 @@ impl RenderQueue {
     }
 }
 
-pub struct RenderInstance(pub Arc<Instance>);
+pub struct RenderInstance(Arc<Instance>);
 
 impl RenderInstance {
     pub fn new(instance: Instance) -> Self {
@@ -50,13 +50,25 @@ impl RenderInstance {
     }
 
     // SAFETY: The window handles in ExtractedWindows will always be valid objects to create surfaces on
-    pub fn create_surface_unsafe(&self, target: SurfaceTargetUnsafe) -> GpuSurface {
-        let surface = unsafe {
-            self.0
-                .create_surface_unsafe(target)
-                .expect("Failed to create wgpu surface")
-        };
+    pub fn create_surface(&self, target: impl Into<SurfaceTarget<'static>>) -> GpuSurface {
+        let surface = self
+            .0
+            .create_surface(target)
+            .expect("Failed to create wgpu surface");
 
         GpuSurface::new(surface)
+    }
+}
+
+#[derive(Clone)]
+pub struct RenderAdapter(Arc<Adapter>);
+
+impl RenderAdapter {
+    pub fn new(value: Adapter) -> Self {
+        RenderAdapter(Arc::new(value))
+    }
+
+    pub(crate) fn get_wgpu_adpter(&self) -> &Adapter {
+        &self.0
     }
 }

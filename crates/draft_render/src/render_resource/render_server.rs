@@ -1,4 +1,4 @@
-use draft_graphics::gfx_base::{RenderDevice, RenderQueue};
+use draft_graphics::gfx_base::{RenderAdapter, RenderDevice, RenderInstance, RenderQueue};
 use draft_graphics::wgpu::{
     Instance, InstanceDescriptor, RequestAdapterOptions, wgt::DeviceDescriptor,
 };
@@ -8,6 +8,8 @@ use fyrox_core::futures::executor::block_on;
 pub struct RenderServer {
     pub device: RenderDevice,
     pub queue: RenderQueue,
+    pub instance: RenderInstance,
+    pub adapter: RenderAdapter,
 }
 
 pub fn initialize_render_server(primary_window: RawHandleWrapper) -> RenderServer {
@@ -43,5 +45,7 @@ pub async fn initialize_render_server_async(primary_window: RawHandleWrapper) ->
     RenderServer {
         device: RenderDevice::new(device),
         queue: RenderQueue::new(queue),
+        instance: RenderInstance::new(instance),
+        adapter: RenderAdapter::new(adapter),
     }
 }

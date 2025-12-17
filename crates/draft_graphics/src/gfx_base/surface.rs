@@ -1,6 +1,6 @@
 use wgpu::SurfaceError;
 
-use crate::gfx_base::GpuSurfaceTexture;
+use crate::gfx_base::{GpuSurfaceTexture, RenderAdapter};
 
 pub struct GpuSurface(wgpu::Surface<'static>);
 
@@ -17,5 +17,9 @@ impl GpuSurface {
         let texture = self.0.get_current_texture()?;
 
         Ok(GpuSurfaceTexture::new(texture))
+    }
+
+    pub fn get_capabilities(&self, adapter: &RenderAdapter) -> wgpu::SurfaceCapabilities {
+        self.0.get_capabilities(adapter.get_wgpu_adpter())
     }
 }

@@ -585,6 +585,7 @@ name = "draft_window"
 version = "0.1.0"
 dependencies = [
  "downcast-rs",
+ "draft_graphics",
  "fyrox-core",
  "raw-window-handle",
  "thiserror 2.0.17",

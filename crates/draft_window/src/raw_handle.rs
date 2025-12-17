@@ -55,11 +55,11 @@ pub struct RawHandleWrapper {
 
 impl RawHandleWrapper {
     /// Creates a `RawHandleWrapper` from a `WindowWrapper`.
-    pub fn new<W: ISystemWindow>(window: &WindowWrapper) -> Result<RawHandleWrapper, HandleError> {
+    pub fn new(window: &WindowWrapper) -> Result<RawHandleWrapper, HandleError> {
         Ok(RawHandleWrapper {
             _window: window.reference.clone(),
-            window_handle: window.get_system_window::<W>().window_handle()?.as_raw(),
-            display_handle: window.get_system_window::<W>().display_handle()?.as_raw(),
+            window_handle: window.reference.window_handle()?.as_raw(),
+            display_handle: window.reference.display_handle()?.as_raw(),
         })
     }
 

@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 
 use draft_graphics::gfx_base::{GpuSurfaceTexture, TextureView};
-use draft_window::Window;
-use fyrox_resource::core::pool::Handle;
 
 pub struct RenderWindow {
     pub surface_texture: GpuSurfaceTexture,
@@ -11,8 +9,8 @@ pub struct RenderWindow {
 
 #[derive(Default)]
 pub struct RenderWindows {
-    primary: Option<Handle<Window>>,
-    data: HashMap<Handle<Window>, RenderWindow>,
+    primary: Option<usize>,
+    data: HashMap<usize, RenderWindow>,
 }
 
 impl RenderWindows {

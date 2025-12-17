@@ -1,12 +1,15 @@
 mod render_data_bundle;
+mod window;
 
 pub use render_data_bundle::*;
+pub use window::*;
 
 use draft_geometry::GeometryVertexBufferLayouts;
 
 use crate::{PipelineCache, error::FrameworkError};
 
 pub struct Frame {
+    pub windows: RenderWindows,
     pub render_data_bundle: RenderDataBundle,
 }
 

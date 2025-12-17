@@ -4,9 +4,12 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+draft_graphics = { path = "../draft_graphics" }
+
+fyrox-core = { workspace = true }
+
+downcast-rs = { workspace = true  }
+thiserror = { workspace = true }
 raw-window-handle = { version = "0.6", features = [
     "alloc",
 ], default-features = false }
-fyrox-core = { workspace = true }
-downcast-rs = { workspace = true  }
-thiserror = { workspace = true }

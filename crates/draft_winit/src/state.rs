@@ -6,8 +6,8 @@ use draft_render::{
 };
 
 use draft_window::{RawHandleWrapper, SystemWindowManager};
-use tracing::error;
 use thiserror::Error;
+use tracing::error;
 use winit::{
     application::ApplicationHandler,
     event::WindowEvent,
@@ -78,15 +78,23 @@ impl<M: Message> WinitAppRunnerState<M> {
 
         let winit_window = create_window(event_loop, &params.window);
 
-        let wrapper = RawHandleWrapper::new::<Window>(&winit_window).unwrap();
+        let wrapper = RawHandleWrapper::new(&winit_window).unwrap();
         let render_server = initialize_render_server(wrapper);
 
-        self.app
-            .system_window_manager
-            .initialize_system_window(handle, winit_window)?;
+        self.app.system_window_manager.initialize_system_window(
+            &render_server.instance,
+            &render_server.device,
+            &render_server.adapter,
+            handle,
+            winit_window,
+        )?;
 
         self.app.graphics_context = GraphicsContext::Initialized(InitializedGraphicsContext::new(
-            WorldRenderer::new(render_server, &self.app.resource_manager),
+            WorldRenderer::new(
+                render_server,
+                self.app.system_window_manager.clone(),
+                &self.app.resource_manager,
+            ),
             params,
         ));
 
@@ -184,7 +192,7 @@ fn game_loop_iteration(
         }
     }
 
-    for system_window in app.system_window_manager.iter() {
+    for system_window in app.system_window_manager.get_ref().iter() {
         if let Some(window) = system_window.get_system_window::<Window>() {
             window.request_redraw();
         }

@@ -1,10 +1,12 @@
 use crate::{
-    Frame, GeometryInstanceData, PipelineCache, RenderDataBundle, RenderFrame, RenderFrameContext, RenderPipelineManager, RenderServer, SpecializedMeshPipeline, error::FrameworkError
+    Frame, GeometryInstanceData, PipelineCache, RenderDataBundle, RenderFrame, RenderFrameContext,
+    RenderPipelineManager, RenderServer, RenderWindows, SpecializedMeshPipeline,
+    error::FrameworkError,
 };
 use draft_geometry::{GeometryResource, GeometryVertexBufferLayouts};
 use draft_graphics::frame_graph::FrameGraph;
 use draft_material::MaterialResource;
-use draft_window::Window;
+use draft_window::{SystemWindowManager, Window};
 use fyrox_resource::manager::ResourceManager;
 use tracing::error;
 
@@ -14,21 +16,41 @@ pub struct WorldRenderer {
     specialized_mesh_pipeline: SpecializedMeshPipeline,
     render_pipeline_manager: RenderPipelineManager,
     layouts: GeometryVertexBufferLayouts,
+    system_window_manager: SystemWindowManager,
 }
 
 impl WorldRenderer {
-    pub fn new(render_server: RenderServer, _resource_manager: &ResourceManager) -> Self {
+    pub fn new(
+        render_server: RenderServer,
+        system_window_manager: SystemWindowManager,
+        _resource_manager: &ResourceManager,
+    ) -> Self {
         Self {
             pipeline_cache: PipelineCache::new(render_server.device.clone()),
             _render_server: render_server,
             specialized_mesh_pipeline: Default::default(),
             render_pipeline_manager: Default::default(),
             layouts: Default::default(),
+            system_window_manager,
         }
     }
 
     pub fn update(&mut self) {
         self.pipeline_cache.process_queue();
+    }
+
+    pub fn prepare_render_windows(&self) -> Result<RenderWindows, FrameworkError> {
+        let mut windows = RenderWindows::default();
+
+        for (index, window) in self.system_window_manager.get_ref().iter().enumerate() {
+            if let Some(current_texture) = window.get_current_texture() {
+                let current_texture = current_texture?;
+
+                todo!()
+            }
+        }
+
+        Ok(windows)
     }
 
     fn prepare_frame<W: World>(&mut self, world: &W) -> Result<RenderFrame, FrameworkError> {
@@ -42,6 +64,7 @@ impl WorldRenderer {
 
         let frame = Frame {
             render_data_bundle: render_data_bundle,
+            windows: RenderWindows::default(),
         };
 
         frame.prepare(
