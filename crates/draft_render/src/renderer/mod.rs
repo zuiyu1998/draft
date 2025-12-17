@@ -1,6 +1,5 @@
 use crate::{
-    GeometryInstanceData, PipelineCache, RenderDataBundle, RenderFrameContext,
-    RenderPipelineManager, RenderServer, SpecializedMeshPipeline, error::FrameworkError,
+    Frame, GeometryInstanceData, PipelineCache, RenderDataBundle, RenderFrame, RenderFrameContext, RenderPipelineManager, RenderServer, SpecializedMeshPipeline, error::FrameworkError
 };
 use draft_geometry::{GeometryResource, GeometryVertexBufferLayouts};
 use draft_graphics::frame_graph::FrameGraph;
@@ -48,7 +47,7 @@ impl WorldRenderer {
         frame.prepare(
             &mut self.specialized_mesh_pipeline,
             &mut self.pipeline_cache,
-            &mut self.layouts
+            &mut self.layouts,
         )
     }
 
@@ -74,27 +73,6 @@ impl WorldRenderer {
         };
     }
 }
-
-pub struct Frame {
-    render_data_bundle: RenderDataBundle,
-}
-
-impl Frame {
-    pub fn prepare(
-        &self,
-        specialized_mesh_pipeline: &mut SpecializedMeshPipeline,
-        pipeline_cache: &mut PipelineCache,
-        layouts: &mut GeometryVertexBufferLayouts,
-    ) -> Result<RenderFrame, FrameworkError> {
-        for batch in self.render_data_bundle.mesh.values() {
-            specialized_mesh_pipeline.get(batch, pipeline_cache, layouts)?;
-        }
-
-        Ok(RenderFrame {})
-    }
-}
-
-pub struct RenderFrame {}
 
 pub struct RenderContext<'a> {
     render_data_bundle: &'a mut RenderDataBundle,
