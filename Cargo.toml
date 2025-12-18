@@ -14,7 +14,9 @@ members = [
     "crates/draft_geometry",
     "crates/draft_graphics",
     "crates/draft_scene",
-    "crates/draft_shader", "crates/draft_material",
+    "crates/draft_shader",
+    "crates/draft_material",
+    "crates/draft_render_2d",
 ]
 
 [workspace.dependencies]

@@ -3,7 +3,7 @@ use std::{
     fmt::{Debug, Display},
 };
 
-pub struct AppError {
+pub struct DraftError {
     inner: Box<InnerAppError>,
 }
 
@@ -11,13 +11,13 @@ struct InnerAppError {
     error: Box<dyn Error + Send + Sync + 'static>,
 }
 
-impl<E> From<E> for AppError
+impl<E> From<E> for DraftError
 where
     Box<dyn Error + Send + Sync + 'static>: From<E>,
 {
     #[cold]
     fn from(error: E) -> Self {
-        AppError {
+        DraftError {
             inner: Box::new(InnerAppError {
                 error: error.into(),
             }),
@@ -25,14 +25,14 @@ where
     }
 }
 
-impl Display for AppError {
+impl Display for DraftError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         writeln!(f, "{}", self.inner.error)?;
         Ok(())
     }
 }
 
-impl Debug for AppError {
+impl Debug for DraftError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         writeln!(f, "{:?}", self.inner.error)?;
         Ok(())

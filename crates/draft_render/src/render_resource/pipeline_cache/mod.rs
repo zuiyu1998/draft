@@ -1,8 +1,18 @@
 mod layout;
 
+use fyrox_resource::{event::ResourceEvent, manager::ResourceManager};
 pub use layout::*;
+use tracing::warn;
 
-use std::{collections::HashSet, mem, ops::Deref, sync::Arc};
+use std::{
+    collections::HashSet,
+    mem,
+    ops::Deref,
+    sync::{
+        Arc,
+        mpsc::{Receiver, channel},
+    },
+};
 
 use draft_graphics::{
     DepthStencilState, MultisampleState, PipelineCompilationOptions, PrimitiveState,
@@ -13,7 +23,7 @@ use draft_graphics::{
         RenderPipelineDescriptor as GpuRenderPipelineDescriptor, VertexState as GpuVertexState,
     },
 };
-use draft_shader::{ShaderCache, ShaderCacheError, ShaderDefVal, ShaderResource};
+use draft_shader::{Shader, ShaderCache, ShaderCacheError, ShaderDefVal, ShaderResource};
 use fyrox_core::{futures::executor::block_on, parking_lot::Mutex};
 use thiserror::Error;
 
@@ -92,6 +102,7 @@ pub struct PipelineCache {
     waiting_pipelines: HashSet<CachedPipelineId>,
     layout_cache: Arc<Mutex<LayoutCache>>,
     shader_cache: Arc<Mutex<ShaderCache>>,
+    shader_event_receiver: Receiver<ResourceEvent>,
 }
 
 impl GetPipelineContainer for PipelineCache {
@@ -114,7 +125,11 @@ impl GetPipelineContainer for PipelineCache {
 }
 
 impl PipelineCache {
-    pub fn new(device: RenderDevice) -> Self {
+    pub fn new(device: RenderDevice, resource_manager: &ResourceManager) -> Self {
+        let (rx, tx) = channel();
+
+        resource_manager.state().event_broadcaster.add(rx);
+
         Self {
             _device: device,
             new_pipelines: Default::default(),
@@ -122,10 +137,27 @@ impl PipelineCache {
             waiting_pipelines: Default::default(),
             layout_cache: Arc::new(Mutex::new(LayoutCache::default())),
             shader_cache: Arc::new(Mutex::new(ShaderCache::new())),
+            shader_event_receiver: tx,
         }
     }
 
-    pub fn process_queue(&mut self) {
+    pub fn update(&mut self) {
+        self.handle_shader_event();
+        self.process_queue();
+    }
+
+    fn handle_shader_event(&mut self) {
+        while let Ok(event) = self.shader_event_receiver.try_recv() {
+            if let ResourceEvent::Loaded(resource) | ResourceEvent::Reloaded(resource) = event {
+                if let Some(shader) = resource.try_cast::<Shader>() {
+                    let mut shader_cache = self.shader_cache.lock();
+                    shader_cache.set_shader(&shader);
+                }
+            }
+        }
+    }
+
+    fn process_queue(&mut self) {
         let mut waiting_pipelines = mem::take(&mut self.waiting_pipelines);
         let mut pipelines = mem::take(&mut self.pipelines);
 
@@ -154,9 +186,19 @@ impl PipelineCache {
                     }
                 };
             }
-
             CachedPipelineState::Ok(_) => return,
-            _ => return,
+            CachedPipelineState::Err(err) => match err {
+                // Retry
+                PipelineCacheError::ShaderCacheError(err) => match err {
+                    ShaderCacheError::ShaderNotLoaded(err) => {
+                        warn!("Failed to process shader error: {}", err);
+                        cached_pipeline.state = CachedPipelineState::Queued;
+                    }
+                    _ => {
+                        return;
+                    }
+                },
+            },
         }
 
         self.waiting_pipelines.insert(id);

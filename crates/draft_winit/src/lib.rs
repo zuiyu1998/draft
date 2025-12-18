@@ -1,5 +1,4 @@
 mod state;
-mod winit_windows;
 
 use draft_app::{App, Executor};
 use state::winit_runner;

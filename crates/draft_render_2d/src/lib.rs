@@ -2,10 +2,10 @@ use draft_graphics::{
     frame_graph::{
         FrameGraph, PassNodeBuilderExt, TransientRenderPassColorAttachment, TransientTextureView,
     },
-    wgpu,
+    wgpu::{self},
 };
 
-use crate::{Node, RenderFrameContext, RenderPipeline};
+use draft_render::{Node, RenderFrameContext, RenderPipeline};
 
 pub fn create_core_2d_render_pipiline() -> RenderPipeline {
     let mut pipeline = RenderPipeline::default();
@@ -64,7 +64,6 @@ impl Node for UpscalingNode {
                     );
 
                     render_pass_buidler.draw_indexed(0..size, 0, 0..1);
-
                 } else {
                     render_pass_buidler.draw(0..3, 0..1);
                 }

@@ -1,14 +1,12 @@
-mod core_2d;
-
 use std::collections::HashMap;
 
 use draft_graphics::{frame_graph::FrameGraph, gfx_base::PipelineContainer};
 
-use crate::{RenderFrame, render_pipeline::core_2d::create_core_2d_render_pipiline};
+use crate::RenderFrame;
 
 pub struct RenderFrameContext<'a> {
     pub frame: &'a RenderFrame,
-    pub pipeline_container: &'a PipelineContainer
+    pub pipeline_container: &'a PipelineContainer,
 }
 
 pub trait Node: 'static + Sync + Send {
@@ -40,6 +38,14 @@ impl RenderPipeline {
     }
 }
 
+pub trait RenderPipelineExt {
+    fn insert_pipeline(&mut self, name: &str, pipeline: RenderPipeline);
+
+    fn pipeline(&self, name: &str) -> Option<&RenderPipeline>;
+
+    fn pipeline_mut(&mut self, name: &str) -> Option<&mut RenderPipeline>;
+}
+
 pub struct RenderPipelineManager {
     data: HashMap<String, RenderPipeline>,
 }
@@ -50,13 +56,23 @@ impl Default for RenderPipelineManager {
     }
 }
 
+impl RenderPipelineExt for RenderPipelineManager {
+    fn insert_pipeline(&mut self, name: &str, pipeline: RenderPipeline) {
+        self.data.insert(name.to_string(), pipeline);
+    }
+
+    fn pipeline(&self, name: &str) -> Option<&RenderPipeline> {
+        self.data.get(name)
+    }
+
+    fn pipeline_mut(&mut self, name: &str) -> Option<&mut RenderPipeline> {
+        self.data.get_mut(name)
+    }
+}
+
 impl RenderPipelineManager {
     pub fn new() -> Self {
-        let mut manager = Self::empty();
-
-        manager.insert("core_2d", create_core_2d_render_pipiline());
-
-        manager
+        Self::empty()
     }
 
     pub fn empty() -> Self {
@@ -69,17 +85,5 @@ impl RenderPipelineManager {
         for pipeline in self.data.values_mut() {
             pipeline.update();
         }
-    }
-
-    pub fn insert(&mut self, name: &str, pipeline: RenderPipeline) {
-        self.data.insert(name.to_string(), pipeline);
-    }
-
-    pub fn pipeline(&self, name: &str) -> Option<&RenderPipeline> {
-        self.data.get(name)
-    }
-
-    pub fn pipeline_mut(&mut self, name: &str) -> Option<&mut RenderPipeline> {
-        self.data.get_mut(name)
     }
 }

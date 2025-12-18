@@ -1,30 +1,43 @@
 use std::{marker::PhantomData, time::Instant};
 
-use draft_app::{App, AppError, AppExit};
-use draft_render::{
-    GraphicsContext, InitializedGraphicsContext, WorldRenderer, initialize_render_server,
-};
+use draft_app::{App, AppExit, IEventLoop};
 
-use draft_window::{RawHandleWrapper, SystemWindowManager};
-use thiserror::Error;
+use draft_window::{Window, WindowWrapper};
 use tracing::error;
 use winit::{
     application::ApplicationHandler,
     event::WindowEvent,
     event_loop::{ActiveEventLoop, ControlFlow, EventLoop},
-    window::{Window, WindowId},
+    window::{Window as WinitWindow, WindowId},
 };
 
-use crate::{Message, winit_windows::create_window};
+use crate::Message;
 
 pub const DEFAULT_UPDATE_RATE: f32 = 60.0;
 /// Default time step (in seconds).
 pub const DEFAULT_TIME_STEP: f32 = 1.0 / DEFAULT_UPDATE_RATE;
 
-#[derive(Debug, Error)]
-pub enum WinitError {
-    #[error("winit error: {0}")]
-    Custom(String),
+pub struct ActiveEventLoopRef<'a> {
+    event_loop: &'a ActiveEventLoop,
+}
+
+impl<'a> ActiveEventLoopRef<'a> {
+    pub fn new(event_loop: &'a ActiveEventLoop) -> Self {
+        Self { event_loop }
+    }
+}
+
+impl<'a> IEventLoop for ActiveEventLoopRef<'a> {
+    fn create_window(&self, _window: &Window) -> WindowWrapper {
+        let winit_window_attributes = WinitWindow::default_attributes();
+
+        let winit_window = self
+            .event_loop
+            .create_window(winit_window_attributes)
+            .unwrap();
+
+        WindowWrapper::new(winit_window)
+    }
 }
 
 pub(crate) struct WinitAppRunnerState<T: Message> {
@@ -39,80 +52,22 @@ pub(crate) struct WinitAppRunnerState<T: Message> {
     _marker: PhantomData<T>,
 }
 
-impl<M: Message> WinitAppRunnerState<M> {
-    fn destroy_graphics_context(&mut self) -> Result<(), WinitError> {
-        let graphics_context = match &self.app.graphics_context {
-            GraphicsContext::Initialized(params) => params,
-            _ => {
-                return Err(WinitError::Custom(
-                    "Graphics context is already destroyed!".to_string(),
-                ));
-            }
-        };
-        let params = graphics_context.params.clone();
-        self.app.graphics_context = GraphicsContext::Uninitialized(params);
-
-        self.app.system_window_manager = SystemWindowManager::default();
-
-        Ok(())
-    }
-
-    fn initialize_graphics_context(
-        &mut self,
-        event_loop: &ActiveEventLoop,
-    ) -> Result<(), AppError> {
-        let params = match &self.app.graphics_context {
-            GraphicsContext::Uninitialized(params) => params.clone(),
-            _ => {
-                return Err(WinitError::Custom(
-                    "Graphics context is already initialized!".to_string(),
-                )
-                .into());
-            }
-        };
-
-        let handle = self
-            .app
-            .system_window_manager
-            .spawn_primary(params.window.clone());
-
-        let winit_window = create_window(event_loop, &params.window);
-
-        let wrapper = RawHandleWrapper::new(&winit_window).unwrap();
-        let render_server = initialize_render_server(wrapper);
-
-        self.app.system_window_manager.initialize_system_window(
-            &render_server.instance,
-            &render_server.device,
-            &render_server.adapter,
-            handle,
-            winit_window,
-        )?;
-
-        self.app.graphics_context = GraphicsContext::Initialized(InitializedGraphicsContext::new(
-            WorldRenderer::new(
-                render_server,
-                self.app.system_window_manager.clone(),
-                &self.app.resource_manager,
-            ),
-            params,
-        ));
-
-        Ok(())
-    }
-}
-
 impl<M: Message> ApplicationHandler<M> for WinitAppRunnerState<M> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         event_loop.set_control_flow(ControlFlow::Wait);
 
         self.previous = Instant::now();
-        self.initialize_graphics_context(event_loop)
+
+        let event_loop_ref = ActiveEventLoopRef::new(event_loop);
+
+        self.app
+            .initialize_graphics_context(&event_loop_ref)
             .expect("Unable to initialize graphics context!");
     }
 
     fn suspended(&mut self, _event_loop: &ActiveEventLoop) {
-        self.destroy_graphics_context()
+        self.app
+            .destroy_graphics_context()
             .expect("Unable to destroy graphics context!");
     }
 
@@ -193,7 +148,7 @@ fn game_loop_iteration(
     }
 
     for system_window in app.system_window_manager.get_ref().iter() {
-        if let Some(window) = system_window.get_system_window::<Window>() {
+        if let Some(window) = system_window.get_system_window::<WinitWindow>() {
             window.request_redraw();
         }
     }
@@ -204,7 +159,7 @@ impl<M: Message> WinitAppRunnerState<M> {
         Self {
             app,
             app_exit: None,
-            desired_update_rate: 1.0 / DEFAULT_UPDATE_RATE,
+            desired_update_rate: DEFAULT_UPDATE_RATE,
             throttle_threshold: 2.0 * DEFAULT_TIME_STEP,
             throttle_frame_interval: 5,
             lag: 0.0,

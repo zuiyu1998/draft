@@ -1,7 +1,7 @@
 use crate::{
     BufferAllocator, Frame, GeometryInstanceData, PipelineCache, RenderDataBundle, RenderFrame,
-    RenderFrameContext, RenderPipelineManager, RenderServer, RenderWindow, RenderWindows,
-    SpecializedMeshPipeline, error::FrameworkError,
+    RenderFrameContext, RenderPipeline, RenderPipelineExt, RenderPipelineManager, RenderServer,
+    RenderWindow, RenderWindows, SpecializedMeshPipeline, error::FrameworkError,
 };
 use draft_geometry::{GeometryResource, GeometryVertexBufferLayouts};
 use draft_graphics::{
@@ -24,18 +24,32 @@ pub struct WorldRenderer {
     transient_resource_cache: TransientResourceCache,
 }
 
+impl RenderPipelineExt for WorldRenderer {
+    fn insert_pipeline(&mut self, name: &str, pipeline: RenderPipeline) {
+        self.render_pipeline_manager.insert_pipeline(name, pipeline);
+    }
+
+    fn pipeline(&self, name: &str) -> Option<&RenderPipeline> {
+        self.render_pipeline_manager.pipeline(name)
+    }
+
+    fn pipeline_mut(&mut self, name: &str) -> Option<&mut RenderPipeline> {
+        self.render_pipeline_manager.pipeline_mut(name)
+    }
+}
+
 impl WorldRenderer {
     pub fn new(
         render_server: RenderServer,
         system_window_manager: SystemWindowManager,
-        _resource_manager: &ResourceManager,
+        resource_manager: &ResourceManager,
     ) -> Self {
         Self {
-            pipeline_cache: PipelineCache::new(render_server.device.clone()),
+            pipeline_cache: PipelineCache::new(render_server.device.clone(), resource_manager),
             buffer_allocator: BufferAllocator::new(render_server.device.clone()),
             render_server,
             specialized_mesh_pipeline: Default::default(),
-            render_pipeline_manager: Default::default(),
+            render_pipeline_manager: RenderPipelineManager::default(),
             layouts: Default::default(),
             system_window_manager,
             transient_resource_cache: Default::default(),
@@ -43,7 +57,7 @@ impl WorldRenderer {
     }
 
     pub fn update(&mut self) {
-        self.pipeline_cache.process_queue();
+        self.pipeline_cache.update();
     }
 
     pub fn prepare_render_windows(&self) -> Result<RenderWindows, FrameworkError> {
