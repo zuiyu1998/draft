@@ -5,7 +5,20 @@ use draft_graphics::{
     wgpu::{self},
 };
 
+use draft_material::{IMaterial, MaterialInfo};
 use draft_render::{Node, RenderFrameContext, RenderPipeline};
+
+pub struct Material2d;
+
+impl IMaterial for Material2d {
+    fn name() -> &'static str {
+        "2d"
+    }
+
+    fn material_info() -> MaterialInfo {
+        MaterialInfo::default()
+    }
+}
 
 pub fn create_core_2d_render_pipiline() -> RenderPipeline {
     let mut pipeline = RenderPipeline::default();

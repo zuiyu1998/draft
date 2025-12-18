@@ -5,9 +5,9 @@ pub use bind_group::*;
 pub use effect::*;
 
 use draft_graphics::{ColorTargetState, DepthStencilState, MultisampleState, PrimitiveState};
-use draft_shader::{ShaderDefVal, ShaderResource};
+use draft_shader::{Shader, ShaderDefVal, ShaderResource};
 use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
-use fyrox_resource::{Resource, ResourceData};
+use fyrox_resource::{Resource, ResourceData, manager::BuiltInResource};
 use std::{error::Error, path::Path};
 
 pub type MaterialResource = Resource<Material>;
@@ -76,7 +76,7 @@ impl Material {
         let info = M::material_info();
 
         Self {
-            name: M::name(),
+            name: M::name().to_string(),
             effct_info: info.effct_info,
             pipeline_state: info.pipeline_state,
         }
@@ -96,7 +96,11 @@ pub struct MaterialInfo {
 }
 
 pub trait IMaterial {
-    fn name() -> String;
+    fn name() -> &'static str;
 
     fn material_info() -> MaterialInfo;
+
+    fn built_in_shaders() -> Vec<&'static BuiltInResource<Shader>> {
+        vec![]
+    }
 }
