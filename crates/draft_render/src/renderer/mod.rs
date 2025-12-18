@@ -9,8 +9,9 @@ use draft_graphics::{
     gfx_base::{GetPipelineContainer, TextureView, TextureViewDescriptor},
 };
 use draft_material::MaterialResource;
+use draft_shader::Shader;
 use draft_window::SystemWindowManager;
-use fyrox_resource::manager::ResourceManager;
+use fyrox_resource::{Resource, manager::ResourceManager};
 use tracing::error;
 
 pub struct WorldRenderer {
@@ -58,6 +59,10 @@ impl WorldRenderer {
 
     pub fn update(&mut self) {
         self.pipeline_cache.update();
+    }
+
+    pub fn set_shader(&mut self, shader: Resource<Shader>) {
+        self.pipeline_cache.set_shader(shader);
     }
 
     pub fn prepare_render_windows(&self) -> Result<RenderWindows, FrameworkError> {

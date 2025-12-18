@@ -518,12 +518,14 @@ impl BlendState {
 pub enum TextureFormat {
     #[default]
     R8Unorm,
+    Rgba8UnormSrgb
 }
 
 impl TextureFormat {
     pub fn get_wgpu_texture_format(&self) -> WgpuTextureFormat {
         match self {
             TextureFormat::R8Unorm => WgpuTextureFormat::R8Unorm,
+            TextureFormat::Rgba8UnormSrgb => WgpuTextureFormat::Rgba8UnormSrgb,
         }
     }
 }

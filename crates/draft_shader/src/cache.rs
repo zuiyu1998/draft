@@ -210,6 +210,7 @@ impl ShaderCache {
         shader_defs: &[ShaderDefVal],
     ) -> Result<Arc<ShaderModule>, ShaderCacheError> {
         let id = resource.key();
+
         let shader = self
             .shaders
             .get(&id)
@@ -221,6 +222,7 @@ impl ShaderCache {
             .imports()
             .filter(|import| matches!(import, ShaderImport::AssetPath(_)))
             .count();
+
         let n_resolved_asset_imports = data
             .resolved_imports
             .keys()

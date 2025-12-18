@@ -56,6 +56,7 @@ fn create_index_buffer(
     if data.is_none() {
         return None;
     }
+    let count = geomertry.count_indexs().unwrap();
 
     let data = data.unwrap();
 
@@ -77,6 +78,7 @@ fn create_index_buffer(
             desc,
         },
         len: size,
+        count,
     })
 }
 
@@ -87,8 +89,10 @@ pub struct BatchRenderMesh {
 }
 
 pub struct IndexBufferInfo {
-    buffer: Buffer,
+    pub buffer: Buffer,
     len: usize,
+
+    pub count: usize,
 }
 
 impl BatchRenderMesh {

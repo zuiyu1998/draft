@@ -7,5 +7,7 @@ edition = "2024"
 draft_render = { path = "../draft_render" }
 draft_geometry = { path = "../draft_geometry" }
 draft_material = { path = "../draft_material" }
+draft_render_2d = { path = "../draft_render_2d" }
+
 fyrox-resource = { workspace = true }
 fyrox-core = { workspace = true }

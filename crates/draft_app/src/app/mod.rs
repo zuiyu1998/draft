@@ -6,12 +6,12 @@ use std::{
     },
 };
 
-use draft_material::MaterialEffectLoader;
+use draft_material::{IMaterial, MaterialEffectLoader};
 use draft_render::{
     GraphicsContext, InitializedGraphicsContext, RenderPipelineExt, WorldRenderer,
     initialize_render_server,
 };
-use draft_render_2d::create_core_2d_render_pipiline;
+use draft_render_2d::{Material2d, create_core_2d_render_pipiline};
 use draft_scene::SceneContainer;
 use draft_window::{
     Error as WindoError, RawHandleWrapper, SystemWindowManager, Window, WindowWrapper,
@@ -135,6 +135,13 @@ impl App {
 
         self.graphics_context =
             GraphicsContext::Initialized(InitializedGraphicsContext::new(renderer, params));
+
+        for resource in Material2d::built_in_shaders() {
+            self.resource_manager
+                .register_built_in_resource(resource.clone());
+
+            self.graphics_context.set_shader(resource.resource());
+        }
 
         Ok(())
     }

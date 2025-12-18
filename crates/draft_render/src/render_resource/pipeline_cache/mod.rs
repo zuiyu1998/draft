@@ -1,6 +1,6 @@
 mod layout;
 
-use fyrox_resource::{event::ResourceEvent, manager::ResourceManager};
+use fyrox_resource::{Resource, event::ResourceEvent, manager::ResourceManager};
 pub use layout::*;
 use tracing::warn;
 
@@ -146,12 +146,16 @@ impl PipelineCache {
         self.process_queue();
     }
 
+    pub fn set_shader(&mut self, shader: Resource<Shader>) {
+        let mut shader_cache = self.shader_cache.lock();
+        shader_cache.set_shader(&shader);
+    }
+
     fn handle_shader_event(&mut self) {
         while let Ok(event) = self.shader_event_receiver.try_recv() {
             if let ResourceEvent::Loaded(resource) | ResourceEvent::Reloaded(resource) = event {
                 if let Some(shader) = resource.try_cast::<Shader>() {
-                    let mut shader_cache = self.shader_cache.lock();
-                    shader_cache.set_shader(&shader);
+                    self.set_shader(shader);
                 }
             }
         }
@@ -226,7 +230,9 @@ impl PipelineCache {
                     &descriptor.vertex.shader_defs,
                 ) {
                     Ok(module) => module,
-                    Err(err) => return Err(err.into()),
+                    Err(err) => {
+                        return Err(err.into());
+                    }
                 };
 
                 let fragment_module = match &descriptor.fragment {

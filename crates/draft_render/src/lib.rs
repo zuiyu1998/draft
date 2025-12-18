@@ -7,6 +7,8 @@ pub mod error;
 
 use std::sync::Arc;
 
+use draft_shader::Shader;
+use fyrox_resource::Resource;
 pub use render_frame::*;
 pub use render_pipeline::*;
 pub use render_resource::*;
@@ -70,6 +72,12 @@ impl GraphicsContext {
     pub fn render<W: World>(&mut self, world: &W) {
         if let GraphicsContext::Initialized(graphics_context) = self {
             graphics_context.renderer.render(world);
+        }
+    }
+
+    pub fn set_shader(&mut self, shader: Resource<Shader>) {
+        if let GraphicsContext::Initialized(graphics_context) = self {
+            graphics_context.renderer.set_shader(shader);
         }
     }
 }

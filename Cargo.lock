@@ -566,6 +566,8 @@ dependencies = [
  "draft_material",
  "draft_render",
  "draft_shader",
+ "fyrox-core",
+ "fyrox-resource",
 ]
 
 [[package]]
@@ -575,6 +577,7 @@ dependencies = [
  "draft_geometry",
  "draft_material",
  "draft_render",
+ "draft_render_2d",
  "fyrox-core",
  "fyrox-resource",
 ]

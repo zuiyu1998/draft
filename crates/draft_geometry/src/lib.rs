@@ -83,6 +83,13 @@ impl Geometry {
         vertex_count * vertex_size
     }
 
+    pub fn count_indexs(&self) -> Option<usize> {
+        self.indices.as_ref().map(|indices| match &indices {
+            Indices::U16(indices) => indices.len(),
+            Indices::U32(indices) => indices.len(),
+        })
+    }
+
     pub fn get_index_buffer_bytes(&self) -> Option<&[u8]> {
         self.indices.as_ref().map(|indices| match &indices {
             Indices::U16(indices) => cast_slice(&indices[..]),

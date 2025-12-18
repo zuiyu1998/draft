@@ -1,6 +1,7 @@
 use draft_geometry::{Circle, GeometryResource};
 use draft_material::{Material, MaterialResource};
 use draft_render::{GeometryInstanceData, RenderContext, World};
+use draft_render_2d::Material2d;
 use fyrox_core::uuid;
 use fyrox_resource::untyped::ResourceKind;
 
@@ -20,7 +21,7 @@ impl Default for SceneContainer {
         let material = MaterialResource::new_ok(
             uuid!("33ee0142-f345-4c0a-9aca-d1f684a34856"),
             ResourceKind::External,
-            Material::default(),
+            Material::new::<Material2d>(),
         );
 
         SceneContainer { geometry, material }
