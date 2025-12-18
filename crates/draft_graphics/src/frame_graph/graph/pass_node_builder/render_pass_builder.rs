@@ -1,11 +1,11 @@
-use std::mem::take;
+use std::{mem::take, ops::Range};
 
 use crate::{
     frame_graph::{
         Handle, PassNodeBuilderExt, Ref, RenderPass, ResourceMaterial, ResourceRead, ResourceWrite,
         TransientBindGroup, TransientBuffer, TransientRenderPassColorAttachment, TransientResource,
     },
-    gfx_base::CachedPipelineId,
+    gfx_base::GpuRenderPipeline,
 };
 
 use super::{PassBuilder, RenderPassExt};
@@ -62,6 +62,24 @@ impl<'a, 'b> RenderPassBuilder<'a, 'b> {
         }
     }
 
+    pub fn draw_indexed(
+        &mut self,
+        indices: Range<u32>,
+        base_vertex: i32,
+        instances: Range<u32>,
+    ) -> &mut Self {
+        self.render_pass
+            .draw_indexed(indices, base_vertex, instances);
+
+        self
+    }
+
+    pub fn draw(&mut self, vertices: Range<u32>, instances: Range<u32>) -> &mut Self {
+        self.render_pass.draw(vertices, instances);
+
+        self
+    }
+
     pub fn add_color_attachment(
         &mut self,
         color_attachment: TransientRenderPassColorAttachment,
@@ -71,8 +89,8 @@ impl<'a, 'b> RenderPassBuilder<'a, 'b> {
         self
     }
 
-    pub fn set_render_pipeline(&mut self, id: CachedPipelineId) -> &mut Self {
-        self.render_pass.set_render_pipeline(id);
+    pub fn set_render_pipeline(&mut self, pipeline: &GpuRenderPipeline) -> &mut Self {
+        self.render_pass.set_render_pipeline(pipeline.clone());
         self
     }
 

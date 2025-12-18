@@ -2,12 +2,13 @@ mod core_2d;
 
 use std::collections::HashMap;
 
-use draft_graphics::frame_graph::FrameGraph;
+use draft_graphics::{frame_graph::FrameGraph, gfx_base::PipelineContainer};
 
 use crate::{RenderFrame, render_pipeline::core_2d::create_core_2d_render_pipiline};
 
 pub struct RenderFrameContext<'a> {
     pub frame: &'a RenderFrame,
+    pub pipeline_container: &'a PipelineContainer
 }
 
 pub trait Node: 'static + Sync + Send {

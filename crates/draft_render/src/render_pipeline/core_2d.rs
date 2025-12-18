@@ -40,23 +40,34 @@ impl Node for UpscalingNode {
         });
 
         for batch in context.frame.batchs.iter() {
-            render_pass_buidler.set_render_pipeline(batch.id.id());
+            if let Some(pipeline) = context
+                .pipeline_container
+                .get_render_pipeline(batch.id.id())
+            {
+                render_pass_buidler.set_render_pipeline(pipeline);
 
-            let buffer_ref = render_pass_buidler.read_material(&batch.get_vertex_buffer_meta());
-            let slice = batch.vertex_buffer.slice(0..);
-            render_pass_buidler.set_vertex_buffer(0, &buffer_ref, slice.offset, slice.size);
-
-            if batch.index_buffer.is_some() {
-                let buffer_ref =
-                    render_pass_buidler.read_material(&batch.get_index_buffer_meta().unwrap());
+                let buffer_ref = render_pass_buidler.read_material(&batch.get_vertex_buffer_meta());
                 let slice = batch.vertex_buffer.slice(0..);
-                render_pass_buidler.set_index_buffer(
-                    &buffer_ref,
-                    wgpu::IndexFormat::Uint32,
-                    slice.offset,
-                    slice.size,
-                );
-            } else {
+                render_pass_buidler.set_vertex_buffer(0, &buffer_ref, slice.offset, slice.size);
+
+                if batch.index_buffer.is_some() {
+                    let size = batch.get_index_buffer_size().unwrap() as u32;
+
+                    let buffer_ref =
+                        render_pass_buidler.read_material(&batch.get_index_buffer_meta().unwrap());
+                    let slice = batch.vertex_buffer.slice(0..);
+                    render_pass_buidler.set_index_buffer(
+                        &buffer_ref,
+                        wgpu::IndexFormat::Uint32,
+                        slice.offset,
+                        slice.size,
+                    );
+
+                    render_pass_buidler.draw_indexed(0..size, 0, 0..1);
+
+                } else {
+                    render_pass_buidler.draw(0..3, 0..1);
+                }
             }
         }
     }

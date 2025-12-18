@@ -1,3 +1,5 @@
+mod draw_indexed_parameter;
+mod draw_parameter;
 mod set_bind_group_parameter;
 mod set_index_buffer_parameter;
 mod set_render_pipeline_parameter;
@@ -7,18 +9,36 @@ use crate::{
     frame_graph::{
         Ref, RenderPass, RenderPassCommand, ResourceRead, TransientBindGroup, TransientBuffer,
     },
-    gfx_base::CachedPipelineId,
+    gfx_base::GpuRenderPipeline,
 };
+use draw_indexed_parameter::*;
+use draw_parameter::*;
 use set_bind_group_parameter::*;
 use set_index_buffer_parameter::*;
 use set_render_pipeline_parameter::*;
 use set_vertex_buffer_parameter::*;
+use std::ops::Range;
 
 pub trait RenderPassExt {
     fn push<T: RenderPassCommand>(&mut self, value: T);
 
-    fn set_render_pipeline(&mut self, id: CachedPipelineId) {
-        self.push(SetRenderPipelineParameter { id });
+    fn draw_indexed(&mut self, indices: Range<u32>, base_vertex: i32, instances: Range<u32>) {
+        self.push(DrawIndexedParameter {
+            indices,
+            base_vertex,
+            instances,
+        });
+    }
+
+    fn draw(&mut self, vertices: Range<u32>, instances: Range<u32>) {
+        self.push(DrawParameter {
+            vertices,
+            instances,
+        });
+    }
+
+    fn set_render_pipeline(&mut self, pipeline: GpuRenderPipeline) {
+        self.push(SetRenderPipelineParameter { pipeline });
     }
 
     fn set_bind_group(&mut self, index: u32, bind_group: &TransientBindGroup, offsets: &[u32]) {

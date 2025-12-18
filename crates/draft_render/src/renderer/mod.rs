@@ -108,7 +108,12 @@ impl WorldRenderer {
     fn render_frame(&mut self, frame: RenderFrame) {
         self.render_pipeline_manager.update();
 
-        let context = RenderFrameContext { frame: &frame };
+        let pipeline_container = self.pipeline_cache.get_pipeline_container();
+
+        let context = RenderFrameContext {
+            frame: &frame,
+            pipeline_container: &pipeline_container,
+        };
         let mut frame_graph = FrameGraph::default();
 
         if let Some(pipeline) = self.render_pipeline_manager.pipeline_mut("core_2d") {
@@ -116,8 +121,6 @@ impl WorldRenderer {
         }
 
         frame_graph.compile();
-
-        let pipeline_container = self.pipeline_cache.get_pipeline_container();
 
         let mut frame_graph_context = FrameGraphContext::new(
             pipeline_container,

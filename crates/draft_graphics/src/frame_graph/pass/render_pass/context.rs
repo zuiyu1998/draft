@@ -1,6 +1,8 @@
+use std::ops::Range;
+
 use crate::{
     frame_graph::{PassContext, Ref, ResourceRead, TransientBindGroup, TransientBuffer},
-    gfx_base::{CachedPipelineId, GpuRenderPass},
+    gfx_base::{GpuRenderPass, GpuRenderPipeline},
 };
 
 pub struct RenderPassContext<'a, 'b> {
@@ -16,8 +18,19 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
         }
     }
 
-    pub fn set_render_pipeline(&mut self, id: CachedPipelineId) {
-        let pipeline = self.pass_context.get_render_pipeline(id);
+    pub fn draw_indexed(&mut self, indices: Range<u32>, base_vertex: i32, instances: Range<u32>) {
+        self.render_pass
+            .get_render_pass_mut()
+            .draw_indexed(indices, base_vertex, instances);
+    }
+
+    pub fn draw(&mut self, vertices: Range<u32>, instances: Range<u32>) {
+        self.render_pass
+            .get_render_pass_mut()
+            .draw(vertices, instances);
+    }
+
+    pub fn set_render_pipeline(&mut self, pipeline: &GpuRenderPipeline) {
         self.render_pass
             .get_render_pass_mut()
             .set_pipeline(pipeline.wgpu());

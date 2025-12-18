@@ -49,7 +49,7 @@ fn create_index_buffer(
     geomertry: &GeometryResource,
     buffer_allocator: &mut BufferAllocator,
     render_queue: &RenderQueue,
-) -> Option<Buffer> {
+) -> Option<IndexBufferInfo> {
     let geomertry = geomertry.data_ref();
     let data = geomertry.get_index_buffer_bytes();
 
@@ -59,9 +59,11 @@ fn create_index_buffer(
 
     let data = data.unwrap();
 
+    let size = data.len();
+
     let desc = BufferDescriptor {
         label: None,
-        size: data.len() as u64,
+        size: size as u64,
         usage: BufferUsages::INDEX | BufferUsages::COPY_DST,
         mapped_at_creation: false,
     };
@@ -69,16 +71,24 @@ fn create_index_buffer(
     let buffer = buffer_allocator.get_buffer(index_buffer_handle);
     render_queue.write_buffer(&buffer, 0, &data);
 
-    Some(Buffer {
-        value: buffer,
-        desc,
+    Some(IndexBufferInfo {
+        buffer: Buffer {
+            value: buffer,
+            desc,
+        },
+        len: size,
     })
 }
 
 pub struct BatchRenderMesh {
     pub vertex_buffer: Buffer,
-    pub index_buffer: Option<Buffer>,
+    pub index_buffer: Option<IndexBufferInfo>,
     pub id: CachedRenderPipelineId,
+}
+
+pub struct IndexBufferInfo {
+    buffer: Buffer,
+    len: usize,
 }
 
 impl BatchRenderMesh {
@@ -89,15 +99,21 @@ impl BatchRenderMesh {
         }
     }
 
-    pub fn get_index_buffer_meta(&self) -> Option<BufferMeta> {
-        if self.index_buffer.is_none() {
-            return None;
+    pub fn get_index_buffer_size(&self) -> Option<usize> {
+        match &self.index_buffer {
+            Some(index_buffer) => Some(index_buffer.len),
+            None => None,
         }
+    }
 
-        Some(BufferMeta {
-            key: "index".to_string(),
-            value: self.index_buffer.as_ref().unwrap().clone(),
-        })
+    pub fn get_index_buffer_meta(&self) -> Option<BufferMeta> {
+        match &self.index_buffer {
+            Some(index_buffer) => Some(BufferMeta {
+                key: "index".to_string(),
+                value: index_buffer.buffer.clone(),
+            }),
+            None => None,
+        }
     }
 }
 

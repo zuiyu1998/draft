@@ -14,14 +14,18 @@ impl PipelineContainer {
     }
 
     pub fn get_render_pipeline(&self, id: CachedPipelineId) -> Option<&GpuRenderPipeline> {
-        self.0[id]
-            .as_ref()
-            .and_then(|pipelie| pipelie.get_render_pipeline())
+        self.0.get(id).and_then(|pipeline| {
+            pipeline
+                .as_ref()
+                .and_then(|pipeline| pipeline.get_render_pipeline())
+        })
     }
 
     pub fn get_compute_pipeline(&self, id: CachedPipelineId) -> Option<&GpuComputePipeline> {
-        self.0[id]
-            .as_ref()
-            .and_then(|pipelie| pipelie.get_compute_pipeline())
+        self.0.get(id).and_then(|pipeline| {
+            pipeline
+                .as_ref()
+                .and_then(|pipeline| pipeline.get_compute_pipeline())
+        })
     }
 }
