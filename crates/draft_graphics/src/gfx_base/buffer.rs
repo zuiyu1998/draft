@@ -1,3 +1,5 @@
+use std::ops::{Bound, RangeBounds};
+
 use wgpu::{
     Buffer as WgpuBuffer, BufferAddress, BufferDescriptor as WgpuBufferDescriptor, BufferUsages,
 };
@@ -56,7 +58,31 @@ impl BufferInitDescriptor<'_> {
 }
 
 #[derive(Clone, Debug)]
+pub struct BufferSlice {
+    pub offset: wgpu::BufferAddress,
+    pub size: wgpu::BufferAddress,
+}
+
+#[derive(Clone, Debug)]
 pub struct Buffer {
     pub value: GpuBuffer,
     pub desc: BufferDescriptor,
+}
+
+impl Buffer {
+    pub fn slice(&self, bounds: impl RangeBounds<wgpu::BufferAddress>) -> BufferSlice {
+        // need to compute and store this manually because wgpu doesn't export offset and size on wgpu::BufferSlice
+        let offset = match bounds.start_bound() {
+            Bound::Included(&bound) => bound,
+            Bound::Excluded(&bound) => bound + 1,
+            Bound::Unbounded => 0,
+        };
+        let size = match bounds.end_bound() {
+            Bound::Included(&bound) => bound + 1,
+            Bound::Excluded(&bound) => bound,
+            Bound::Unbounded => self.value.size(),
+        } - offset;
+
+        BufferSlice { offset, size }
+    }
 }

@@ -9,7 +9,7 @@ use draft_graphics::{
     gfx_base::{GetPipelineContainer, TextureView, TextureViewDescriptor},
 };
 use draft_material::MaterialResource;
-use draft_window::{SystemWindowManager, Window};
+use draft_window::SystemWindowManager;
 use fyrox_resource::manager::ResourceManager;
 use tracing::error;
 
@@ -165,45 +165,4 @@ impl RenderContext<'_> {
 
 pub trait World {
     fn prepare(&self, context: &mut RenderContext);
-}
-
-pub struct InitializedGraphicsContext {
-    pub renderer: WorldRenderer,
-    pub params: GraphicsContextParams,
-}
-
-impl InitializedGraphicsContext {
-    pub fn new(renderer: WorldRenderer, params: GraphicsContextParams) -> Self {
-        Self { renderer, params }
-    }
-}
-
-#[derive(Default, Clone)]
-pub struct GraphicsContextParams {
-    pub window: Window,
-}
-
-pub enum GraphicsContext {
-    Initialized(InitializedGraphicsContext),
-    Uninitialized(GraphicsContextParams),
-}
-
-impl GraphicsContext {
-    pub fn update(&mut self) {
-        if let GraphicsContext::Initialized(graphics_context) = self {
-            graphics_context.renderer.update();
-        }
-    }
-
-    pub fn render<W: World>(&mut self, world: &W) {
-        if let GraphicsContext::Initialized(graphics_context) = self {
-            graphics_context.renderer.render(world);
-        }
-    }
-}
-
-impl Default for GraphicsContext {
-    fn default() -> Self {
-        GraphicsContext::Uninitialized(Default::default())
-    }
 }

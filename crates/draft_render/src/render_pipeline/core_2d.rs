@@ -1,5 +1,7 @@
 use draft_graphics::{
-    frame_graph::{FrameGraph, TransientRenderPassColorAttachment, TransientTextureView},
+    frame_graph::{
+        FrameGraph, PassNodeBuilderExt, TransientRenderPassColorAttachment, TransientTextureView,
+    },
     wgpu,
 };
 
@@ -36,5 +38,26 @@ impl Node for UpscalingNode {
                 store: wgpu::StoreOp::Store,
             },
         });
+
+        for batch in context.frame.batchs.iter() {
+            render_pass_buidler.set_render_pipeline(batch.id.id());
+
+            let buffer_ref = render_pass_buidler.read_material(&batch.get_vertex_buffer_meta());
+            let slice = batch.vertex_buffer.slice(0..);
+            render_pass_buidler.set_vertex_buffer(0, &buffer_ref, slice.offset, slice.size);
+
+            if batch.index_buffer.is_some() {
+                let buffer_ref =
+                    render_pass_buidler.read_material(&batch.get_index_buffer_meta().unwrap());
+                let slice = batch.vertex_buffer.slice(0..);
+                render_pass_buidler.set_index_buffer(
+                    &buffer_ref,
+                    wgpu::IndexFormat::Uint32,
+                    slice.offset,
+                    slice.size,
+                );
+            } else {
+            }
+        }
     }
 }

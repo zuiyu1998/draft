@@ -2,8 +2,8 @@ use std::mem::take;
 
 use crate::{
     frame_graph::{
-        Ref, RenderPass, ResourceRead, TransientBindGroup, TransientBuffer,
-        TransientRenderPassColorAttachment,
+        Handle, PassNodeBuilderExt, Ref, RenderPass, ResourceMaterial, ResourceRead, ResourceWrite,
+        TransientBindGroup, TransientBuffer, TransientRenderPassColorAttachment, TransientResource,
     },
     gfx_base::CachedPipelineId,
 };
@@ -18,6 +18,36 @@ pub struct RenderPassBuilder<'a, 'b> {
 impl Drop for RenderPassBuilder<'_, '_> {
     fn drop(&mut self) {
         self.finish();
+    }
+}
+
+impl PassNodeBuilderExt for RenderPassBuilder<'_, '_> {
+    fn read_material<M: ResourceMaterial>(
+        &mut self,
+        material: &M,
+    ) -> Ref<M::ResourceType, ResourceRead> {
+        self.pass_builder.read_material(material)
+    }
+
+    fn write_material<M: ResourceMaterial>(
+        &mut self,
+        material: &M,
+    ) -> Ref<M::ResourceType, ResourceWrite> {
+        self.pass_builder.write_material(material)
+    }
+
+    fn read<ResourceType: TransientResource>(
+        &mut self,
+        resource_handle: Handle<ResourceType>,
+    ) -> Ref<ResourceType, ResourceRead> {
+        self.pass_builder.read(resource_handle)
+    }
+
+    fn write<ResourceType: TransientResource>(
+        &mut self,
+        resource_handle: Handle<ResourceType>,
+    ) -> Ref<ResourceType, ResourceWrite> {
+        self.pass_builder.write(resource_handle)
     }
 }
 

@@ -2,7 +2,7 @@ mod render_data_bundle;
 mod window;
 
 use draft_graphics::{
-    gfx_base::{BufferDescriptor, GpuBuffer, RenderQueue},
+    gfx_base::{Buffer, BufferDescriptor, RenderQueue},
     wgpu::BufferUsages,
 };
 pub use render_data_bundle::*;
@@ -10,7 +10,9 @@ pub use window::*;
 
 use draft_geometry::{GeometryResource, GeometryVertexBufferLayouts};
 
-use crate::{BufferAllocator, CachedRenderPipelineId, PipelineCache, error::FrameworkError};
+use crate::{
+    BufferAllocator, BufferMeta, CachedRenderPipelineId, PipelineCache, error::FrameworkError,
+};
 
 pub struct Frame {
     pub windows: RenderWindows,
@@ -21,7 +23,7 @@ fn create_vertext_buffer(
     geomertry: &GeometryResource,
     buffer_allocator: &mut BufferAllocator,
     render_queue: &RenderQueue,
-) -> GpuBuffer {
+) -> Buffer {
     let geomertry = geomertry.data_ref();
     let vertex_buffer_size = geomertry.get_vertex_buffer_size();
 
@@ -32,19 +34,22 @@ fn create_vertext_buffer(
         mapped_at_creation: false,
     };
 
-    let vertext_buffer_handle = buffer_allocator.allocate(desc);
+    let vertext_buffer_handle = buffer_allocator.allocate(desc.clone());
     let buffer = buffer_allocator.get_buffer(vertext_buffer_handle);
     let data = geomertry.create_packed_vertex_buffer_data();
     render_queue.write_buffer(&buffer, 0, &data);
 
-    buffer
+    Buffer {
+        value: buffer,
+        desc,
+    }
 }
 
 fn create_index_buffer(
     geomertry: &GeometryResource,
     buffer_allocator: &mut BufferAllocator,
     render_queue: &RenderQueue,
-) -> Option<GpuBuffer> {
+) -> Option<Buffer> {
     let geomertry = geomertry.data_ref();
     let data = geomertry.get_index_buffer_bytes();
 
@@ -60,17 +65,40 @@ fn create_index_buffer(
         usage: BufferUsages::INDEX | BufferUsages::COPY_DST,
         mapped_at_creation: false,
     };
-    let index_buffer_handle = buffer_allocator.allocate(desc);
+    let index_buffer_handle = buffer_allocator.allocate(desc.clone());
     let buffer = buffer_allocator.get_buffer(index_buffer_handle);
     render_queue.write_buffer(&buffer, 0, &data);
 
-    Some(buffer)
+    Some(Buffer {
+        value: buffer,
+        desc,
+    })
 }
 
 pub struct BatchRenderMesh {
-    pub vertex_buffer: GpuBuffer,
-    pub index_buffer: Option<GpuBuffer>,
+    pub vertex_buffer: Buffer,
+    pub index_buffer: Option<Buffer>,
     pub id: CachedRenderPipelineId,
+}
+
+impl BatchRenderMesh {
+    pub fn get_vertex_buffer_meta(&self) -> BufferMeta {
+        BufferMeta {
+            key: "vertex".to_string(),
+            value: self.vertex_buffer.clone(),
+        }
+    }
+
+    pub fn get_index_buffer_meta(&self) -> Option<BufferMeta> {
+        if self.index_buffer.is_none() {
+            return None;
+        }
+
+        Some(BufferMeta {
+            key: "index".to_string(),
+            value: self.index_buffer.as_ref().unwrap().clone(),
+        })
+    }
 }
 
 impl Frame {
@@ -99,12 +127,12 @@ impl Frame {
 
         Ok(RenderFrame {
             windows: self.windows,
-            batchs
+            batchs,
         })
     }
 }
 
 pub struct RenderFrame {
     pub windows: RenderWindows,
-    pub batchs: Vec<BatchRenderMesh>
+    pub batchs: Vec<BatchRenderMesh>,
 }
