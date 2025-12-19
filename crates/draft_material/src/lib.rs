@@ -13,14 +13,14 @@ use std::{error::Error, path::Path};
 pub type MaterialResource = Resource<Material>;
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
-pub struct VertexState {
+pub struct MaterialVertexState {
     pub shader: ShaderResource,
     pub entry_point: Option<String>,
     pub shader_defs: Vec<ShaderDefVal>,
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
-pub struct FragmentState {
+pub struct MaterialFragmentState {
     pub shader: ShaderResource,
     pub entry_point: Option<String>,
     pub targets: Vec<Option<ColorTargetState>>,
@@ -29,8 +29,8 @@ pub struct FragmentState {
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
 pub struct PipelineState {
-    pub vertex: VertexState,
-    pub fragment: Option<FragmentState>,
+    pub vertex: MaterialVertexState,
+    pub fragment: Option<MaterialFragmentState>,
     pub push_constant_ranges: Vec<PushConstantRange>,
     pub depth_stencil: Option<DepthStencilState>,
     pub multisample: MultisampleState,

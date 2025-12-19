@@ -353,7 +353,7 @@ impl DepthStencilState {
     }
 }
 
-#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize)]
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, PartialEq, Eq, Hash)]
 pub struct ColorWrites(u32);
 
 bitflags::bitflags! {
@@ -385,7 +385,7 @@ impl ColorWrites {
     }
 }
 
-#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default, PartialEq, Eq, Hash)]
 pub enum BlendOperation {
     /// Src + Dst
     #[default]
@@ -412,7 +412,7 @@ impl BlendOperation {
     }
 }
 
-#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default, PartialEq, Eq, Hash)]
 pub enum BlendFactor {
     /// 0.0
     #[default]
@@ -475,7 +475,7 @@ impl BlendFactor {
     }
 }
 
-#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default, PartialEq, Eq, Hash)]
 pub struct BlendComponent {
     /// Multiplier for the source, which is produced by the fragment shader.
     pub src_factor: BlendFactor,
@@ -496,7 +496,7 @@ impl BlendComponent {
     }
 }
 
-#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default, PartialEq, Eq, Hash)]
 pub struct BlendState {
     /// Color equation.
     pub color: BlendComponent,
@@ -514,7 +514,7 @@ impl BlendState {
 }
 
 //todo impl more TextureFormat
-#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default, PartialEq, Eq, Hash)]
 pub enum TextureFormat {
     #[default]
     R8Unorm,
@@ -530,7 +530,7 @@ impl TextureFormat {
     }
 }
 
-#[derive(Debug, Clone, Visit, Reflect, Default)]
+#[derive(Debug, Clone, Visit, Reflect, Default, PartialEq, Eq, Hash)]
 pub struct ColorTargetState {
     pub format: TextureFormat,
     pub blend: Option<BlendState>,

@@ -8,7 +8,9 @@ use draft_graphics::{
     wgpu::{self},
 };
 
-use draft_material::{FragmentState, IMaterial, MaterialInfo, PipelineState, VertexState};
+use draft_material::{
+    IMaterial, MaterialFragmentState, MaterialInfo, MaterialVertexState, PipelineState,
+};
 use draft_render::{Node, RenderFrameContext, RenderPipeline};
 use draft_shader::{Shader, ShaderResource};
 use fyrox_core::uuid;
@@ -39,12 +41,12 @@ impl IMaterial for Material2d {
         let mut info = MaterialInfo::default();
 
         info.pipeline_state = PipelineState {
-            vertex: VertexState {
+            vertex: MaterialVertexState {
                 entry_point: Some("vertex".to_string()),
                 shader: MESH_2D.resource(),
                 ..Default::default()
             },
-            fragment: Some(FragmentState {
+            fragment: Some(MaterialFragmentState {
                 entry_point: Some("fragment".to_string()),
                 shader: MESH_2D.resource(),
                 targets: vec![Some(ColorTargetState {

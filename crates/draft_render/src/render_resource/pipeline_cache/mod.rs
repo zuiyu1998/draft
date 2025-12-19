@@ -15,8 +15,8 @@ use std::{
 };
 
 use draft_graphics::{
-    DepthStencilState, MultisampleState, PipelineCompilationOptions, PrimitiveState,
-    PushConstantRange, VertexBufferLayout,
+    ColorTargetState, DepthStencilState, MultisampleState, PipelineCompilationOptions,
+    PrimitiveState, PushConstantRange, VertexBufferLayout,
     gfx_base::{
         BindGroupLayout, CachedPipelineId, FragmentState as GpuFragmentState, GetPipelineContainer,
         GpuPipeline, PipelineContainer, RenderDevice,
@@ -27,7 +27,7 @@ use draft_shader::{Shader, ShaderCache, ShaderCacheError, ShaderDefVal, ShaderRe
 use fyrox_core::{futures::executor::block_on, parking_lot::Mutex};
 use thiserror::Error;
 
-use draft_material::FragmentState;
+use draft_material::MaterialFragmentState;
 
 #[derive(Debug, Clone)]
 pub struct VertexState {
@@ -38,12 +38,20 @@ pub struct VertexState {
 }
 
 #[derive(Debug, Clone)]
+pub struct FragmentState {
+    pub shader: ShaderResource,
+    pub entry_point: Option<String>,
+    pub targets: Vec<Option<ColorTargetState>>,
+    pub shader_defs: Vec<ShaderDefVal>,
+}
+
+#[derive(Debug, Clone)]
 pub struct RenderPipelineDescriptor {
     pub label: Option<String>,
     pub layout: Vec<BindGroupLayout>,
     pub push_constant_ranges: Vec<PushConstantRange>,
     pub vertex: VertexState,
-    pub fragment: Option<FragmentState>,
+    pub fragment: Option<MaterialFragmentState>,
     pub depth_stencil: Option<DepthStencilState>,
     pub multisample: MultisampleState,
     pub primitive: PrimitiveState,

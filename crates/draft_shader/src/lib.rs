@@ -31,7 +31,7 @@ pub enum ShaderStage {
     Mesh,
 }
 
-#[derive(Debug, Clone, Reflect, Visit)]
+#[derive(Debug, Clone, Reflect, Visit, PartialEq, Eq, Hash)]
 pub enum Source {
     Wgsl(String),
     Glsl(String, ShaderStage),
@@ -102,7 +102,7 @@ pub enum ShaderError {
     FromUtf8Error(#[from] FromUtf8Error),
 }
 
-#[derive(Debug, Clone, Reflect, Visit, Default)]
+#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
 pub struct ImportDefinition {
     pub import: String,
     pub items: Vec<String>,
@@ -117,7 +117,7 @@ impl ImportDefinition {
     }
 }
 
-#[derive(Debug, Clone, Reflect, Visit, Default)]
+#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
 pub struct Shader {
     pub path: String,
     pub source: Source,

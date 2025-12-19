@@ -11,7 +11,8 @@ pub use window::*;
 use draft_geometry::{GeometryResource, GeometryVertexBufferLayouts};
 
 use crate::{
-    BufferAllocator, BufferMeta, CachedRenderPipelineId, PipelineCache, error::FrameworkError,
+    BufferAllocator, BufferMeta, CachedRenderPipelineId, PipelineCache, SpecializedMeshPipeline,
+    error::FrameworkError,
 };
 
 pub struct Frame {
