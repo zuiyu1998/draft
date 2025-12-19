@@ -16,7 +16,7 @@ use fyrox_resource::{embedded_data_source, manager::BuiltInResource, untyped::Re
 
 pub static MESH_2D: LazyLock<BuiltInResource<Shader>> = LazyLock::new(|| {
     BuiltInResource::new(
-        "__BOLD_ITALIC__",
+        "__MESH_2D__",
         embedded_data_source!("./mesh2d.wgsl"),
         |data| {
             ShaderResource::new_ok(

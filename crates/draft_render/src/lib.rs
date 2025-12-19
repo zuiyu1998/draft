@@ -2,17 +2,20 @@ mod render_frame;
 mod render_pipeline;
 mod render_resource;
 mod renderer;
+mod render_phase;
 
 pub mod error;
 
 use std::sync::Arc;
 
-use draft_shader::Shader;
-use fyrox_resource::Resource;
 pub use render_frame::*;
 pub use render_pipeline::*;
 pub use render_resource::*;
 pub use renderer::*;
+pub use render_phase::*;
+
+use draft_shader::Shader;
+use fyrox_resource::Resource;
 
 use draft_graphics::{
     frame_graph::{
