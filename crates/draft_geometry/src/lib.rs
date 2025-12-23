@@ -90,6 +90,10 @@ impl Geometry {
         })
     }
 
+    pub fn indices(&self) -> Option<&Indices> {
+        self.indices.as_ref()
+    }
+
     pub fn get_index_buffer_bytes(&self) -> Option<&[u8]> {
         self.indices.as_ref().map(|indices| match &indices {
             Indices::U16(indices) => cast_slice(&indices[..]),

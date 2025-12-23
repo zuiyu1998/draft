@@ -37,6 +37,18 @@ pub struct PipelineState {
     pub primitive: PrimitiveState,
 }
 
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+pub struct MaterialClass {
+    pub name: String,
+    pub effct_info: MaterialEffctInfo,
+}
+
+impl MaterialClass {
+    pub fn new(name: String, effct_info: MaterialEffctInfo) -> Self {
+        Self { name, effct_info }
+    }
+}
+
 #[derive(Debug, Clone, Reflect, Visit, Default)]
 pub struct Material {
     pub name: String,
@@ -73,7 +85,7 @@ impl ResourceData for Material {
 
 impl Material {
     pub fn new<M: IMaterial>() -> Self {
-        let info = M::material_info();
+        let info = M::info();
 
         Self {
             name: M::name().to_string(),
@@ -81,11 +93,15 @@ impl Material {
             pipeline_state: info.pipeline_state,
         }
     }
+
+    pub fn get_class(&self) -> MaterialClass {
+        MaterialClass::new(self.name.clone(), self.effct_info.clone())
+    }
 }
 
-#[derive(Debug, Clone, Reflect, Visit, Default)]
+#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
 pub struct MaterialEffctInfo {
-    pub effect_name: Option<String>,
+    pub effect_name: String,
     pub technique: usize,
 }
 
@@ -98,7 +114,7 @@ pub struct MaterialInfo {
 pub trait IMaterial {
     fn name() -> &'static str;
 
-    fn material_info() -> MaterialInfo;
+    fn info() -> MaterialInfo;
 
     fn built_in_shaders() -> Vec<&'static BuiltInResource<Shader>> {
         vec![]

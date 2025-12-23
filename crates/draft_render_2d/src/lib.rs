@@ -37,7 +37,7 @@ impl IMaterial for Material2d {
         "2d"
     }
 
-    fn material_info() -> MaterialInfo {
+    fn info() -> MaterialInfo {
         let mut info = MaterialInfo::default();
 
         info.pipeline_state = PipelineState {
