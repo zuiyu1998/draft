@@ -29,16 +29,40 @@ pub use texture_view::*;
 
 pub use wgpu::{ShaderModuleDescriptor, ShaderSource};
 
-use wgpu::{Adapter, BufferAddress, CommandBuffer, Instance, Queue, SurfaceTarget};
+use wgpu::{
+    Adapter, BufferAddress, BufferSize, CommandBuffer, Instance, Queue, QueueWriteBufferView,
+    SurfaceTarget,
+};
 
 use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct RenderQueue(Arc<Queue>);
 
+pub trait WriteBufferView: 'static {
+    fn get_writer(&mut self) -> &mut [u8];
+}
+
+impl WriteBufferView for QueueWriteBufferView {
+    fn get_writer(&mut self) -> &mut [u8] {
+        self.as_mut()
+    }
+}
+
 impl RenderQueue {
     pub fn new(queue: Queue) -> Self {
         Self(Arc::new(queue))
+    }
+
+    pub fn write_buffer_with(
+        &self,
+        buffer: &GpuBuffer,
+        offset: BufferAddress,
+        size: BufferSize,
+    ) -> Option<Box<dyn WriteBufferView>> {
+        self.0
+            .write_buffer_with(buffer.get_wgpu_buffer(), offset, size)
+            .map(|buffer_view| Box::new(buffer_view) as Box<dyn WriteBufferView>)
     }
 
     pub fn write_buffer(&self, buffer: &GpuBuffer, offset: BufferAddress, data: &[u8]) {

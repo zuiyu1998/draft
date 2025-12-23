@@ -104,6 +104,7 @@ impl WorldRenderer {
 
         let mut context = RenderContext {
             render_data_bundle: &mut render_data_bundle,
+            layouts: &mut self.layouts,
         };
 
         world.prepare(&mut context);
@@ -170,6 +171,7 @@ impl WorldRenderer {
 
 pub struct RenderContext<'a> {
     render_data_bundle: &'a mut RenderDataBundle,
+    layouts: &'a mut GeometryVertexBufferLayouts,
 }
 
 impl RenderContext<'_> {
@@ -181,7 +183,7 @@ impl RenderContext<'_> {
     ) {
         self.render_data_bundle
             .mesh
-            .push(geometry, material, instance);
+            .push(geometry, material, instance, self.layouts);
     }
 }
 

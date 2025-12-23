@@ -8,7 +8,7 @@ use wgpu::{
 pub struct GpuBuffer(WgpuBuffer);
 
 impl GpuBuffer {
-    pub(crate) fn get_wgpu_buffer(&self) -> &WgpuBuffer {
+    pub fn get_wgpu_buffer(&self) -> &WgpuBuffer {
         &self.0
     }
 
@@ -18,6 +18,22 @@ impl GpuBuffer {
 
     pub fn new(buffer: WgpuBuffer) -> Self {
         Self(buffer)
+    }
+
+    pub fn slice(&self, bounds: impl RangeBounds<wgpu::BufferAddress>) -> BufferSlice {
+        // need to compute and store this manually because wgpu doesn't export offset and size on wgpu::BufferSlice
+        let offset = match bounds.start_bound() {
+            Bound::Included(&bound) => bound,
+            Bound::Excluded(&bound) => bound + 1,
+            Bound::Unbounded => 0,
+        };
+        let size = match bounds.end_bound() {
+            Bound::Included(&bound) => bound + 1,
+            Bound::Excluded(&bound) => bound,
+            Bound::Unbounded => self.size(),
+        } - offset;
+
+        BufferSlice { offset, size }
     }
 }
 
@@ -61,28 +77,4 @@ impl BufferInitDescriptor<'_> {
 pub struct BufferSlice {
     pub offset: wgpu::BufferAddress,
     pub size: wgpu::BufferAddress,
-}
-
-#[derive(Clone, Debug)]
-pub struct Buffer {
-    pub value: GpuBuffer,
-    pub desc: BufferDescriptor,
-}
-
-impl Buffer {
-    pub fn slice(&self, bounds: impl RangeBounds<wgpu::BufferAddress>) -> BufferSlice {
-        // need to compute and store this manually because wgpu doesn't export offset and size on wgpu::BufferSlice
-        let offset = match bounds.start_bound() {
-            Bound::Included(&bound) => bound,
-            Bound::Excluded(&bound) => bound + 1,
-            Bound::Unbounded => 0,
-        };
-        let size = match bounds.end_bound() {
-            Bound::Included(&bound) => bound + 1,
-            Bound::Excluded(&bound) => bound,
-            Bound::Unbounded => self.value.size(),
-        } - offset;
-
-        BufferSlice { offset, size }
-    }
 }

@@ -1,150 +1,42 @@
 mod render_data_bundle;
 mod window;
 
-use draft_graphics::{
-    gfx_base::{Buffer, BufferDescriptor, RenderQueue},
-    wgpu::BufferUsages,
-};
+use draft_graphics::gfx_base::RenderQueue;
 pub use render_data_bundle::*;
 pub use window::*;
 
-use draft_geometry::{GeometryResource, GeometryVertexBufferLayouts};
+use draft_geometry::GeometryVertexBufferLayouts;
 
-use crate::{
-    BufferAllocator, BufferMeta, CachedRenderPipelineId, PipelineCache, SpecializedMeshPipeline,
-    error::FrameworkError,
-};
+use crate::{BufferAllocator, PipelineCache, SpecializedMeshPipeline, error::FrameworkError};
 
 pub struct Frame {
     pub windows: RenderWindows,
     pub render_data_bundle: RenderDataBundle,
 }
 
-fn create_vertext_buffer(
-    geomertry: &GeometryResource,
-    buffer_allocator: &mut BufferAllocator,
-    render_queue: &RenderQueue,
-) -> Buffer {
-    let geomertry = geomertry.data_ref();
-    let vertex_buffer_size = geomertry.get_vertex_buffer_size();
-
-    let desc = BufferDescriptor {
-        label: None,
-        size: vertex_buffer_size as u64,
-        usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
-        mapped_at_creation: false,
-    };
-
-    let vertext_buffer_handle = buffer_allocator.allocate(desc.clone());
-    let buffer = buffer_allocator.get_buffer(vertext_buffer_handle);
-    let data = geomertry.create_packed_vertex_buffer_data();
-    render_queue.write_buffer(&buffer, 0, &data);
-
-    Buffer {
-        value: buffer,
-        desc,
-    }
-}
-
-fn create_index_buffer(
-    geomertry: &GeometryResource,
-    buffer_allocator: &mut BufferAllocator,
-    render_queue: &RenderQueue,
-) -> Option<IndexBufferInfo> {
-    let geomertry = geomertry.data_ref();
-    let data = geomertry.get_index_buffer_bytes();
-
-    if data.is_none() {
-        return None;
-    }
-    let count = geomertry.count_indexs().unwrap();
-
-    let data = data.unwrap();
-
-    let size = data.len();
-
-    let desc = BufferDescriptor {
-        label: None,
-        size: size as u64,
-        usage: BufferUsages::INDEX | BufferUsages::COPY_DST,
-        mapped_at_creation: false,
-    };
-    let index_buffer_handle = buffer_allocator.allocate(desc.clone());
-    let buffer = buffer_allocator.get_buffer(index_buffer_handle);
-    render_queue.write_buffer(&buffer, 0, &data);
-
-    Some(IndexBufferInfo {
-        buffer: Buffer {
-            value: buffer,
-            desc,
-        },
-        len: size,
-        count,
-    })
-}
-
-pub struct BatchRenderMesh {
-    pub vertex_buffer: Buffer,
-    pub index_buffer: Option<IndexBufferInfo>,
-    pub id: CachedRenderPipelineId,
-}
-
-pub struct IndexBufferInfo {
-    pub buffer: Buffer,
-    len: usize,
-
-    pub count: usize,
-}
-
-impl BatchRenderMesh {
-    pub fn get_vertex_buffer_meta(&self) -> BufferMeta {
-        BufferMeta {
-            key: "vertex".to_string(),
-            value: self.vertex_buffer.clone(),
-        }
-    }
-
-    pub fn get_index_buffer_size(&self) -> Option<usize> {
-        match &self.index_buffer {
-            Some(index_buffer) => Some(index_buffer.len),
-            None => None,
-        }
-    }
-
-    pub fn get_index_buffer_meta(&self) -> Option<BufferMeta> {
-        match &self.index_buffer {
-            Some(index_buffer) => Some(BufferMeta {
-                key: "index".to_string(),
-                value: index_buffer.buffer.clone(),
-            }),
-            None => None,
-        }
-    }
-}
-
 impl Frame {
     pub fn prepare(
         self,
-        specialized_mesh_pipeline: &mut SpecializedMeshPipeline,
-        pipeline_cache: &mut PipelineCache,
-        layouts: &mut GeometryVertexBufferLayouts,
-        buffer_allocator: &mut BufferAllocator,
-        render_queue: &RenderQueue,
+        _specialized_mesh_pipeline: &mut SpecializedMeshPipeline,
+        _pipeline_cache: &mut PipelineCache,
+        _layouts: &mut GeometryVertexBufferLayouts,
+        _buffer_allocator: &mut BufferAllocator,
+        _render_queue: &RenderQueue,
     ) -> Result<RenderFrame, FrameworkError> {
-        let mut batchs = vec![];
+        let batchs = vec![];
 
-        for batch in self.render_data_bundle.mesh.values() {
-            let vertex_buffer =
-                create_vertext_buffer(&batch.geometry, buffer_allocator, render_queue);
-            let index_buffer = create_index_buffer(&batch.geometry, buffer_allocator, render_queue);
-            let id = specialized_mesh_pipeline.get(batch, pipeline_cache, layouts)?;
+        // for batch in self.render_data_bundle.mesh.values() {
+        //     let vertex_buffer =
+        //         create_vertext_buffer(&batch.geometry, buffer_allocator, render_queue);
+        //     let index_buffer = create_index_buffer(&batch.geometry, buffer_allocator, render_queue);
+        //     let id = specialized_mesh_pipeline.get(batch, pipeline_cache, layouts)?;
 
-            batchs.push(BatchRenderMesh {
-                vertex_buffer,
-                id,
-                index_buffer,
-            });
-        }
+        //     batchs.push(BatchRenderMesh {
+        //         vertex_buffer,
+        //         id,
+        //         index_buffer,
+        //     });
+        // }
 
         Ok(RenderFrame {
             windows: self.windows,
@@ -152,6 +44,8 @@ impl Frame {
         })
     }
 }
+
+pub struct BatchRenderMesh {}
 
 pub struct RenderFrame {
     pub windows: RenderWindows,

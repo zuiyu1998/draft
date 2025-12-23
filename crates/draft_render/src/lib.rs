@@ -1,18 +1,18 @@
 mod render_frame;
+mod render_phase;
 mod render_pipeline;
 mod render_resource;
 mod renderer;
-mod render_phase;
 
 pub mod error;
 
 use std::sync::Arc;
 
 pub use render_frame::*;
+pub use render_phase::*;
 pub use render_pipeline::*;
 pub use render_resource::*;
 pub use renderer::*;
-pub use render_phase::*;
 
 use draft_shader::Shader;
 use fyrox_resource::Resource;
@@ -21,24 +21,25 @@ use draft_graphics::{
     frame_graph::{
         FrameGraph, Handle, ResourceMaterial, TransientBuffer, TransientBufferDescriptor,
     },
-    gfx_base::Buffer,
+    gfx_base::{BufferDescriptor, GpuBuffer},
 };
 use draft_window::Window;
 
-pub struct BufferMeta {
+pub struct ImportBufferMeta {
     key: String,
-    value: Buffer,
+    value: GpuBuffer,
+    desc: BufferDescriptor,
 }
 
-impl ResourceMaterial for BufferMeta {
+impl ResourceMaterial for ImportBufferMeta {
     type ResourceType = TransientBuffer;
 
     fn imported(&self, frame_graph: &mut FrameGraph) -> Handle<Self::ResourceType> {
         frame_graph.import(
             &self.key,
             Arc::new(TransientBuffer {
-                resource: self.value.value.clone(),
-                desc: TransientBufferDescriptor::from_buffer_desc(&self.value.desc),
+                resource: self.value.clone(),
+                desc: TransientBufferDescriptor::from_buffer_desc(&self.desc),
             }),
         )
     }

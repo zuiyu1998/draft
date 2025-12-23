@@ -1,32 +1,49 @@
-use draft_material::MaterialResource;
+use draft_material::{MaterialClass, MaterialResource};
 
-use draft_geometry::GeometryResource;
-use fxhash::{FxHashMap, FxHasher};
-use std::{collections::hash_map::Entry, hash::Hasher, ops::Deref};
+use draft_geometry::{
+    GeometryResource, GeometryVertexBufferLayoutRef, GeometryVertexBufferLayouts,
+};
+use fxhash::FxHashMap;
+use std::{collections::hash_map::Entry, ops::Deref};
 
 pub struct GeometryInstanceData {}
 
 pub struct BatchMesh {
     pub geometry: GeometryResource,
     pub material: MaterialResource,
-    pub instances: Vec<GeometryInstanceData>,
+    pub instance: GeometryInstanceData,
 }
 
-impl BatchMesh {
-    pub fn key(geometry: &GeometryResource, material: &MaterialResource) -> u64 {
-        let mut hasher = FxHasher::default();
-        hasher.write_u64(geometry.key());
-        hasher.write_u64(material.key());
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+pub struct BatchMeshKey {
+    pub geometry_layout: GeometryVertexBufferLayoutRef,
+    pub material_class: MaterialClass,
+}
 
-        hasher.finish()
+impl BatchMeshKey {
+    pub fn new(
+        geometry: &GeometryResource,
+        material: &MaterialResource,
+        layouts: &mut GeometryVertexBufferLayouts,
+    ) -> BatchMeshKey {
+        let geometry = geometry.data_ref();
+        let geometry_layout = geometry.get_geometry_vertex_buffer_layout(layouts);
+
+        let material = material.data_ref();
+        let material_class = material.get_class();
+
+        BatchMeshKey {
+            geometry_layout,
+            material_class,
+        }
     }
 }
 
 #[derive(Default)]
-pub struct BatchMeshContainer(FxHashMap<u64, BatchMesh>);
+pub struct BatchMeshContainer(FxHashMap<BatchMeshKey, Vec<BatchMesh>>);
 
 impl Deref for BatchMeshContainer {
-    type Target = FxHashMap<u64, BatchMesh>;
+    type Target = FxHashMap<BatchMeshKey, Vec<BatchMesh>>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -39,19 +56,24 @@ impl BatchMeshContainer {
         geometry: GeometryResource,
         material: MaterialResource,
         instance: GeometryInstanceData,
+        layouts: &mut GeometryVertexBufferLayouts,
     ) {
-        let key = BatchMesh::key(&geometry, &material);
+        let key = BatchMeshKey::new(&geometry, &material, layouts);
 
         match self.0.entry(key) {
             Entry::Occupied(entry) => {
-                entry.into_mut().instances.push(instance);
-            }
-            Entry::Vacant(entry) => {
-                entry.insert(BatchMesh {
+                entry.into_mut().push(BatchMesh {
                     geometry,
                     material,
-                    instances: vec![instance],
+                    instance,
                 });
+            }
+            Entry::Vacant(entry) => {
+                entry.insert(vec![BatchMesh {
+                    geometry,
+                    material,
+                    instance,
+                }]);
             }
         }
     }

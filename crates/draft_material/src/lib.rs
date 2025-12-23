@@ -39,19 +39,17 @@ pub struct PipelineState {
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct MaterialClass {
-    pub name: String,
     pub effct_info: MaterialEffctInfo,
 }
 
 impl MaterialClass {
-    pub fn new(name: String, effct_info: MaterialEffctInfo) -> Self {
-        Self { name, effct_info }
+    pub fn new(effct_info: MaterialEffctInfo) -> Self {
+        Self { effct_info }
     }
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
 pub struct Material {
-    pub name: String,
     pub effct_info: MaterialEffctInfo,
     pub pipeline_state: PipelineState,
 }
@@ -88,14 +86,13 @@ impl Material {
         let info = M::info();
 
         Self {
-            name: M::name().to_string(),
             effct_info: info.effct_info,
             pipeline_state: info.pipeline_state,
         }
     }
 
     pub fn get_class(&self) -> MaterialClass {
-        MaterialClass::new(self.name.clone(), self.effct_info.clone())
+        MaterialClass::new(self.effct_info.clone())
     }
 }
 
