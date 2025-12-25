@@ -1,18 +1,18 @@
-use draft_geometry::{Circle, GeometryResource};
+use draft_mesh::{Circle, MeshResource};
 use draft_material::{Material, MaterialResource};
-use draft_render::{GeometryInstanceData, RenderContext, World};
+use draft_render::{MeshInstanceData, RenderContext, World};
 use draft_render_2d::Material2d;
 use fyrox_core::uuid;
 use fyrox_resource::untyped::ResourceKind;
 
 pub struct SceneContainer {
-    geometry: GeometryResource,
+    mesh: MeshResource,
     material: MaterialResource,
 }
 
 impl Default for SceneContainer {
     fn default() -> Self {
-        let geometry = GeometryResource::new_ok(
+        let mesh = MeshResource::new_ok(
             uuid!("33ee0142-f345-4c0a-9aca-d1f684a3485b"),
             ResourceKind::External,
             Circle::default().into(),
@@ -24,16 +24,16 @@ impl Default for SceneContainer {
             Material::new::<Material2d>(),
         );
 
-        SceneContainer { geometry, material }
+        SceneContainer { mesh, material }
     }
 }
 
 impl World for SceneContainer {
     fn prepare(&self, context: &mut RenderContext) {
         context.push(
-            self.geometry.clone(),
+            self.mesh.clone(),
             self.material.clone(),
-            GeometryInstanceData {},
+            MeshInstanceData {},
         );
     }
 }

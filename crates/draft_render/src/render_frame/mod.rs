@@ -5,7 +5,7 @@ use draft_graphics::gfx_base::RenderQueue;
 pub use render_data_bundle::*;
 pub use window::*;
 
-use draft_geometry::GeometryVertexBufferLayouts;
+use draft_mesh::MeshVertexBufferLayouts;
 
 use crate::{BufferAllocator, PipelineCache, SpecializedMeshPipeline, error::FrameworkError};
 
@@ -19,7 +19,7 @@ impl Frame {
         self,
         _specialized_mesh_pipeline: &mut SpecializedMeshPipeline,
         _pipeline_cache: &mut PipelineCache,
-        _layouts: &mut GeometryVertexBufferLayouts,
+        _layouts: &mut MeshVertexBufferLayouts,
         _buffer_allocator: &mut BufferAllocator,
         _render_queue: &RenderQueue,
     ) -> Result<RenderFrame, FrameworkError> {
@@ -27,8 +27,8 @@ impl Frame {
 
         // for batch in self.render_data_bundle.mesh.values() {
         //     let vertex_buffer =
-        //         create_vertext_buffer(&batch.geometry, buffer_allocator, render_queue);
-        //     let index_buffer = create_index_buffer(&batch.geometry, buffer_allocator, render_queue);
+        //         create_vertext_buffer(&batch.Mesh, buffer_allocator, render_queue);
+        //     let index_buffer = create_index_buffer(&batch.Mesh, buffer_allocator, render_queue);
         //     let id = specialized_mesh_pipeline.get(batch, pipeline_cache, layouts)?;
 
         //     batchs.push(BatchRenderMesh {

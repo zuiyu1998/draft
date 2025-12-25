@@ -9,22 +9,20 @@ use crate::{
 };
 use draft_material::{MaterialFragmentState, MaterialResource, MaterialVertexState, PipelineState};
 
-use draft_geometry::{
-    GeometryResource, GeometryVertexBufferLayoutRef, GeometryVertexBufferLayouts,
-};
+use draft_mesh::{MeshVertexBufferLayoutRef, MeshVertexBufferLayouts, MeshResource};
 use fxhash::FxHasher;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct GeometryKey {
+pub struct MeshKey {
     id: u64,
-    layout: GeometryVertexBufferLayoutRef,
+    layout: MeshVertexBufferLayoutRef,
 }
 
-impl GeometryKey {
-    pub fn create(geometry: &GeometryResource, layouts: &mut GeometryVertexBufferLayouts) -> Self {
-        let id = geometry.key();
-        let geometry = geometry.data_ref();
-        let layout = geometry.get_geometry_vertex_buffer_layout(layouts);
+impl MeshKey {
+    pub fn create(mesh: &MeshResource, layouts: &mut MeshVertexBufferLayouts) -> Self {
+        let id = mesh.key();
+        let mesh = mesh.data_ref();
+        let layout = mesh.get_mesh_vertex_buffer_layout(layouts);
         Self { id, layout }
     }
 }
@@ -105,26 +103,26 @@ impl MaterialKey {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MeshPipelineKey {
-    geometry: GeometryKey,
+    mesh: MeshKey,
     material: MaterialKey,
 }
 
 fn get_mesh_pipeline_key(
     batch: &BatchMesh,
-    layouts: &mut GeometryVertexBufferLayouts,
+    layouts: &mut MeshVertexBufferLayouts,
 ) -> Result<MeshPipelineKey, FrameworkError> {
     if !batch.material.is_ok() {
         return Err(FrameworkError::MaterialInvalid(batch.material.summary()));
     }
 
-    if !batch.geometry.is_ok() {
-        return Err(FrameworkError::GeometryInvalid(batch.material.summary()));
+    if !batch.mesh.is_ok() {
+        return Err(FrameworkError::MeshInvalid(batch.mesh.summary()));
     }
 
-    let geometry = GeometryKey::create(&batch.geometry, layouts);
+    let mesh = MeshKey::create(&batch.mesh, layouts);
     let material = MaterialKey::from_material(&batch.material);
 
-    Ok(MeshPipelineKey { geometry, material })
+    Ok(MeshPipelineKey { mesh, material })
 }
 
 #[derive(Default)]
@@ -137,7 +135,7 @@ impl SpecializedMeshPipeline {
         &mut self,
         batch: &BatchMesh,
         pipeline_cache: &mut PipelineCache,
-        layouts: &mut GeometryVertexBufferLayouts,
+        layouts: &mut MeshVertexBufferLayouts,
     ) -> Result<CachedRenderPipelineId, FrameworkError> {
         let key = get_mesh_pipeline_key(batch, layouts)?;
 
@@ -146,9 +144,9 @@ impl SpecializedMeshPipeline {
         }
 
         let layout = batch
-            .geometry
+            .mesh
             .data_ref()
-            .get_geometry_vertex_buffer_layout(layouts);
+            .get_mesh_vertex_buffer_layout(layouts);
 
         let pipeline_state = batch.material.data_ref().pipeline_state.clone();
 
@@ -163,7 +161,7 @@ impl SpecializedMeshPipeline {
         &mut self,
         pipeline_state: PipelineState,
         pipeline_cache: &mut PipelineCache,
-        layout: &GeometryVertexBufferLayoutRef,
+        layout: &MeshVertexBufferLayoutRef,
     ) -> Result<CachedRenderPipelineId, FrameworkError> {
         let buffer = layout.0.layout().clone();
 

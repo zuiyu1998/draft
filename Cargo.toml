@@ -11,7 +11,7 @@ members = [
     "crates/draft_internal",
     "crates/draft_window",
     "crates/draft_winit",
-    "crates/draft_geometry",
+    "crates/draft_mesh",
     "crates/draft_graphics",
     "crates/draft_scene",
     "crates/draft_shader",

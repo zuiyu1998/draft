@@ -3,19 +3,19 @@ use std::f32::consts::FRAC_PI_2;
 
 use crate::{Indices, PrimitiveTopology};
 
-use super::Geometry;
+use super::Mesh;
 
-pub trait Geometryable {
-    type Output: GeometryBuilder;
+pub trait Meshable {
+    type Output: MeshBuilder;
 
-    fn geometry(&self) -> Self::Output;
+    fn mesh(&self) -> Self::Output;
 }
 
-pub trait GeometryBuilder {
-    fn build(&self) -> Geometry;
+pub trait MeshBuilder {
+    fn build(&self) -> Mesh;
 }
 
-impl<T: GeometryBuilder> From<T> for Geometry {
+impl<T: MeshBuilder> From<T> for Mesh {
     fn from(builder: T) -> Self {
         builder.build()
     }
@@ -33,8 +33,8 @@ impl EllipseMeshBuilder {
     }
 }
 
-impl GeometryBuilder for EllipseMeshBuilder {
-    fn build(&self) -> Geometry {
+impl MeshBuilder for EllipseMeshBuilder {
+    fn build(&self) -> Mesh {
         let resolution = self.resolution as usize;
         let mut indices = Vec::with_capacity((resolution - 2) * 3);
         let mut positions = Vec::with_capacity(resolution);
@@ -60,10 +60,10 @@ impl GeometryBuilder for EllipseMeshBuilder {
             indices.extend_from_slice(&[0, i, i + 1]);
         }
 
-        Geometry::new(PrimitiveTopology::TriangleList)
-            .with_inserted_attribute(Geometry::attribute_position(), positions)
-            .with_inserted_attribute(Geometry::attribute_normal(), normals)
-            .with_inserted_attribute(Geometry::attribute_uv_0(), uvs)
+        Mesh::new(PrimitiveTopology::TriangleList)
+            .with_inserted_attribute(Mesh::attribute_position(), positions)
+            .with_inserted_attribute(Mesh::attribute_normal(), normals)
+            .with_inserted_attribute(Mesh::attribute_uv_0(), uvs)
             .with_inserted_indices(Indices::U32(indices))
     }
 }
@@ -91,10 +91,10 @@ impl Default for Ellipse {
     }
 }
 
-impl Geometryable for Ellipse {
+impl Meshable for Ellipse {
     type Output = EllipseMeshBuilder;
 
-    fn geometry(&self) -> Self::Output {
+    fn mesh(&self) -> Self::Output {
         EllipseMeshBuilder {
             ellipse: *self,
             ..Default::default()
@@ -135,19 +135,19 @@ impl Default for CircleMeshBuilder {
     }
 }
 
-impl GeometryBuilder for CircleMeshBuilder {
-    fn build(&self) -> Geometry {
+impl MeshBuilder for CircleMeshBuilder {
+    fn build(&self) -> Mesh {
         Ellipse::new(self.circle.radius, self.circle.radius)
-            .geometry()
+            .mesh()
             .resolution(self.resolution)
             .build()
     }
 }
 
-impl Geometryable for Circle {
+impl Meshable for Circle {
     type Output = CircleMeshBuilder;
 
-    fn geometry(&self) -> Self::Output {
+    fn mesh(&self) -> Self::Output {
         CircleMeshBuilder {
             circle: *self,
             ..Default::default()
@@ -155,8 +155,8 @@ impl Geometryable for Circle {
     }
 }
 
-impl From<Circle> for Geometry {
+impl From<Circle> for Mesh {
     fn from(circle: Circle) -> Self {
-        circle.geometry().build()
+        circle.mesh().build()
     }
 }

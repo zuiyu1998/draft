@@ -1,9 +1,9 @@
 use crate::{
-    BufferAllocator, Frame, GeometryInstanceData, PipelineCache, RenderDataBundle, RenderFrame,
+    BufferAllocator, Frame, MeshInstanceData, PipelineCache, RenderDataBundle, RenderFrame,
     RenderFrameContext, RenderPipeline, RenderPipelineExt, RenderPipelineManager, RenderServer,
     RenderWindow, RenderWindows, SpecializedMeshPipeline, error::FrameworkError,
 };
-use draft_geometry::{GeometryResource, GeometryVertexBufferLayouts};
+use draft_mesh::{MeshResource, MeshVertexBufferLayouts};
 use draft_graphics::{
     frame_graph::{FrameGraph, FrameGraphContext, TransientResourceCache},
     gfx_base::{GetPipelineContainer, TextureView, TextureViewDescriptor},
@@ -19,7 +19,7 @@ pub struct WorldRenderer {
     pipeline_cache: PipelineCache,
     specialized_mesh_pipeline: SpecializedMeshPipeline,
     render_pipeline_manager: RenderPipelineManager,
-    layouts: GeometryVertexBufferLayouts,
+    layouts: MeshVertexBufferLayouts,
     system_window_manager: SystemWindowManager,
     buffer_allocator: BufferAllocator,
     transient_resource_cache: TransientResourceCache,
@@ -171,19 +171,19 @@ impl WorldRenderer {
 
 pub struct RenderContext<'a> {
     render_data_bundle: &'a mut RenderDataBundle,
-    layouts: &'a mut GeometryVertexBufferLayouts,
+    layouts: &'a mut MeshVertexBufferLayouts,
 }
 
 impl RenderContext<'_> {
     pub fn push(
         &mut self,
-        geometry: GeometryResource,
+        mesh: MeshResource,
         material: MaterialResource,
-        instance: GeometryInstanceData,
+        instance: MeshInstanceData,
     ) {
         self.render_data_bundle
             .mesh
-            .push(geometry, material, instance, self.layouts);
+            .push(mesh, material, instance, self.layouts);
     }
 }
 

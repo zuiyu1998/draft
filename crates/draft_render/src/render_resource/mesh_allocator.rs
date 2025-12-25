@@ -5,8 +5,8 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use draft_geometry::{
-    Geometry, GeometryResource, GeometryVertexBufferLayoutRef, GeometryVertexBufferLayouts, Indices,
+use draft_mesh::{
+    Indices, Mesh, MeshResource, MeshVertexBufferLayoutRef, MeshVertexBufferLayouts,
 };
 use draft_graphics::{
     gfx_base::{BufferDescriptor, CommandEncoderDescriptor, RenderDevice, RenderQueue},
@@ -17,7 +17,7 @@ use nonmax::NonMaxU32;
 use offset_allocator::{Allocation, Allocator};
 use tracing::error;
 
-type GeometryKey = u64;
+type MeshKey = u64;
 
 use crate::{BufferAllocator, ImportBufferMeta};
 
@@ -57,12 +57,12 @@ impl ElementLayout {
         self.size * self.elements_per_slot as u64
     }
 
-    fn vertex(layout: &GeometryVertexBufferLayoutRef) -> ElementLayout {
+    fn vertex(layout: &MeshVertexBufferLayoutRef) -> ElementLayout {
         ElementLayout::new(ElementClass::Vertex, layout.0.layout().array_stride)
     }
 
-    fn index(geometry: &Geometry) -> Option<ElementLayout> {
-        let size = match geometry.indices()? {
+    fn index(mesh: &Mesh) -> Option<ElementLayout> {
+        let size = match mesh.indices()? {
             Indices::U16(_) => 2,
             Indices::U32(_) => 4,
         };
@@ -126,8 +126,8 @@ enum SlabGrowthResult {
 pub struct GeneralSlab {
     allocator: Allocator,
     buffer: Option<ImportBufferMeta>,
-    resident_allocations: FxHashMap<GeometryKey, SlabAllocation>,
-    pending_allocations: FxHashMap<GeometryKey, SlabAllocation>,
+    resident_allocations: FxHashMap<MeshKey, SlabAllocation>,
+    pending_allocations: FxHashMap<MeshKey, SlabAllocation>,
     element_layout: ElementLayout,
     current_slot_capacity: u32,
 }
@@ -230,8 +230,8 @@ impl DerefMut for SlabsToReallocate {
 pub struct MeshAllocator {
     slabs: FxHashMap<SlabId, Slab>,
     slab_layouts: FxHashMap<ElementLayout, Vec<SlabId>>,
-    geometry_key_to_vertex_slab: FxHashMap<GeometryKey, SlabId>,
-    geometry_key_to_index_slab: FxHashMap<GeometryKey, SlabId>,
+    mesh_key_to_vertex_slab: FxHashMap<MeshKey, SlabId>,
+    mesh_key_to_index_slab: FxHashMap<MeshKey, SlabId>,
     pub general_vertex_slabs_supported: bool,
     next_slab_id: SlabId,
 
@@ -243,8 +243,8 @@ impl MeshAllocator {
         Self {
             slab_layouts: Default::default(),
             next_slab_id: Default::default(),
-            geometry_key_to_vertex_slab: Default::default(),
-            geometry_key_to_index_slab: Default::default(),
+            mesh_key_to_vertex_slab: Default::default(),
+            mesh_key_to_index_slab: Default::default(),
             slabs: Default::default(),
             general_vertex_slabs_supported: true,
             extra_buffer_usages: BufferUsages::empty(),
@@ -253,25 +253,23 @@ impl MeshAllocator {
 
     fn record_allocation(
         &mut self,
-        geometry_key: GeometryKey,
+        mesh_key: MeshKey,
         slab_id: SlabId,
         element_class: ElementClass,
     ) {
         match element_class {
             ElementClass::Vertex => {
-                self.geometry_key_to_vertex_slab
-                    .insert(geometry_key, slab_id);
+                self.mesh_key_to_vertex_slab.insert(mesh_key, slab_id);
             }
             ElementClass::Index => {
-                self.geometry_key_to_index_slab
-                    .insert(geometry_key, slab_id);
+                self.mesh_key_to_index_slab.insert(mesh_key, slab_id);
             }
         }
     }
 
     fn allocate_general(
         &mut self,
-        geometry_key: GeometryKey,
+        mesh_key: MeshKey,
         data_slot_count: u32,
         layout: ElementLayout,
         settings: &MeshAllocatorSettings,
@@ -337,15 +335,15 @@ impl MeshAllocator {
         if let Some(Slab::General(general_slab)) = self.slabs.get_mut(&mesh_allocation.slab_id) {
             general_slab
                 .pending_allocations
-                .insert(geometry_key, mesh_allocation.slab_allocation);
+                .insert(mesh_key, mesh_allocation.slab_allocation);
         };
 
-        self.record_allocation(geometry_key, mesh_allocation.slab_id, layout.class);
+        self.record_allocation(mesh_key, mesh_allocation.slab_id, layout.class);
     }
 
     fn allocate(
         &mut self,
-        geometry_key: GeometryKey,
+        mesh_key: MeshKey,
         data_byte_len: u64,
         layout: ElementLayout,
         settings: &MeshAllocatorSettings,
@@ -354,13 +352,7 @@ impl MeshAllocator {
         let data_element_count = data_byte_len.div_ceil(layout.size) as u32;
         let data_slot_count = data_element_count.div_ceil(layout.elements_per_slot);
 
-        self.allocate_general(
-            geometry_key,
-            data_slot_count,
-            layout,
-            settings,
-            slabs_to_grow,
-        );
+        self.allocate_general(mesh_key, data_slot_count, layout, settings, slabs_to_grow);
     }
 
     fn reallocate_slab(
@@ -427,40 +419,39 @@ impl MeshAllocator {
 
     pub fn allocate_meshes(
         &mut self,
-        geometrys: &[GeometryResource],
+        meshs: &[MeshResource],
         settings: &MeshAllocatorSettings,
-        layouts: &mut GeometryVertexBufferLayouts,
+        layouts: &mut MeshVertexBufferLayouts,
         buffer_allocator: &mut BufferAllocator,
         render_device: &RenderDevice,
         render_queue: &RenderQueue,
     ) {
         let mut slabs_to_grow = SlabsToReallocate::default();
 
-        for geometry in geometrys {
-            let geometry_key = geometry.key();
-            let geometry = geometry.data_ref();
+        for mesh in meshs {
+            let mesh_key = mesh.key();
+            let mesh = mesh.data_ref();
 
-            let vertex_buffer_size = geometry.get_vertex_buffer_size() as u64;
+            let vertex_buffer_size = mesh.get_vertex_buffer_size() as u64;
             if vertex_buffer_size == 0 {
                 return;
             }
 
-            let layout = geometry.get_geometry_vertex_buffer_layout(layouts);
+            let layout = mesh.get_mesh_vertex_buffer_layout(layouts);
 
             self.allocate(
-                geometry_key,
+                mesh_key,
                 vertex_buffer_size,
                 ElementLayout::vertex(&layout),
                 settings,
                 &mut slabs_to_grow,
             );
 
-            if let (Some(index_buffer_data), Some(index_element_layout)) = (
-                geometry.get_index_buffer_bytes(),
-                ElementLayout::index(&geometry),
-            ) {
+            if let (Some(index_buffer_data), Some(index_element_layout)) =
+                (mesh.get_index_buffer_bytes(), ElementLayout::index(&mesh))
+            {
                 self.allocate(
-                    geometry_key,
+                    mesh_key,
                     index_buffer_data.len() as u64,
                     index_element_layout,
                     settings,
@@ -479,32 +470,32 @@ impl MeshAllocator {
             );
         }
 
-        for geometry in geometrys {
-            self.copy_mesh_vertex_data(geometry, render_device, render_queue);
-            self.copy_mesh_index_data(geometry, render_device, render_queue);
+        for mesh in meshs {
+            self.copy_mesh_vertex_data(mesh, render_device, render_queue);
+            self.copy_mesh_index_data(mesh, render_device, render_queue);
         }
     }
 
     fn copy_mesh_index_data(
         &mut self,
-        geometry: &GeometryResource,
+        mesh: &MeshResource,
         render_device: &RenderDevice,
         render_queue: &RenderQueue,
     ) {
-        let geometry_key = geometry.key();
+        let mesh_key = mesh.key();
 
-        let Some(&slab_id) = self.geometry_key_to_index_slab.get(&geometry_key) else {
+        let Some(&slab_id) = self.mesh_key_to_index_slab.get(&mesh_key) else {
             return;
         };
-        let geometry = geometry.data_ref();
+        let mesh = mesh.data_ref();
 
-        let Some(index_data) = geometry.get_index_buffer_bytes() else {
+        let Some(index_data) = mesh.get_index_buffer_bytes() else {
             return;
         };
 
         // Call the generic function.
         self.copy_element_data(
-            geometry_key,
+            mesh_key,
             index_data.len(),
             |slice| slice.copy_from_slice(index_data),
             BufferUsages::INDEX,
@@ -516,20 +507,20 @@ impl MeshAllocator {
 
     fn copy_mesh_vertex_data(
         &mut self,
-        geometry: &GeometryResource,
+        mesh: &MeshResource,
         render_device: &RenderDevice,
         render_queue: &RenderQueue,
     ) {
-        let geometry_key = geometry.key();
+        let mesh_key = mesh.key();
 
-        let Some(&slab_id) = self.geometry_key_to_vertex_slab.get(&geometry_key) else {
+        let Some(&slab_id) = self.mesh_key_to_vertex_slab.get(&mesh_key) else {
             return;
         };
 
-        let mesh = geometry.data_ref();
+        let mesh = mesh.data_ref();
 
         self.copy_element_data(
-            geometry_key,
+            mesh_key,
             mesh.get_vertex_buffer_size(),
             |slice| mesh.write_packed_vertex_buffer_data(slice),
             BufferUsages::VERTEX,
@@ -541,7 +532,7 @@ impl MeshAllocator {
 
     fn copy_element_data(
         &mut self,
-        geometry_key: GeometryKey,
+        mesh_key: MeshKey,
         len: usize,
         fill_data: impl Fn(&mut [u8]),
         _buffer_usages: BufferUsages,
@@ -557,7 +548,7 @@ impl MeshAllocator {
             Slab::General(ref mut general_slab) => {
                 let (Some(buffer), Some(allocated_range)) = (
                     &general_slab.buffer,
-                    general_slab.pending_allocations.remove(&geometry_key),
+                    general_slab.pending_allocations.remove(&mesh_key),
                 ) else {
                     return;
                 };
@@ -580,7 +571,7 @@ impl MeshAllocator {
                 // Mark the allocation as resident.
                 general_slab
                     .resident_allocations
-                    .insert(geometry_key, allocated_range);
+                    .insert(mesh_key, allocated_range);
             }
         }
     }

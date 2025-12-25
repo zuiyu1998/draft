@@ -12,7 +12,7 @@ use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*, warn};
 use fyrox_resource::{Resource, ResourceData};
 use std::{collections::BTreeMap, error::Error, path::Path};
 
-pub type GeometryResource = Resource<Geometry>;
+pub type MeshResource = Resource<Mesh>;
 
 #[derive(Debug, Clone, Reflect)]
 pub enum Indices {
@@ -28,16 +28,16 @@ impl Default for Indices {
 
 #[derive(Debug, Clone, Default, Reflect, TypeUuidProvider)]
 #[type_uuid(id = "8a23a414-e66d-4e12-9628-92c6ab49c2f0")]
-pub struct Geometry {
+pub struct Mesh {
     primitive_topology: PrimitiveTopology,
     #[reflect(hidden)]
-    attributes: BTreeMap<GeometryVertexAttributeId, MeshAttributeData>,
+    attributes: BTreeMap<MeshVertexAttributeId, MeshAttributeData>,
     indices: Option<Indices>,
 }
 
-impl Geometry {
+impl Mesh {
     pub fn new(primitive_topology: PrimitiveTopology) -> Self {
-        Geometry {
+        Mesh {
             primitive_topology,
             attributes: Default::default(),
             indices: None,
@@ -128,10 +128,10 @@ impl Geometry {
         }
     }
 
-    pub fn get_geometry_vertex_buffer_layout(
+    pub fn get_mesh_vertex_buffer_layout(
         &self,
-        geometry_vertex_buffer_layouts: &mut GeometryVertexBufferLayouts,
-    ) -> GeometryVertexBufferLayoutRef {
+        mesh_vertex_buffer_layouts: &mut MeshVertexBufferLayouts,
+    ) -> MeshVertexBufferLayoutRef {
         let mut attributes = Vec::with_capacity(self.attributes.len());
         let mut attribute_ids = Vec::with_capacity(self.attributes.len());
         let mut accumulated_offset = 0;
@@ -145,7 +145,7 @@ impl Geometry {
             accumulated_offset += data.attribute.format.size();
         }
 
-        let layout = GeometryVertexBufferLayout {
+        let layout = MeshVertexBufferLayout {
             layout: VertexBufferLayout {
                 array_stride: accumulated_offset,
                 step_mode: VertexStepMode::Vertex,
@@ -153,19 +153,19 @@ impl Geometry {
             },
             attribute_ids,
         };
-        geometry_vertex_buffer_layouts.insert(layout)
+        mesh_vertex_buffer_layouts.insert(layout)
     }
 
-    pub fn attribute_position() -> GeometryhVertexAttribute {
-        GeometryhVertexAttribute::new("Vertex_Position", 0, VertexFormat::Float32x3)
+    pub fn attribute_position() -> MeshhVertexAttribute {
+        MeshhVertexAttribute::new("Vertex_Position", 0, VertexFormat::Float32x3)
     }
 
-    pub fn attribute_normal() -> GeometryhVertexAttribute {
-        GeometryhVertexAttribute::new("Vertex_Normal", 1, VertexFormat::Float32x3)
+    pub fn attribute_normal() -> MeshhVertexAttribute {
+        MeshhVertexAttribute::new("Vertex_Normal", 1, VertexFormat::Float32x3)
     }
 
-    pub fn attribute_uv_0() -> GeometryhVertexAttribute {
-        GeometryhVertexAttribute::new("Vertex_Uv", 2, VertexFormat::Float32x2)
+    pub fn attribute_uv_0() -> MeshhVertexAttribute {
+        MeshhVertexAttribute::new("Vertex_Uv", 2, VertexFormat::Float32x2)
     }
 
     pub fn insert_indices(&mut self, indices: Indices) {
@@ -179,7 +179,7 @@ impl Geometry {
 
     pub fn insert_attribute(
         &mut self,
-        attribute: GeometryhVertexAttribute,
+        attribute: MeshhVertexAttribute,
         values: impl Into<VertexAttributeValues>,
     ) {
         let values = values.into();
@@ -197,7 +197,7 @@ impl Geometry {
 
     pub fn with_inserted_attribute(
         mut self,
-        attribute: GeometryhVertexAttribute,
+        attribute: MeshhVertexAttribute,
         values: impl Into<VertexAttributeValues>,
     ) -> Self {
         self.insert_attribute(attribute, values);
@@ -205,7 +205,7 @@ impl Geometry {
     }
 }
 
-impl Visit for Geometry {
+impl Visit for Mesh {
     fn visit(&mut self, name: &str, visitor: &mut Visitor) -> VisitResult {
         let mut _region = visitor.enter_region(name)?;
 
@@ -215,9 +215,9 @@ impl Visit for Geometry {
     }
 }
 
-impl ResourceData for Geometry {
+impl ResourceData for Mesh {
     fn type_uuid(&self) -> Uuid {
-        <Geometry as fyrox_core::TypeUuidProvider>::type_uuid()
+        <Mesh as fyrox_core::TypeUuidProvider>::type_uuid()
     }
 
     fn save(&mut self, _path: &Path) -> Result<(), Box<dyn Error>> {

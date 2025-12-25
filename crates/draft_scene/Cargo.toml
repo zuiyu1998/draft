@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 draft_render = { path = "../draft_render" }
-draft_geometry = { path = "../draft_geometry" }
+draft_mesh = { path = "../draft_mesh" }
 draft_material = { path = "../draft_material" }
 draft_render_2d = { path = "../draft_render_2d" }
 

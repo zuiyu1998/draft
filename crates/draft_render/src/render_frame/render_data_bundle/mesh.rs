@@ -1,39 +1,39 @@
 use draft_material::{MaterialClass, MaterialResource};
 
-use draft_geometry::{
-    GeometryResource, GeometryVertexBufferLayoutRef, GeometryVertexBufferLayouts,
+use draft_mesh::{
+    MeshResource, MeshVertexBufferLayoutRef, MeshVertexBufferLayouts,
 };
 use fxhash::FxHashMap;
 use std::{collections::hash_map::Entry, ops::Deref};
 
-pub struct GeometryInstanceData {}
+pub struct MeshInstanceData {}
 
 pub struct BatchMesh {
-    pub geometry: GeometryResource,
+    pub mesh: MeshResource,
     pub material: MaterialResource,
-    pub instance: GeometryInstanceData,
+    pub instance: MeshInstanceData,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct BatchMeshKey {
-    pub geometry_layout: GeometryVertexBufferLayoutRef,
+    pub mesh_layout: MeshVertexBufferLayoutRef,
     pub material_class: MaterialClass,
 }
 
 impl BatchMeshKey {
     pub fn new(
-        geometry: &GeometryResource,
+        mesh: &MeshResource,
         material: &MaterialResource,
-        layouts: &mut GeometryVertexBufferLayouts,
+        layouts: &mut MeshVertexBufferLayouts,
     ) -> BatchMeshKey {
-        let geometry = geometry.data_ref();
-        let geometry_layout = geometry.get_geometry_vertex_buffer_layout(layouts);
+        let mesh = mesh.data_ref();
+        let mesh_layout = mesh.get_mesh_vertex_buffer_layout(layouts);
 
         let material = material.data_ref();
         let material_class = material.get_class();
 
         BatchMeshKey {
-            geometry_layout,
+            mesh_layout,
             material_class,
         }
     }
@@ -53,24 +53,24 @@ impl Deref for BatchMeshContainer {
 impl BatchMeshContainer {
     pub fn push(
         &mut self,
-        geometry: GeometryResource,
+        mesh: MeshResource,
         material: MaterialResource,
-        instance: GeometryInstanceData,
-        layouts: &mut GeometryVertexBufferLayouts,
+        instance: MeshInstanceData,
+        layouts: &mut MeshVertexBufferLayouts,
     ) {
-        let key = BatchMeshKey::new(&geometry, &material, layouts);
+        let key = BatchMeshKey::new(&mesh, &material, layouts);
 
         match self.0.entry(key) {
             Entry::Occupied(entry) => {
                 entry.into_mut().push(BatchMesh {
-                    geometry,
+                    mesh,
                     material,
                     instance,
                 });
             }
             Entry::Vacant(entry) => {
                 entry.insert(vec![BatchMesh {
-                    geometry,
+                    mesh,
                     material,
                     instance,
                 }]);

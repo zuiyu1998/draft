@@ -495,19 +495,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "draft_geometry"
-version = "0.1.0"
-dependencies = [
- "bytemuck",
- "draft_graphics",
- "fxhash",
- "fyrox-core",
- "fyrox-resource",
- "thiserror 2.0.17",
- "tracing",
-]
-
-[[package]]
 name = "draft_graphics"
 version = "0.1.0"
 dependencies = [
@@ -541,13 +528,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "draft_mesh"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "draft_graphics",
+ "fxhash",
+ "fyrox-core",
+ "fyrox-resource",
+ "thiserror 2.0.17",
+ "tracing",
+]
+
+[[package]]
 name = "draft_render"
 version = "0.1.0"
 dependencies = [
  "bitflags 2.10.0",
- "draft_geometry",
  "draft_graphics",
  "draft_material",
+ "draft_mesh",
  "draft_shader",
  "draft_window",
  "fxhash",
@@ -576,8 +576,8 @@ dependencies = [
 name = "draft_scene"
 version = "0.1.0"
 dependencies = [
- "draft_geometry",
  "draft_material",
+ "draft_mesh",
  "draft_render",
  "draft_render_2d",
  "fyrox-core",

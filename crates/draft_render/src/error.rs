@@ -5,8 +5,8 @@ use thiserror::Error;
 pub enum FrameworkError {
     #[error("Material is invalid. Summary: {0}")]
     MaterialInvalid(String),
-    #[error("Geometry is invalid. Summary: {0}")]
-    GeometryInvalid(String),
+    #[error("Mesh is invalid. Summary: {0}")]
+    MeshInvalid(String),
     #[error(transparent)]
     SurfaceError(#[from] SurfaceError),
 }

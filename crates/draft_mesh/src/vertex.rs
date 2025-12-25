@@ -164,38 +164,38 @@ impl Default for VertexAttributeValues {
 
 #[derive(Debug, Clone, Default, Reflect)]
 pub(crate) struct MeshAttributeData {
-    pub(crate) attribute: GeometryhVertexAttribute,
+    pub(crate) attribute: MeshhVertexAttribute,
     pub(crate) values: VertexAttributeValues,
 }
 
 #[derive(Debug, Clone, Default, Reflect)]
-pub struct GeometryhVertexAttribute {
+pub struct MeshhVertexAttribute {
     pub name: ImmutableString,
-    pub id: GeometryVertexAttributeId,
+    pub id: MeshVertexAttributeId,
     pub format: VertexFormat,
 }
 
-impl GeometryhVertexAttribute {
+impl MeshhVertexAttribute {
     pub fn new(name: &'static str, id: u64, format: VertexFormat) -> Self {
         Self {
             name: ImmutableString::new(name),
-            id: GeometryVertexAttributeId(id),
+            id: MeshVertexAttributeId(id),
             format,
         }
     }
 }
 
 #[derive(Debug, Clone, Copy, Default, Reflect, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct GeometryVertexAttributeId(u64);
+pub struct MeshVertexAttributeId(u64);
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub struct GeometryVertexBufferLayout {
-    pub(crate) attribute_ids: Vec<GeometryVertexAttributeId>,
+pub struct MeshVertexBufferLayout {
+    pub(crate) attribute_ids: Vec<MeshVertexAttributeId>,
     pub(crate) layout: VertexBufferLayout,
 }
 
-impl GeometryVertexBufferLayout {
-    pub fn new(attribute_ids: Vec<GeometryVertexAttributeId>, layout: VertexBufferLayout) -> Self {
+impl MeshVertexBufferLayout {
+    pub fn new(attribute_ids: Vec<MeshVertexAttributeId>, layout: VertexBufferLayout) -> Self {
         Self {
             attribute_ids,
             layout,
@@ -203,12 +203,12 @@ impl GeometryVertexBufferLayout {
     }
 
     #[inline]
-    pub fn contains(&self, attribute_id: impl Into<GeometryVertexAttributeId>) -> bool {
+    pub fn contains(&self, attribute_id: impl Into<MeshVertexAttributeId>) -> bool {
         self.attribute_ids.contains(&attribute_id.into())
     }
 
     #[inline]
-    pub fn attribute_ids(&self) -> &[GeometryVertexAttributeId] {
+    pub fn attribute_ids(&self) -> &[MeshVertexAttributeId] {
         &self.attribute_ids
     }
 
@@ -253,24 +253,24 @@ impl GeometryVertexBufferLayout {
 
 #[derive(Error, Debug)]
 #[error(
-    "Geometry is missing requested attribute: {name} ({id:?}, pipeline type: {pipeline_type:?})"
+    "Mesh is missing requested attribute: {name} ({id:?}, pipeline type: {pipeline_type:?})"
 )]
 pub struct MissingVertexAttributeError {
     pub pipeline_type: Option<&'static str>,
-    id: GeometryVertexAttributeId,
+    id: MeshVertexAttributeId,
     name: &'static str,
 }
 
 pub struct VertexAttributeDescriptor {
     pub shader_location: u32,
-    pub id: GeometryVertexAttributeId,
+    pub id: MeshVertexAttributeId,
     name: &'static str,
 }
 
 impl VertexAttributeDescriptor {
     pub const fn new(
         shader_location: u32,
-        id: GeometryVertexAttributeId,
+        id: MeshVertexAttributeId,
         name: &'static str,
     ) -> Self {
         Self {
@@ -282,10 +282,10 @@ impl VertexAttributeDescriptor {
 }
 
 #[derive(Debug, Default)]
-pub struct GeometryVertexBufferLayouts(FxHashSet<Arc<GeometryVertexBufferLayout>>);
+pub struct MeshVertexBufferLayouts(FxHashSet<Arc<MeshVertexBufferLayout>>);
 
-impl GeometryVertexBufferLayouts {
-    pub fn insert(&mut self, layout: GeometryVertexBufferLayout) -> GeometryVertexBufferLayoutRef {
+impl MeshVertexBufferLayouts {
+    pub fn insert(&mut self, layout: MeshVertexBufferLayout) -> MeshVertexBufferLayoutRef {
         let layout = match self.0.get(&layout) {
             Some(layout) => layout.clone(),
             None => {
@@ -295,22 +295,22 @@ impl GeometryVertexBufferLayouts {
             }
         };
 
-        GeometryVertexBufferLayoutRef(layout)
+        MeshVertexBufferLayoutRef(layout)
     }
 }
 
 #[derive(Clone, Debug)]
-pub struct GeometryVertexBufferLayoutRef(pub Arc<GeometryVertexBufferLayout>);
+pub struct MeshVertexBufferLayoutRef(pub Arc<MeshVertexBufferLayout>);
 
-impl PartialEq for GeometryVertexBufferLayoutRef {
+impl PartialEq for MeshVertexBufferLayoutRef {
     fn eq(&self, other: &Self) -> bool {
         Arc::ptr_eq(&self.0, &other.0)
     }
 }
 
-impl Eq for GeometryVertexBufferLayoutRef {}
+impl Eq for MeshVertexBufferLayoutRef {}
 
-impl Hash for GeometryVertexBufferLayoutRef {
+impl Hash for MeshVertexBufferLayoutRef {
     fn hash<H: Hasher>(&self, state: &mut H) {
         // Hash the address of the underlying data, so two layouts that share the same
         // `MeshVertexBufferLayout` will have the same hash.
