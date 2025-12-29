@@ -1,14 +1,15 @@
 use crate::{
-    BufferAllocator, Frame, MeshInstanceData, PipelineCache, RenderDataBundle, RenderFrame,
-    RenderFrameContext, RenderPipeline, RenderPipelineExt, RenderPipelineManager, RenderServer,
-    RenderWindow, RenderWindows, SpecializedMeshPipeline, error::FrameworkError,
+    BatchMeshMaterialContainer, BufferAllocator, Frame, MeshAllocator, MeshAllocatorSettings,
+    MeshCache, MeshInstanceData, PipelineCache, RenderFrame, RenderPipeline, RenderPipelineContext,
+    RenderPipelineExt, RenderPipelineManager, RenderServer, RenderWindow, RenderWindows,
+    SpecializedMeshPipeline, error::FrameworkError,
 };
-use draft_mesh::{MeshResource, MeshVertexBufferLayouts};
 use draft_graphics::{
     frame_graph::{FrameGraph, FrameGraphContext, TransientResourceCache},
     gfx_base::{GetPipelineContainer, TextureView, TextureViewDescriptor},
 };
 use draft_material::MaterialResource;
+use draft_mesh::{MeshResource, MeshVertexBufferLayouts};
 use draft_shader::Shader;
 use draft_window::SystemWindowManager;
 use fyrox_resource::{Resource, manager::ResourceManager};
@@ -23,6 +24,9 @@ pub struct WorldRenderer {
     system_window_manager: SystemWindowManager,
     buffer_allocator: BufferAllocator,
     transient_resource_cache: TransientResourceCache,
+    mesh_allocator_settings: MeshAllocatorSettings,
+    mesh_allocator: MeshAllocator,
+    mesh_cache: MeshCache,
 }
 
 impl RenderPipelineExt for WorldRenderer {
@@ -54,11 +58,15 @@ impl WorldRenderer {
             layouts: Default::default(),
             system_window_manager,
             transient_resource_cache: Default::default(),
+            mesh_allocator: MeshAllocator::new(),
+            mesh_allocator_settings: Default::default(),
+            mesh_cache: Default::default(),
         }
     }
 
-    pub fn update(&mut self) {
+    pub fn update(&mut self, dt: f32) {
         self.pipeline_cache.update();
+        self.mesh_cache.update(dt);
     }
 
     pub fn set_shader(&mut self, shader: Resource<Shader>) {
@@ -100,28 +108,33 @@ impl WorldRenderer {
     }
 
     fn prepare_frame<W: World>(&mut self, world: &W) -> Result<RenderFrame, FrameworkError> {
-        let mut render_data_bundle = RenderDataBundle::empty();
+        let windows = self.prepare_render_windows()?;
+        self.buffer_allocator.unset();
+
+        let mut frame = Frame {
+            mesh_materials: Default::default(),
+            meshes: Default::default(),
+            windows,
+        };
 
         let mut context = RenderContext {
-            render_data_bundle: &mut render_data_bundle,
+            mesh_cache: &mut self.mesh_cache,
+            mesh_materials: &mut frame.mesh_materials,
             layouts: &mut self.layouts,
         };
 
         world.prepare(&mut context);
-
-        let windows = self.prepare_render_windows()?;
-
-        let frame = Frame {
-            render_data_bundle: render_data_bundle,
-            windows,
-        };
 
         frame.prepare(
             &mut self.specialized_mesh_pipeline,
             &mut self.pipeline_cache,
             &mut self.layouts,
             &mut self.buffer_allocator,
+            &mut self.mesh_allocator,
+            &self.mesh_allocator_settings,
+            &self.render_server.device,
             &self.render_server.queue,
+            &mut self.mesh_cache,
         )
     }
 
@@ -130,14 +143,14 @@ impl WorldRenderer {
 
         let pipeline_container = self.pipeline_cache.get_pipeline_container();
 
-        let context = RenderFrameContext {
-            frame: &frame,
+        let context = RenderPipelineContext {
             pipeline_container: &pipeline_container,
+            mesh_allocator: &self.mesh_allocator
         };
         let mut frame_graph = FrameGraph::default();
 
         if let Some(pipeline) = self.render_pipeline_manager.pipeline_mut("core_2d") {
-            pipeline.run(&mut frame_graph, &context);
+            pipeline.run(&mut frame_graph, &frame, &context);
         }
 
         frame_graph.compile();
@@ -170,7 +183,8 @@ impl WorldRenderer {
 }
 
 pub struct RenderContext<'a> {
-    render_data_bundle: &'a mut RenderDataBundle,
+    mesh_materials: &'a mut BatchMeshMaterialContainer,
+    mesh_cache: &'a mut MeshCache,
     layouts: &'a mut MeshVertexBufferLayouts,
 }
 
@@ -181,8 +195,9 @@ impl RenderContext<'_> {
         material: MaterialResource,
         instance: MeshInstanceData,
     ) {
-        self.render_data_bundle
-            .mesh
+        self.mesh_cache.insert_mesh(&mesh);
+
+        self.mesh_materials
             .push(mesh, material, instance, self.layouts);
     }
 }

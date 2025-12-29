@@ -1,17 +1,15 @@
 use core::fmt;
 use std::{
-    collections::hash_map::Entry,
+    collections::{HashSet, hash_map::Entry},
     fmt::{Display, Formatter},
-    ops::{Deref, DerefMut},
+    ops::{Deref, DerefMut, Range},
 };
 
-use draft_mesh::{
-    Indices, Mesh, MeshResource, MeshVertexBufferLayoutRef, MeshVertexBufferLayouts,
-};
 use draft_graphics::{
     gfx_base::{BufferDescriptor, CommandEncoderDescriptor, RenderDevice, RenderQueue},
     wgpu::{BufferSize, BufferUsages, COPY_BUFFER_ALIGNMENT},
 };
+use draft_mesh::{Indices, Mesh, MeshResource, MeshVertexBufferLayoutRef, MeshVertexBufferLayouts};
 use fxhash::FxHashMap;
 use nonmax::NonMaxU32;
 use offset_allocator::{Allocation, Allocator};
@@ -133,6 +131,10 @@ pub struct GeneralSlab {
 }
 
 impl GeneralSlab {
+    fn is_empty(&self) -> bool {
+        self.resident_allocations.is_empty() && self.pending_allocations.is_empty()
+    }
+
     fn new(
         new_slab_id: SlabId,
         mesh_allocation: &mut Option<MeshAllocation>,
@@ -227,6 +229,11 @@ impl DerefMut for SlabsToReallocate {
     }
 }
 
+pub struct MeshBufferSlice<'a> {
+    pub range: Range<u32>,
+    pub buffer: &'a ImportBufferMeta,
+}
+
 pub struct MeshAllocator {
     slabs: FxHashMap<SlabId, Slab>,
     slab_layouts: FxHashMap<ElementLayout, Vec<SlabId>>,
@@ -248,6 +255,33 @@ impl MeshAllocator {
             slabs: Default::default(),
             general_vertex_slabs_supported: true,
             extra_buffer_usages: BufferUsages::empty(),
+        }
+    }
+
+    pub fn mesh_vertex_slice(&self, mesh_key: &MeshKey) -> Option<MeshBufferSlice<'_>> {
+        self.mesh_slice_in_slab(mesh_key, *self.mesh_key_to_vertex_slab.get(mesh_key)?)
+    }
+
+    pub fn mesh_index_slice(&self, mesh_key: &MeshKey) -> Option<MeshBufferSlice<'_>> {
+        self.mesh_slice_in_slab(mesh_key, *self.mesh_key_to_index_slab.get(mesh_key)?)
+    }
+
+    fn mesh_slice_in_slab(
+        &self,
+        mesh_key: &MeshKey,
+        slab_id: SlabId,
+    ) -> Option<MeshBufferSlice<'_>> {
+        match self.slabs.get(&slab_id)? {
+            Slab::General(general_slab) => {
+                let slab_allocation = general_slab.resident_allocations.get(mesh_key)?;
+                Some(MeshBufferSlice {
+                    buffer: general_slab.buffer.as_ref()?,
+                    range: (slab_allocation.allocation.offset
+                        * general_slab.element_layout.elements_per_slot)
+                        ..((slab_allocation.allocation.offset + slab_allocation.slot_count)
+                            * general_slab.element_layout.elements_per_slot),
+                })
+            }
         }
     }
 
@@ -415,6 +449,58 @@ impl MeshAllocator {
 
         let command_buffer = encoder.finish();
         render_queue.submit([command_buffer]);
+    }
+
+    fn free_allocation_in_slab(
+        &mut self,
+        mesh_key: &MeshKey,
+        slab_id: SlabId,
+        empty_slabs: &mut HashSet<SlabId>,
+    ) {
+        let Some(slab) = self.slabs.get_mut(&slab_id) else {
+            return;
+        };
+
+        match *slab {
+            Slab::General(ref mut general_slab) => {
+                let Some(slab_allocation) = general_slab
+                    .resident_allocations
+                    .remove(mesh_key)
+                    .or_else(|| general_slab.pending_allocations.remove(mesh_key))
+                else {
+                    return;
+                };
+
+                general_slab.allocator.free(slab_allocation.allocation);
+
+                if general_slab.is_empty() {
+                    empty_slabs.insert(slab_id);
+                }
+            }
+        }
+    }
+
+    pub fn free_meshes<'a>(&mut self, meshes_to_free: impl Iterator<Item = &'a MeshKey>) {
+        let mut empty_slabs = HashSet::default();
+
+        for mesh_id in meshes_to_free {
+            if let Some(slab_id) = self.mesh_key_to_vertex_slab.remove(mesh_id) {
+                self.free_allocation_in_slab(mesh_id, slab_id, &mut empty_slabs);
+            }
+            if let Some(slab_id) = self.mesh_key_to_index_slab.remove(mesh_id) {
+                self.free_allocation_in_slab(mesh_id, slab_id, &mut empty_slabs);
+            }
+        }
+
+        for empty_slab in empty_slabs {
+            self.slab_layouts.values_mut().for_each(|slab_ids| {
+                let idx = slab_ids.iter().position(|&slab_id| slab_id == empty_slab);
+                if let Some(idx) = idx {
+                    slab_ids.remove(idx);
+                }
+            });
+            self.slabs.remove(&empty_slab);
+        }
     }
 
     pub fn allocate_meshes(

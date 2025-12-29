@@ -8,31 +8,31 @@ use std::{collections::hash_map::Entry, ops::Deref};
 
 pub struct MeshInstanceData {}
 
-pub struct BatchMesh {
+pub struct BatchMeshMaterial {
     pub mesh: MeshResource,
     pub material: MaterialResource,
     pub instance: MeshInstanceData,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
-pub struct BatchMeshKey {
+pub struct BatchMeshMaterialKey {
     pub mesh_layout: MeshVertexBufferLayoutRef,
     pub material_class: MaterialClass,
 }
 
-impl BatchMeshKey {
+impl BatchMeshMaterialKey {
     pub fn new(
         mesh: &MeshResource,
         material: &MaterialResource,
         layouts: &mut MeshVertexBufferLayouts,
-    ) -> BatchMeshKey {
+    ) -> BatchMeshMaterialKey {
         let mesh = mesh.data_ref();
         let mesh_layout = mesh.get_mesh_vertex_buffer_layout(layouts);
 
         let material = material.data_ref();
         let material_class = material.get_class();
 
-        BatchMeshKey {
+        BatchMeshMaterialKey {
             mesh_layout,
             material_class,
         }
@@ -40,17 +40,17 @@ impl BatchMeshKey {
 }
 
 #[derive(Default)]
-pub struct BatchMeshContainer(FxHashMap<BatchMeshKey, Vec<BatchMesh>>);
+pub struct BatchMeshMaterialContainer(FxHashMap<BatchMeshMaterialKey, Vec<BatchMeshMaterial>>);
 
-impl Deref for BatchMeshContainer {
-    type Target = FxHashMap<BatchMeshKey, Vec<BatchMesh>>;
+impl Deref for BatchMeshMaterialContainer {
+    type Target = FxHashMap<BatchMeshMaterialKey, Vec<BatchMeshMaterial>>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl BatchMeshContainer {
+impl BatchMeshMaterialContainer {
     pub fn push(
         &mut self,
         mesh: MeshResource,
@@ -58,18 +58,18 @@ impl BatchMeshContainer {
         instance: MeshInstanceData,
         layouts: &mut MeshVertexBufferLayouts,
     ) {
-        let key = BatchMeshKey::new(&mesh, &material, layouts);
+        let key = BatchMeshMaterialKey::new(&mesh, &material, layouts);
 
         match self.0.entry(key) {
             Entry::Occupied(entry) => {
-                entry.into_mut().push(BatchMesh {
+                entry.into_mut().push(BatchMeshMaterial {
                     mesh,
                     material,
                     instance,
                 });
             }
             Entry::Vacant(entry) => {
-                entry.insert(vec![BatchMesh {
+                entry.insert(vec![BatchMeshMaterial {
                     mesh,
                     material,
                     instance,

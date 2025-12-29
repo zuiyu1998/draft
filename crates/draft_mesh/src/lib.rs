@@ -33,6 +33,8 @@ pub struct Mesh {
     #[reflect(hidden)]
     attributes: BTreeMap<MeshVertexAttributeId, MeshAttributeData>,
     indices: Option<Indices>,
+    #[reflect(hidden)]
+    modifications_counter: u64,
 }
 
 impl Mesh {
@@ -41,7 +43,12 @@ impl Mesh {
             primitive_topology,
             attributes: Default::default(),
             indices: None,
+            modifications_counter: 0
         }
+    }
+
+    pub fn modifications_counter(&self) -> u64 {
+        self.modifications_counter
     }
 
     pub fn count_vertices(&self) -> usize {

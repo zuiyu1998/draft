@@ -4,7 +4,7 @@ use std::{
 };
 
 use crate::{
-    BatchMesh, CachedRenderPipelineId, PipelineCache, RenderPipelineDescriptor,
+    BatchMeshMaterial, CachedRenderPipelineId, PipelineCache, RenderPipelineDescriptor,
     error::FrameworkError, render_resource::VertexState,
 };
 use draft_material::{MaterialFragmentState, MaterialResource, MaterialVertexState, PipelineState};
@@ -108,7 +108,7 @@ pub struct MeshPipelineKey {
 }
 
 fn get_mesh_pipeline_key(
-    batch: &BatchMesh,
+    batch: &BatchMeshMaterial,
     layouts: &mut MeshVertexBufferLayouts,
 ) -> Result<MeshPipelineKey, FrameworkError> {
     if !batch.material.is_ok() {
@@ -133,7 +133,7 @@ pub struct SpecializedMeshPipeline {
 impl SpecializedMeshPipeline {
     pub fn get(
         &mut self,
-        batch: &BatchMesh,
+        batch: &BatchMeshMaterial,
         pipeline_cache: &mut PipelineCache,
         layouts: &mut MeshVertexBufferLayouts,
     ) -> Result<CachedRenderPipelineId, FrameworkError> {

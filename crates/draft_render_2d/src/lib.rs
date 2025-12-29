@@ -9,7 +9,10 @@ use draft_graphics::{
 use draft_material::{
     IMaterial, MaterialFragmentState, MaterialInfo, MaterialVertexState, PipelineState,
 };
-use draft_render::{Node, RenderFrameContext, RenderPipeline};
+use draft_render::{
+    Node, RenderFrame, RenderPhase, RenderPhaseContext, RenderPipeline, RenderPipelineContext,
+    TrackedRenderPassBuilder,
+};
 use draft_shader::{Shader, ShaderResource};
 use fyrox_core::uuid;
 use fyrox_resource::{embedded_data_source, manager::BuiltInResource, untyped::ResourceKind};
@@ -77,11 +80,16 @@ pub fn create_core_2d_render_pipiline() -> RenderPipeline {
 pub struct UpscalingNode;
 
 impl Node for UpscalingNode {
-    fn run(&self, frame_graph: &mut FrameGraph, context: &RenderFrameContext) {
+    fn run(
+        &self,
+        frame_graph: &mut FrameGraph,
+        render_frame: &RenderFrame,
+        context: &RenderPipelineContext,
+    ) {
         let mut pass_node_builder = frame_graph.create_pass_buidlder("upscaling_node");
         let mut render_pass_buidler = pass_node_builder.create_render_pass_builder("upscaling");
 
-        let texture_view = context.frame.windows.primary().surface_texture_view.clone();
+        let texture_view = render_frame.windows.primary().surface_texture_view.clone();
 
         render_pass_buidler.add_color_attachment(TransientRenderPassColorAttachment {
             view: TransientTextureView::Owned(texture_view),
@@ -97,6 +105,17 @@ impl Node for UpscalingNode {
                 store: wgpu::StoreOp::Store,
             },
         });
+
+        let mut tracked = TrackedRenderPassBuilder::new(render_pass_buidler);
+
+        let render_phase_context = RenderPhaseContext {
+            pipeline_container: context.pipeline_container,
+            mesh_allocator: context.mesh_allocator,
+        };
+
+        for batch in render_frame.batchs.iter() {
+            batch.render(&mut tracked, &render_phase_context);
+        }
 
         todo!()
     }

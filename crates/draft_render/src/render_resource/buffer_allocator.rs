@@ -15,6 +15,12 @@ impl BufferAllocator {
         }
     }
 
+    pub fn unset(&mut self) {
+        for set in self.data.values_mut() {
+            set.unset();
+        }
+    }
+
     pub fn get_buffer(&self, handle: BufferHandle) -> GpuBuffer {
         self.data
             .get(&handle.desc)

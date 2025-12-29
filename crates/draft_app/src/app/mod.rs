@@ -146,8 +146,8 @@ impl App {
         Ok(())
     }
 
-    pub fn update(&mut self, _dt: f32, _lag: &mut f32) {
-        self.graphics_context.update();
+    pub fn update(&mut self, dt: f32, _lag: &mut f32) {
+        self.graphics_context.update(dt);
     }
 
     pub fn render(&mut self) {

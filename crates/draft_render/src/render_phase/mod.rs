@@ -1,6 +1,9 @@
-use draft_graphics::{frame_graph::RenderPassBuilder, gfx_base::GpuRenderPipeline};
+use draft_graphics::{frame_graph::RenderPassBuilder, gfx_base::{GpuRenderPipeline, PipelineContainer}};
 use fyrox_core::err;
 
+use crate::MeshAllocator;
+
+#[derive(Default)]
 pub struct DrawState {
     pipeline: Option<GpuRenderPipeline>,
 }
@@ -15,14 +18,24 @@ impl DrawState {
     }
 }
 
-pub struct RenderPhaseContext {}
+pub struct RenderPhaseContext<'a> {
+    pub pipeline_container: &'a PipelineContainer,
+    pub mesh_allocator: &'a MeshAllocator,
+}
 
 pub struct TrackedRenderPassBuilder<'a, 'b> {
     render_pass_builder: RenderPassBuilder<'a, 'b>,
     state: DrawState,
 }
 
-impl TrackedRenderPassBuilder<'_, '_> {
+impl<'a, 'b> TrackedRenderPassBuilder<'a, 'b> {
+    pub fn new(render_pass_builder: RenderPassBuilder<'a, 'b>) -> Self {
+        Self {
+            render_pass_builder,
+            state: DrawState::default(),
+        }
+    }
+
     pub fn set_render_pipeline(&mut self, pipeline: &GpuRenderPipeline) {
         if self.state.is_pipeline_set() {
             err!("There are multiple rendering pipeline for the same drawcall.");

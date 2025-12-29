@@ -2,17 +2,22 @@ use std::collections::HashMap;
 
 use draft_graphics::{frame_graph::FrameGraph, gfx_base::PipelineContainer};
 
-use crate::RenderFrame;
+use crate::{MeshAllocator, RenderFrame};
 
-pub struct RenderFrameContext<'a> {
-    pub frame: &'a RenderFrame,
+pub struct RenderPipelineContext<'a> {
     pub pipeline_container: &'a PipelineContainer,
+    pub mesh_allocator: &'a MeshAllocator,
 }
 
 pub trait Node: 'static + Sync + Send {
     fn update(&mut self) {}
 
-    fn run(&self, frame_graph: &mut FrameGraph, context: &RenderFrameContext);
+    fn run(
+        &self,
+        frame_graph: &mut FrameGraph,
+        render_frame: &RenderFrame,
+        context: &RenderPipelineContext,
+    );
 }
 
 #[derive(Default)]
@@ -31,9 +36,14 @@ impl RenderPipeline {
         }
     }
 
-    pub fn run(&self, frame_graph: &mut FrameGraph, context: &RenderFrameContext) {
+    pub fn run(
+        &self,
+        frame_graph: &mut FrameGraph,
+        render_frame: &RenderFrame,
+        context: &RenderPipelineContext,
+    ) {
         for node in self.nodes.iter() {
-            node.run(frame_graph, context);
+            node.run(frame_graph, render_frame, context);
         }
     }
 }

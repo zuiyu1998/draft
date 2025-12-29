@@ -67,9 +67,9 @@ pub enum GraphicsContext {
 }
 
 impl GraphicsContext {
-    pub fn update(&mut self) {
+    pub fn update(&mut self, dt: f32) {
         if let GraphicsContext::Initialized(graphics_context) = self {
-            graphics_context.renderer.update();
+            graphics_context.renderer.update(dt);
         }
     }
 
