@@ -14,6 +14,11 @@ use super::{
     SamplerDescriptor, TextureDescriptor,
 };
 
+pub struct Limits {
+    pub max_bind_groups: u32,
+    pub max_vertex_buffers: u32,
+}
+
 #[derive(Debug, Clone)]
 pub struct RenderDevice {
     device: Device,
@@ -22,6 +27,15 @@ pub struct RenderDevice {
 impl RenderDevice {
     pub fn new(device: Device) -> Self {
         Self { device }
+    }
+
+    pub fn limits(&self) -> Limits {
+        let limits = self.device.limits();
+
+        Limits {
+            max_bind_groups: limits.max_bind_groups,
+            max_vertex_buffers: limits.max_vertex_buffers,
+        }
     }
 
     pub fn configure_surface(&self, surface: &GpuSurface, config: &SurfaceConfiguration) {

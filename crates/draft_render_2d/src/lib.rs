@@ -106,7 +106,7 @@ impl Node for UpscalingNode {
             },
         });
 
-        let mut tracked = TrackedRenderPassBuilder::new(render_pass_buidler);
+        let mut tracked = TrackedRenderPassBuilder::new(render_pass_buidler, context.render_device);
 
         let render_phase_context = RenderPhaseContext {
             pipeline_container: context.pipeline_container,
@@ -116,7 +116,5 @@ impl Node for UpscalingNode {
         for batch in render_frame.batchs.iter() {
             batch.render(&mut tracked, &render_phase_context);
         }
-
-        todo!()
     }
 }

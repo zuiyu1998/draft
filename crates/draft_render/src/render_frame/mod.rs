@@ -1,80 +1,97 @@
 mod mesh_material;
 mod window;
 
+use std::ops::Range;
+
+use draft_mesh::MeshResource;
 pub use mesh_material::*;
 pub use window::*;
 
-use draft_graphics::gfx_base::{CachedPipelineId, RenderDevice, RenderQueue};
+use draft_graphics::{IndexFormat, gfx_base::CachedPipelineId};
 use draft_material::MaterialResource;
 
-use draft_mesh::{MeshResource, MeshVertexBufferLayouts};
-
-use crate::{
-    BufferAllocator, MeshAllocator, MeshAllocatorSettings, MeshCache, PipelineCache, RenderPhase,
-    RenderPhaseContext, SpecializedMeshPipeline, TrackedRenderPassBuilder, error::FrameworkError,
-};
-
-pub struct Frame {
-    pub windows: RenderWindows,
-    pub mesh_materials: BatchMeshMaterialContainer,
-    pub meshes: Vec<MeshResource>,
-}
-
-impl Frame {
-    pub fn prepare(
-        self,
-        specialized_mesh_pipeline: &mut SpecializedMeshPipeline,
-        pipeline_cache: &mut PipelineCache,
-        layouts: &mut MeshVertexBufferLayouts,
-        buffer_allocator: &mut BufferAllocator,
-        mesh_allocator: &mut MeshAllocator,
-        settings: &MeshAllocatorSettings,
-        render_device: &RenderDevice,
-        render_queue: &RenderQueue,
-        mesh_cache: &mut MeshCache,
-    ) -> Result<RenderFrame, FrameworkError> {
-        mesh_cache.allocate_and_free_meshes(
-            settings,
-            layouts,
-            buffer_allocator,
-            render_device,
-            render_queue,
-            mesh_allocator,
-        );
-
-        let mut batchs = vec![];
-
-        for batch_mesh_materials in self.mesh_materials.values() {
-            for batch in batch_mesh_materials {
-                let pipeline_id = specialized_mesh_pipeline.get(batch, pipeline_cache, layouts)?;
-                batchs.push(BatchRenderMeshMaterial {
-                    pipeline_id: pipeline_id.id(),
-                    mesh: batch.mesh.key(),
-                    material: batch.material.clone(),
-                });
-            }
-        }
-
-        Ok(RenderFrame {
-            windows: self.windows,
-            batchs,
-        })
-    }
-}
+use crate::{RenderPhase, RenderPhaseContext, TrackedRenderPassBuilder};
 
 pub struct BatchRenderMeshMaterial {
     pub pipeline_id: CachedPipelineId,
-    pub mesh: u64,
     pub material: MaterialResource,
+    pub mesh_info: RenderMeshInfo,
+    pub batch_range: Range<u32>,
+}
+
+pub enum RenderIndiceInfo {
+    Indexed {
+        count: u32,
+        index_format: IndexFormat,
+    },
+    NonIndexed,
+}
+
+pub struct RenderMeshInfo {
+    pub key: u64,
+    pub indice_info: RenderIndiceInfo,
+}
+
+impl RenderMeshInfo {
+    pub fn from_mesh(mesh: &MeshResource) -> Self {
+        let key = mesh.key();
+        let mesh = mesh.data_ref();
+
+        let indice_info = match mesh.indices() {
+            None => RenderIndiceInfo::NonIndexed,
+            Some(indices) => RenderIndiceInfo::Indexed {
+                count: indices.count() as u32,
+                index_format: indices.index_format(),
+            },
+        };
+
+        RenderMeshInfo { key, indice_info }
+    }
 }
 
 impl RenderPhase for BatchRenderMeshMaterial {
     fn render(&self, builder: &mut TrackedRenderPassBuilder, context: &RenderPhaseContext) {
-        let pipeline = context
+        let Some(pipeline) = context
             .pipeline_container
             .get_render_pipeline(self.pipeline_id)
-            .expect("pipeline must have");
+        else {
+            return;
+        };
+
+        let Some(vertex_buffer_slice) = context
+            .mesh_allocator
+            .mesh_vertex_slice(&self.mesh_info.key)
+        else {
+            return;
+        };
+
         builder.set_render_pipeline(pipeline);
+
+        builder.set_vertex_buffer(0, vertex_buffer_slice.buffer.slice(..));
+
+        match &self.mesh_info.indice_info {
+            RenderIndiceInfo::Indexed {
+                count,
+                index_format,
+            } => {
+                let Some(index_buffer_slice) =
+                    context.mesh_allocator.mesh_index_slice(&self.mesh_info.key)
+                else {
+                    return;
+                };
+
+                builder.set_index_buffer(*index_format, index_buffer_slice.buffer.slice(..));
+
+                builder.draw_indexed(
+                    index_buffer_slice.range.start..(index_buffer_slice.range.start + count),
+                    vertex_buffer_slice.range.start as i32,
+                    self.batch_range.clone(),
+                );
+            }
+            RenderIndiceInfo::NonIndexed => {
+                builder.draw(vertex_buffer_slice.range, self.batch_range.clone());
+            }
+        }
     }
 }
 

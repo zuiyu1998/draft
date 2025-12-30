@@ -17,7 +17,7 @@ use tracing::error;
 
 type MeshKey = u64;
 
-use crate::{BufferAllocator, ImportBufferMeta};
+use crate::{Buffer, BufferAllocator};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 enum ElementClass {
@@ -123,7 +123,7 @@ enum SlabGrowthResult {
 
 pub struct GeneralSlab {
     allocator: Allocator,
-    buffer: Option<ImportBufferMeta>,
+    buffer: Option<Buffer>,
     resident_allocations: FxHashMap<MeshKey, SlabAllocation>,
     pending_allocations: FxHashMap<MeshKey, SlabAllocation>,
     element_layout: ElementLayout,
@@ -231,7 +231,7 @@ impl DerefMut for SlabsToReallocate {
 
 pub struct MeshBufferSlice<'a> {
     pub range: Range<u32>,
-    pub buffer: &'a ImportBufferMeta,
+    pub buffer: &'a Buffer,
 }
 
 pub struct MeshAllocator {
@@ -426,11 +426,7 @@ impl MeshAllocator {
         let new_buffer_handle = buffer_allocator.allocate(desc.clone());
         let new_buffer = buffer_allocator.get_buffer(new_buffer_handle);
 
-        slab.buffer = Some(ImportBufferMeta {
-            key,
-            value: new_buffer.clone(),
-            desc,
-        });
+        slab.buffer = Some(Buffer::new(key, new_buffer.clone(), desc));
 
         let Some(old_buffer) = old_buffer else { return };
 
@@ -440,7 +436,7 @@ impl MeshAllocator {
 
         // Copy the data from the old buffer into the new one.
         encoder.copy_buffer_to_buffer(
-            &old_buffer.value.get_wgpu_buffer(),
+            &old_buffer.value().get_wgpu_buffer(),
             0,
             &new_buffer.get_wgpu_buffer(),
             0,
@@ -645,7 +641,7 @@ impl MeshAllocator {
                 if let Some(size) = BufferSize::new((len as u64).next_multiple_of(slot_size)) {
                     // Write the data in.
                     if let Some(mut buffer) = render_queue.write_buffer_with(
-                        &buffer.value,
+                        buffer.value(),
                         allocated_range.allocation.offset as u64 * slot_size,
                         size,
                     ) {

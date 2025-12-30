@@ -6,6 +6,7 @@ mod set_render_pipeline_parameter;
 mod set_vertex_buffer_parameter;
 
 use crate::{
+    IndexFormat,
     frame_graph::{
         Ref, RenderPass, RenderPassCommand, ResourceRead, TransientBindGroup, TransientBuffer,
     },
@@ -67,7 +68,7 @@ pub trait RenderPassExt {
     fn set_index_buffer(
         &mut self,
         buffer_ref: &Ref<TransientBuffer, ResourceRead>,
-        index_format: wgpu::IndexFormat,
+        index_format: IndexFormat,
         offset: u64,
         size: u64,
     ) {

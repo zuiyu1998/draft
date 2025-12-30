@@ -1,12 +1,16 @@
 use std::collections::HashMap;
 
-use draft_graphics::{frame_graph::FrameGraph, gfx_base::PipelineContainer};
+use draft_graphics::{
+    frame_graph::FrameGraph,
+    gfx_base::{PipelineContainer, RenderDevice},
+};
 
 use crate::{MeshAllocator, RenderFrame};
 
 pub struct RenderPipelineContext<'a> {
     pub pipeline_container: &'a PipelineContainer,
     pub mesh_allocator: &'a MeshAllocator,
+    pub render_device: &'a RenderDevice,
 }
 
 pub trait Node: 'static + Sync + Send {

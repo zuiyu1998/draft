@@ -1,6 +1,7 @@
 use std::{mem::take, ops::Range};
 
 use crate::{
+    IndexFormat,
     frame_graph::{
         Handle, PassNodeBuilderExt, Ref, RenderPass, ResourceMaterial, ResourceRead, ResourceWrite,
         TransientBindGroup, TransientBuffer, TransientRenderPassColorAttachment, TransientResource,
@@ -108,7 +109,7 @@ impl<'a, 'b> RenderPassBuilder<'a, 'b> {
     pub fn set_index_buffer(
         &mut self,
         buffer_ref: &Ref<TransientBuffer, ResourceRead>,
-        index_format: wgpu::IndexFormat,
+        index_format: IndexFormat,
         offset: u64,
         size: u64,
     ) -> &mut Self {

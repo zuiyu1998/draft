@@ -76,7 +76,7 @@ impl FrontFace {
     }
 }
 
-#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
+#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default, PartialEq, Eq, Copy)]
 pub enum IndexFormat {
     /// Indices are 16 bit unsigned integers.
     Uint16 = 0,

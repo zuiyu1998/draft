@@ -6,8 +6,6 @@ mod renderer;
 
 pub mod error;
 
-use std::sync::Arc;
-
 pub use render_frame::*;
 pub use render_phase::*;
 pub use render_pipeline::*;
@@ -17,33 +15,7 @@ pub use renderer::*;
 use draft_shader::Shader;
 use fyrox_resource::Resource;
 
-use draft_graphics::{
-    frame_graph::{
-        FrameGraph, Handle, ResourceMaterial, TransientBuffer, TransientBufferDescriptor,
-    },
-    gfx_base::{BufferDescriptor, GpuBuffer},
-};
 use draft_window::Window;
-
-pub struct ImportBufferMeta {
-    key: String,
-    value: GpuBuffer,
-    desc: BufferDescriptor,
-}
-
-impl ResourceMaterial for ImportBufferMeta {
-    type ResourceType = TransientBuffer;
-
-    fn imported(&self, frame_graph: &mut FrameGraph) -> Handle<Self::ResourceType> {
-        frame_graph.import(
-            &self.key,
-            Arc::new(TransientBuffer {
-                resource: self.value.clone(),
-                desc: TransientBufferDescriptor::from_buffer_desc(&self.desc),
-            }),
-        )
-    }
-}
 
 pub struct InitializedGraphicsContext {
     pub renderer: WorldRenderer,

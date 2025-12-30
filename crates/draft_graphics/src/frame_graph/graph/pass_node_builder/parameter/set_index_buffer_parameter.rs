@@ -1,7 +1,7 @@
-use crate::frame_graph::{
-    Ref, RenderPassCommand, RenderPassContext, ResourceRead, TransientBuffer,
+use crate::{
+    IndexFormat,
+    frame_graph::{Ref, RenderPassCommand, RenderPassContext, ResourceRead, TransientBuffer},
 };
-use wgpu::IndexFormat;
 
 pub struct SetIndexBufferParameter {
     pub buffer_ref: Ref<TransientBuffer, ResourceRead>,

@@ -1,6 +1,7 @@
 use std::ops::Range;
 
 use crate::{
+    IndexFormat,
     frame_graph::{PassContext, Ref, ResourceRead, TransientBindGroup, TransientBuffer},
     gfx_base::{GpuRenderPass, GpuRenderPipeline},
 };
@@ -66,7 +67,7 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
     pub fn set_index_buffer(
         &mut self,
         buffer_ref: &Ref<TransientBuffer, ResourceRead>,
-        index_format: wgpu::IndexFormat,
+        index_format: IndexFormat,
         offset: u64,
         size: u64,
     ) {
@@ -77,7 +78,7 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
                 .resource
                 .get_wgpu_buffer()
                 .slice(offset..(offset + size)),
-            index_format,
+            index_format.get_wgpu_index_format(),
         );
     }
 }

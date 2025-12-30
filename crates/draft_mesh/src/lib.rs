@@ -6,7 +6,8 @@ pub use vertex::*;
 
 use bytemuck::cast_slice;
 use draft_graphics::{
-    PrimitiveTopology, VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode,
+    IndexFormat, PrimitiveTopology, VertexAttribute, VertexBufferLayout, VertexFormat,
+    VertexStepMode,
 };
 use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*, warn};
 use fyrox_resource::{Resource, ResourceData};
@@ -18,6 +19,22 @@ pub type MeshResource = Resource<Mesh>;
 pub enum Indices {
     U16(Vec<u16>),
     U32(Vec<u32>),
+}
+
+impl Indices {
+    pub fn index_format(&self) -> IndexFormat {
+        match self {
+            Indices::U16(_) => IndexFormat::Uint16,
+            Indices::U32(_) => IndexFormat::Uint32,
+        }
+    }
+
+    pub fn count(&self) -> usize {
+        match self {
+            Indices::U16(data) => data.len(),
+            Indices::U32(data) => data.len(),
+        }
+    }
 }
 
 impl Default for Indices {
@@ -43,7 +60,7 @@ impl Mesh {
             primitive_topology,
             attributes: Default::default(),
             indices: None,
-            modifications_counter: 0
+            modifications_counter: 0,
         }
     }
 
