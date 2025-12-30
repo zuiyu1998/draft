@@ -51,7 +51,7 @@ impl IMaterial for Material2d {
                 entry_point: Some("fragment".to_string()),
                 shader: MESH_2D.resource(),
                 targets: vec![Some(ColorTargetState {
-                    format: TextureFormat::Rgba8UnormSrgb,
+                    format: TextureFormat::Bgra8UnormSrgb,
                     blend: None,
                     write_mask: ColorWrites::ALL,
                 })],

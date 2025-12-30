@@ -29,7 +29,7 @@ impl Indices {
         }
     }
 
-    pub fn count(&self) -> usize {
+    pub fn len(&self) -> usize {
         match self {
             Indices::U16(data) => data.len(),
             Indices::U32(data) => data.len(),

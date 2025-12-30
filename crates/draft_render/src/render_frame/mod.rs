@@ -40,7 +40,7 @@ impl RenderMeshInfo {
         let indice_info = match mesh.indices() {
             None => RenderIndiceInfo::NonIndexed,
             Some(indices) => RenderIndiceInfo::Indexed {
-                count: indices.count() as u32,
+                count: indices.len() as u32,
                 index_format: indices.index_format(),
             },
         };

@@ -131,7 +131,7 @@ impl<'a, 'b> TrackedRenderPassBuilder<'a, 'b> {
             &buffer_ref,
             index_format,
             buffer_slice.offset,
-            buffer_slice.offset,
+            buffer_slice.size,
         );
         self.state
             .set_index_buffer(&buffer_ref, buffer_slice.offset, index_format);
