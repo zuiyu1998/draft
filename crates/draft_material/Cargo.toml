@@ -13,3 +13,6 @@ bitflags = { workspace = true }
 serde = { workspace = true }
 serde_pretty_yaml = { version = "0.9" }
 thiserror = { workspace = true }
+fxhash = { workspace = true }
+strum_macros = { workspace = true }
+strum = { workspace = true }

@@ -520,10 +520,13 @@ dependencies = [
  "bitflags 2.10.0",
  "draft_graphics",
  "draft_shader",
+ "fxhash",
  "fyrox-core",
  "fyrox-resource",
  "serde",
  "serde_pretty_yaml",
+ "strum",
+ "strum_macros",
  "thiserror 2.0.17",
 ]
 

@@ -1,14 +1,18 @@
 mod bind_group;
 mod effect;
+mod resource_binding;
 
 pub use bind_group::*;
 pub use effect::*;
 
 use draft_graphics::{ColorTargetState, DepthStencilState, MultisampleState, PrimitiveState};
 use draft_shader::{Shader, ShaderDefVal, ShaderResource};
-use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
+use fxhash::FxHashMap;
+use fyrox_core::{ImmutableString, TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
 use fyrox_resource::{Resource, ResourceData, manager::BuiltInResource};
 use std::{error::Error, path::Path};
+
+use crate::resource_binding::MaterialResourceBinding;
 
 pub type MaterialResource = Resource<Material>;
 
@@ -52,6 +56,7 @@ impl MaterialClass {
 pub struct Material {
     pub effct_info: MaterialEffctInfo,
     pub pipeline_state: PipelineState,
+    pub resource_bindings: FxHashMap<ImmutableString, MaterialResourceBinding>,
 }
 
 impl TypeUuidProvider for Material {
@@ -88,6 +93,7 @@ impl Material {
         Self {
             effct_info: info.effct_info,
             pipeline_state: info.pipeline_state,
+            resource_bindings: Default::default()
         }
     }
 
