@@ -4,12 +4,12 @@ use std::{
 };
 
 use crate::{
-    BatchMeshMaterial, CachedRenderPipelineId, PipelineCache, RenderPipelineDescriptor,
-    error::FrameworkError, render_resource::VertexState,
+    CachedRenderPipelineId, PipelineCache, RenderPipelineDescriptor, error::FrameworkError,
+    render_resource::VertexState,
 };
 use draft_material::{MaterialFragmentState, MaterialResource, MaterialVertexState, PipelineState};
 
-use draft_mesh::{MeshVertexBufferLayoutRef, MeshVertexBufferLayouts, MeshResource};
+use draft_mesh::{MeshResource, MeshVertexBufferLayoutRef, MeshVertexBufferLayouts};
 use fxhash::FxHasher;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -108,47 +108,46 @@ pub struct MeshPipelineKey {
 }
 
 fn get_mesh_pipeline_key(
-    batch: &BatchMeshMaterial,
+    mesh: &MeshResource,
+    material: &MaterialResource,
     layouts: &mut MeshVertexBufferLayouts,
 ) -> Result<MeshPipelineKey, FrameworkError> {
-    if !batch.material.is_ok() {
-        return Err(FrameworkError::MaterialInvalid(batch.material.summary()));
+    if !material.is_ok() {
+        return Err(FrameworkError::MaterialInvalid(material.summary()));
     }
 
-    if !batch.mesh.is_ok() {
-        return Err(FrameworkError::MeshInvalid(batch.mesh.summary()));
+    if !mesh.is_ok() {
+        return Err(FrameworkError::MeshInvalid(mesh.summary()));
     }
 
-    let mesh = MeshKey::create(&batch.mesh, layouts);
-    let material = MaterialKey::from_material(&batch.material);
+    let mesh = MeshKey::create(&mesh, layouts);
+    let material = MaterialKey::from_material(&material);
 
     Ok(MeshPipelineKey { mesh, material })
 }
 
 #[derive(Default)]
-pub struct SpecializedMeshPipeline {
+pub struct MeshMaterialPipeline {
     cache: HashMap<MeshPipelineKey, CachedRenderPipelineId>,
 }
 
-impl SpecializedMeshPipeline {
+impl MeshMaterialPipeline {
     pub fn get(
         &mut self,
-        batch: &BatchMeshMaterial,
+        mesh: &MeshResource,
+        material: &MaterialResource,
         pipeline_cache: &mut PipelineCache,
         layouts: &mut MeshVertexBufferLayouts,
     ) -> Result<CachedRenderPipelineId, FrameworkError> {
-        let key = get_mesh_pipeline_key(batch, layouts)?;
+        let key = get_mesh_pipeline_key(mesh, material, layouts)?;
 
         if let Some(id) = self.cache.get(&key) {
             return Ok(*id);
         }
 
-        let layout = batch
-            .mesh
-            .data_ref()
-            .get_mesh_vertex_buffer_layout(layouts);
+        let layout = mesh.data_ref().get_mesh_vertex_buffer_layout(layouts);
 
-        let pipeline_state = batch.material.data_ref().pipeline_state.clone();
+        let pipeline_state = material.data_ref().pipeline_state.clone();
 
         let id = self.specialize(pipeline_state, pipeline_cache, &layout)?;
 

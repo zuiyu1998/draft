@@ -149,6 +149,14 @@ impl PipelineCache {
         }
     }
 
+    pub fn get_pipeline(&self, id: CachedPipelineId) -> Option<&GpuPipeline> {
+        if let CachedPipelineState::Ok(pipeline) = &self.pipelines.get(id)?.state {
+            Some(pipeline)
+        } else {
+            None
+        }
+    }
+
     pub fn update(&mut self) {
         self.handle_shader_event();
         self.process_queue();

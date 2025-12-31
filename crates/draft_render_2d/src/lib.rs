@@ -113,8 +113,10 @@ impl Node for UpscalingNode {
             mesh_allocator: context.mesh_allocator,
         };
 
-        for batch in render_frame.batchs.iter() {
-            batch.render(&mut tracked, &render_phase_context);
+        for mesh_materials in render_frame.mesh_materials.values() {
+            for mesh_material in mesh_materials.iter() {
+                mesh_material.render(&mut tracked, &render_phase_context);
+            }
         }
     }
 }

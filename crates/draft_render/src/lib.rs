@@ -11,6 +11,7 @@ pub use render_phase::*;
 pub use render_pipeline::*;
 pub use render_resource::*;
 pub use renderer::*;
+pub use error::FrameworkError;
 
 use draft_shader::Shader;
 use fyrox_resource::Resource;
