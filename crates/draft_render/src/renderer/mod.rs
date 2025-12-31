@@ -151,7 +151,7 @@ impl WorldRenderer {
             pipeline_cache: &mut self.pipeline_cache,
         };
 
-        world.prepare(&mut context)?;
+        world.prepare(&mut context);
 
         self.mesh_cache.allocate_and_free_meshes(
             &self.mesh_allocator_settings,
@@ -229,7 +229,15 @@ impl RenderContext<'_> {
         mesh: MeshResource,
         material: MaterialResource,
         instance: MeshInstanceData,
-    ) -> Result<(), FrameworkError> {
+    ) {
+        if !mesh.is_ok() {
+            return;
+        }
+
+        if !material.is_ok() {
+            return;
+        }
+
         self.mesh_cache.insert_mesh(&mesh);
 
         self.mesh_materials.push(
@@ -239,12 +247,10 @@ impl RenderContext<'_> {
             self.layouts,
             self.mesh_material_pipeline,
             self.pipeline_cache,
-        )?;
-
-        Ok(())
+        );
     }
 }
 
 pub trait World {
-    fn prepare(&self, context: &mut RenderContext) -> Result<(), FrameworkError>;
+    fn prepare(&self, context: &mut RenderContext);
 }

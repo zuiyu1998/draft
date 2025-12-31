@@ -4,8 +4,7 @@ use std::{
 };
 
 use crate::{
-    CachedRenderPipelineId, PipelineCache, RenderPipelineDescriptor, error::FrameworkError,
-    render_resource::VertexState,
+    CachedRenderPipelineId, PipelineCache, RenderPipelineDescriptor, render_resource::VertexState,
 };
 use draft_material::{MaterialFragmentState, MaterialResource, MaterialVertexState, PipelineState};
 
@@ -111,19 +110,11 @@ fn get_mesh_pipeline_key(
     mesh: &MeshResource,
     material: &MaterialResource,
     layouts: &mut MeshVertexBufferLayouts,
-) -> Result<MeshPipelineKey, FrameworkError> {
-    if !material.is_ok() {
-        return Err(FrameworkError::MaterialInvalid(material.summary()));
-    }
-
-    if !mesh.is_ok() {
-        return Err(FrameworkError::MeshInvalid(mesh.summary()));
-    }
-
+) -> MeshPipelineKey {
     let mesh = MeshKey::create(&mesh, layouts);
     let material = MaterialKey::from_material(&material);
 
-    Ok(MeshPipelineKey { mesh, material })
+    MeshPipelineKey { mesh, material }
 }
 
 #[derive(Default)]
@@ -138,22 +129,22 @@ impl MeshMaterialPipeline {
         material: &MaterialResource,
         pipeline_cache: &mut PipelineCache,
         layouts: &mut MeshVertexBufferLayouts,
-    ) -> Result<CachedRenderPipelineId, FrameworkError> {
-        let key = get_mesh_pipeline_key(mesh, material, layouts)?;
+    ) -> CachedRenderPipelineId {
+        let key = get_mesh_pipeline_key(mesh, material, layouts);
 
         if let Some(id) = self.cache.get(&key) {
-            return Ok(*id);
+            return *id;
         }
 
         let layout = mesh.data_ref().get_mesh_vertex_buffer_layout(layouts);
 
         let pipeline_state = material.data_ref().pipeline_state.clone();
 
-        let id = self.specialize(pipeline_state, pipeline_cache, &layout)?;
+        let id = self.specialize(pipeline_state, pipeline_cache, &layout);
 
         self.cache.insert(key, id);
 
-        Ok(id)
+        id
     }
 
     pub fn specialize(
@@ -161,11 +152,10 @@ impl MeshMaterialPipeline {
         pipeline_state: PipelineState,
         pipeline_cache: &mut PipelineCache,
         layout: &MeshVertexBufferLayoutRef,
-    ) -> Result<CachedRenderPipelineId, FrameworkError> {
+    ) -> CachedRenderPipelineId {
         let buffer = layout.0.layout().clone();
 
-        //todo
-        let id = pipeline_cache.queue_render_pipeline(RenderPipelineDescriptor {
+        pipeline_cache.queue_render_pipeline(RenderPipelineDescriptor {
             label: None,
             layout: vec![],
             push_constant_ranges: vec![],
@@ -180,8 +170,6 @@ impl MeshMaterialPipeline {
             multisample: pipeline_state.multisample,
             primitive: pipeline_state.primitive,
             zero_initialize_workgroup_memory: false,
-        });
-
-        Ok(id)
+        })
     }
 }

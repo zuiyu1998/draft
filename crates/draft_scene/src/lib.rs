@@ -1,6 +1,6 @@
 use draft_material::{Material, MaterialResource};
 use draft_mesh::{Circle, MeshResource};
-use draft_render::{MeshInstanceData, RenderContext, World, error::FrameworkError};
+use draft_render::{MeshInstanceData, RenderContext, World};
 use draft_render_2d::Material2d;
 use fyrox_core::uuid;
 use fyrox_resource::untyped::ResourceKind;
@@ -29,11 +29,11 @@ impl Default for SceneContainer {
 }
 
 impl World for SceneContainer {
-    fn prepare(&self, context: &mut RenderContext) -> Result<(), FrameworkError> {
+    fn prepare(&self, context: &mut RenderContext) {
         context.push(
             self.mesh.clone(),
             self.material.clone(),
             MeshInstanceData {},
-        )
+        );
     }
 }

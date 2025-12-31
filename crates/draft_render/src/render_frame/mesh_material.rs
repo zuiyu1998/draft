@@ -9,8 +9,8 @@ use std::{
 };
 
 use crate::{
-    CachedRenderPipelineId, FrameworkError, MeshMaterialPipeline, PipelineCache, RenderPhase,
-    RenderPhaseContext, TrackedRenderPassBuilder,
+    CachedRenderPipelineId, MeshMaterialPipeline, PipelineCache, RenderPhase, RenderPhaseContext,
+    TrackedRenderPassBuilder,
 };
 
 #[derive(Default)]
@@ -171,8 +171,8 @@ impl BatchMeshMaterialContainer {
         layouts: &mut MeshVertexBufferLayouts,
         mesh_material_pipeline: &mut MeshMaterialPipeline,
         pipeline_cache: &mut PipelineCache,
-    ) -> Result<(), FrameworkError> {
-        let pipeline_id = mesh_material_pipeline.get(&mesh, &material, pipeline_cache, layouts)?;
+    ) {
+        let pipeline_id = mesh_material_pipeline.get(&mesh, &material, pipeline_cache, layouts);
         let key = BatchMeshMaterialKey::new(&mesh, &material, layouts, pipeline_id);
 
         match self.0.entry(key) {
@@ -191,7 +191,5 @@ impl BatchMeshMaterialContainer {
                 }]);
             }
         }
-
-        Ok(())
     }
 }
