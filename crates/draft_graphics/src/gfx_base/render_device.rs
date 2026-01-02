@@ -115,11 +115,17 @@ impl RenderDevice {
             .map(|bind_group_layout| bind_group_layout.get_wgpu_bind_group_layout())
             .collect::<Vec<_>>();
 
+        let push_constant_ranges = desc
+            .push_constant_ranges
+            .iter()
+            .map(|push_constant_range| push_constant_range.get_wgpu_push_constant_range())
+            .collect::<Vec<_>>();
+
         GpuPipelineLayout::new(self.device.create_pipeline_layout(
             &wgpu::PipelineLayoutDescriptor {
                 label: desc.label.as_deref(),
                 bind_group_layouts: &bind_group_layouts,
-                push_constant_ranges: &desc.push_constant_ranges,
+                push_constant_ranges: &push_constant_ranges,
             },
         ))
     }

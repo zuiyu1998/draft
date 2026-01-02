@@ -115,12 +115,12 @@ impl RenderPhase for BatchRenderMeshMaterial {
     }
 }
 
-pub struct MeshInstanceData {}
+pub struct MeshMaterialInstanceData {}
 
 pub struct BatchMeshMaterial {
     pub mesh: MeshResource,
     pub material: MaterialResource,
-    pub instance: MeshInstanceData,
+    pub instance: MeshMaterialInstanceData,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
@@ -167,7 +167,7 @@ impl BatchMeshMaterialContainer {
         &mut self,
         mesh: MeshResource,
         material: MaterialResource,
-        instance: MeshInstanceData,
+        instance: MeshMaterialInstanceData,
         layouts: &mut MeshVertexBufferLayouts,
         mesh_material_pipeline: &mut MeshMaterialPipeline,
         pipeline_cache: &mut PipelineCache,

@@ -104,7 +104,7 @@ fn create_pipeline_task(
 }
 
 pub struct PipelineCache {
-    _device: RenderDevice,
+    device: RenderDevice,
     new_pipelines: Mutex<Vec<CachedPipeline>>,
     pipelines: Vec<CachedPipeline>,
     waiting_pipelines: HashSet<CachedPipelineId>,
@@ -139,7 +139,7 @@ impl PipelineCache {
         resource_manager.state().event_broadcaster.add(rx);
 
         Self {
-            _device: device,
+            device: device,
             new_pipelines: Default::default(),
             pipelines: Default::default(),
             waiting_pipelines: Default::default(),
@@ -229,7 +229,7 @@ impl PipelineCache {
         id: CachedPipelineId,
         descriptor: RenderPipelineDescriptor,
     ) -> CachedPipelineState {
-        let device = self._device.clone();
+        let device = self.device.clone();
 
         let shader_cache = self.shader_cache.clone();
         let layout_cache = self.layout_cache.clone();

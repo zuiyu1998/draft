@@ -1,6 +1,6 @@
-use wgpu::{PipelineLayout as WgpuPipelineLayout, PushConstantRange};
+use wgpu::PipelineLayout as WgpuPipelineLayout;
 
-use crate::gfx_base::GpuBindGroupLayout;
+use crate::{PushConstantRange, gfx_base::GpuBindGroupLayout};
 
 #[derive(Debug, Clone)]
 pub struct GpuPipelineLayout(WgpuPipelineLayout);

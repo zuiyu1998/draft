@@ -5,7 +5,9 @@ mod resource_binding;
 pub use bind_group::*;
 pub use effect::*;
 
-use draft_graphics::{ColorTargetState, DepthStencilState, MultisampleState, PrimitiveState};
+use draft_graphics::{
+    ColorTargetState, DepthStencilState, MultisampleState, PrimitiveState, PushConstantRange,
+};
 use draft_shader::{Shader, ShaderDefVal, ShaderResource};
 use fxhash::FxHashMap;
 use fyrox_core::{ImmutableString, TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
@@ -15,6 +17,12 @@ use std::{error::Error, path::Path};
 use crate::resource_binding::MaterialResourceBinding;
 
 pub type MaterialResource = Resource<Material>;
+
+#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
+pub struct MaterialEffctInfo {
+    pub effect_name: String,
+    pub technique: usize,
+}
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
 pub struct MaterialVertexState {
@@ -93,19 +101,13 @@ impl Material {
         Self {
             effct_info: info.effct_info,
             pipeline_state: info.pipeline_state,
-            resource_bindings: Default::default()
+            resource_bindings: Default::default(),
         }
     }
 
     pub fn get_class(&self) -> MaterialClass {
         MaterialClass::new(self.effct_info.clone())
     }
-}
-
-#[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
-pub struct MaterialEffctInfo {
-    pub effect_name: String,
-    pub technique: usize,
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]

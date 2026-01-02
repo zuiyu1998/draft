@@ -7,7 +7,7 @@ use std::{
 
 use fyrox_core::{TypeUuidProvider, Uuid, io::FileError, reflect::*, uuid, visitor::*};
 use fyrox_resource::{
-    ResourceData,
+    Resource, ResourceData,
     io::ResourceIo,
     loader::{BoxedLoaderFuture, LoaderPayload, ResourceLoader},
     state::LoadError,
@@ -16,18 +16,23 @@ use serde::{Deserialize, Serialize};
 use serde_pretty_yaml::Error as YamlError;
 use thiserror::Error;
 
+pub type MaterialEffectResource = Resource<MaterialEffect>;
+
 use crate::MaterialBindGroup;
 
+
 #[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
-pub struct TechniqueInfo {
-    pub name: Option<String>,
+pub struct MaterialTechnique {
+    pub name: String,
     pub bind_groups: Vec<MaterialBindGroup>,
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
 pub struct MaterialEffect {
     pub name: String,
-    pub techniques: Vec<TechniqueInfo>,
+    pub techniques: Vec<MaterialTechnique>,
+    #[reflect(hidden)]
+    modifications_counter: u64,
 }
 
 #[derive(Debug, Error)]
@@ -39,6 +44,10 @@ pub enum MaterialEffectError {
 }
 
 impl MaterialEffect {
+    pub fn modifications_counter(&self) -> u64 {
+        self.modifications_counter
+    }
+
     pub async fn from_file<P>(path: P, io: &dyn ResourceIo) -> Result<Self, MaterialEffectError>
     where
         P: AsRef<Path>,

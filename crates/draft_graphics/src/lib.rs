@@ -7,6 +7,8 @@ pub use wgpu;
 
 pub use common::*;
 
-pub use wgpu::{SurfaceConfiguration, TextureUsages, PresentMode, CompositeAlphaMode};
+pub use wgpu::{
+    BindGroupLayoutEntry, CompositeAlphaMode, PresentMode, SurfaceConfiguration, TextureUsages,
+};
 
-pub use wgpu::{PipelineCompilationOptions, PushConstantRange};
+pub use wgpu::PipelineCompilationOptions;
