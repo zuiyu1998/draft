@@ -117,15 +117,6 @@ impl MaterialEffectCache {
             .and_then(|key| self.data.get(key))
     }
 
-    pub fn get_material_technique_instance(
-        &self,
-        effect_name: &str,
-        technique: usize,
-    ) -> Option<&MaterialTechniqueInstance> {
-        self.get_material_effect_instance(effect_name)
-            .and_then(|instance| instance.techniques.get(technique))
-    }
-
     fn process(&mut self, dt: f32) {
         let mut removed = vec![];
 
@@ -159,11 +150,6 @@ impl MaterialEffectCache {
 }
 
 pub struct MaterialEffectInstance {
-    techniques: Vec<MaterialTechniqueInstance>,
-}
-
-pub struct MaterialTechniqueInstance {
-    pub name: String,
     pub bind_groups: Vec<MaterialBindGroupInstance>,
 }
 
@@ -183,48 +169,40 @@ pub fn create_material_effect_instance(
     render_device: &RenderDevice,
     material_effect: &MaterialEffect,
 ) -> MaterialEffectInstance {
-    let mut techniques = vec![];
-    for technique in material_effect.techniques.iter() {
-        let mut bind_groups = vec![];
+    let mut bind_groups = vec![];
 
-        for bind_group in technique.bind_groups.iter() {
-            let mut bind_group_layouts = vec![];
+    for bind_group in material_effect.bind_groups.iter() {
+        let mut bind_group_layouts = vec![];
 
-            for bind_group_layout in bind_group.layouts.iter() {
-                let mut resource_bindings = vec![];
-                let mut entries = vec![];
+        for bind_group_layout in bind_group.layouts.iter() {
+            let mut resource_bindings = vec![];
+            let mut entries = vec![];
 
-                bind_group_layout.entries.iter().for_each(|entry| {
-                    entries.push(entry.get_bind_group_layout_entry());
-                    resource_bindings.push(entry.name.clone());
-                });
+            bind_group_layout.entries.iter().for_each(|entry| {
+                entries.push(entry.get_bind_group_layout_entry());
+                resource_bindings.push(entry.name.clone());
+            });
 
-                let desc = BindGroupLayoutDescriptor {
-                    label: Some(bind_group_layout.name.clone()),
-                    entries,
-                };
+            let desc = BindGroupLayoutDescriptor {
+                label: Some(bind_group_layout.name.clone()),
+                entries,
+            };
 
-                let bind_group_layout_instance =
-                    bind_group_layout_cache.get_bind_group_layout(desc, render_device);
+            let bind_group_layout_instance =
+                bind_group_layout_cache.get_bind_group_layout(desc, render_device);
 
-                bind_group_layouts.push(MaterialBindGroupLayoutInstance {
-                    bind_group_layout: bind_group_layout_instance,
-                    name: bind_group_layout.name.clone(),
-                    resource_bindings,
-                });
-            }
-
-            bind_groups.push(MaterialBindGroupInstance {
-                bind_group_layouts,
-                name: bind_group.name.clone(),
+            bind_group_layouts.push(MaterialBindGroupLayoutInstance {
+                bind_group_layout: bind_group_layout_instance,
+                name: bind_group_layout.name.clone(),
+                resource_bindings,
             });
         }
 
-        techniques.push(MaterialTechniqueInstance {
-            bind_groups,
-            name: technique.name.clone(),
+        bind_groups.push(MaterialBindGroupInstance {
+            bind_group_layouts,
+            name: bind_group.name.clone(),
         });
     }
 
-    MaterialEffectInstance { techniques }
+    MaterialEffectInstance { bind_groups }
 }

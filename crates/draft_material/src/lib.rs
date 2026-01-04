@@ -124,4 +124,8 @@ pub trait IMaterial {
     fn built_in_shaders() -> Vec<&'static BuiltInResource<Shader>> {
         vec![]
     }
+
+    fn built_in_material_effects() -> Vec<&'static BuiltInResource<MaterialEffect>> {
+        vec![]
+    }
 }

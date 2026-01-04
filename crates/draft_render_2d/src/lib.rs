@@ -1,4 +1,6 @@
-use std::sync::LazyLock;
+mod resource;
+
+pub use resource::*;
 
 use draft_graphics::{
     ColorTargetState, ColorWrites, TextureFormat,
@@ -7,29 +9,15 @@ use draft_graphics::{
 };
 
 use draft_material::{
-    IMaterial, MaterialFragmentState, MaterialInfo, MaterialVertexState, PipelineState,
+    IMaterial, MaterialEffect, MaterialFragmentState, MaterialInfo, MaterialVertexState,
+    PipelineState,
 };
 use draft_render::{
     Node, RenderFrame, RenderPhase, RenderPhaseContext, RenderPipeline, RenderPipelineContext,
     TrackedRenderPassBuilder,
 };
-use draft_shader::{Shader, ShaderResource};
-use fyrox_core::uuid;
-use fyrox_resource::{embedded_data_source, manager::BuiltInResource, untyped::ResourceKind};
-
-pub static MESH_2D: LazyLock<BuiltInResource<Shader>> = LazyLock::new(|| {
-    BuiltInResource::new(
-        "__MESH_2D__",
-        embedded_data_source!("./mesh2d.wgsl"),
-        |data| {
-            ShaderResource::new_ok(
-                uuid!("f5b02124-9601-452a-9368-3fa2a9703ecd"),
-                ResourceKind::External,
-                Shader::from_wgsl(String::from_utf8(data.to_vec()).unwrap(), ""),
-            )
-        },
-    )
-});
+use draft_shader::Shader;
+use fyrox_resource::manager::BuiltInResource;
 
 pub struct Material2d;
 
@@ -66,6 +54,10 @@ impl IMaterial for Material2d {
 
     fn built_in_shaders() -> Vec<&'static BuiltInResource<Shader>> {
         vec![&MESH_2D]
+    }
+
+    fn built_in_material_effects() -> Vec<&'static BuiltInResource<MaterialEffect>> {
+        vec![&MATERIAL_EFFECT_2D]
     }
 }
 

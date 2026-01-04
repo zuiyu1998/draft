@@ -20,17 +20,10 @@ pub type MaterialEffectResource = Resource<MaterialEffect>;
 
 use crate::MaterialBindGroup;
 
-
-#[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
-pub struct MaterialTechnique {
-    pub name: String,
-    pub bind_groups: Vec<MaterialBindGroup>,
-}
-
 #[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
 pub struct MaterialEffect {
     pub name: String,
-    pub techniques: Vec<MaterialTechnique>,
+    pub bind_groups: Vec<MaterialBindGroup>,
     #[reflect(hidden)]
     modifications_counter: u64,
 }

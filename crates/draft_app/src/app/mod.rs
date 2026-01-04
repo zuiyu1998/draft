@@ -143,6 +143,14 @@ impl App {
             self.graphics_context.set_shader(resource.resource());
         }
 
+        for resource in Material2d::built_in_material_effects() {
+            self.resource_manager
+                .register_built_in_resource(resource.clone());
+
+            self.graphics_context
+                .set_material_effect(resource.resource());
+        }
+
         Ok(())
     }
 

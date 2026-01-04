@@ -6,12 +6,13 @@ mod renderer;
 
 pub mod error;
 
+use draft_material::MaterialEffectResource;
+pub use error::FrameworkError;
 pub use render_frame::*;
 pub use render_phase::*;
 pub use render_pipeline::*;
 pub use render_resource::*;
 pub use renderer::*;
-pub use error::FrameworkError;
 
 use draft_shader::Shader;
 use fyrox_resource::Resource;
@@ -55,6 +56,14 @@ impl GraphicsContext {
     pub fn set_shader(&mut self, shader: Resource<Shader>) {
         if let GraphicsContext::Initialized(graphics_context) = self {
             graphics_context.renderer.set_shader(shader);
+        }
+    }
+
+    pub fn set_material_effect(&mut self, material_effect: MaterialEffectResource) {
+        if let GraphicsContext::Initialized(graphics_context) = self {
+            graphics_context
+                .renderer
+                .set_material_effect(material_effect);
         }
     }
 }

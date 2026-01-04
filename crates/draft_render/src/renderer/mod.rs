@@ -9,7 +9,7 @@ use draft_graphics::{
     frame_graph::{FrameGraph, FrameGraphContext, TransientResourceCache},
     gfx_base::{GetPipelineContainer, TextureView, TextureViewDescriptor},
 };
-use draft_material::MaterialResource;
+use draft_material::{MaterialEffectResource, MaterialResource};
 use draft_mesh::{MeshResource, MeshVertexBufferLayouts};
 use draft_shader::Shader;
 use draft_window::SystemWindowManager;
@@ -78,6 +78,11 @@ impl WorldRenderer {
 
     pub fn set_shader(&mut self, shader: Resource<Shader>) {
         self.pipeline_cache.set_shader(shader);
+    }
+
+    pub fn set_material_effect(&mut self, material_effect: MaterialEffectResource) {
+        self.material_effect_cache
+            .set_material_effect(material_effect);
     }
 
     fn prepare_render_windows(&self) -> Result<RenderWindows, FrameworkError> {
