@@ -2,18 +2,19 @@ use fyrox_core::{reflect::*, visitor::*};
 use serde::{Deserialize, Serialize};
 use std::ops::Range;
 use wgpu::{
-    BlendComponent as WgpuBlendComponent, BlendFactor as WgpuBlendFactor,
-    BlendOperation as WgpuBlendOperation, BlendState as WgpuBlendState, BufferAddress,
-    ColorTargetState as WgpuColorTargetState, ColorWrites as WgpuColorWrites,
-    CompareFunction as WgpuCompareFunction, DepthBiasState as WgpuDepthBiasState,
-    DepthStencilState as WgpuDepthStencilState, Face as WgpuFace, FrontFace as WgpuFrontFace,
-    IndexFormat as WgpuIndexFormat, MultisampleState as WgpuMultisampleState,
-    PolygonMode as WgpuPolygonMode, PrimitiveState as WgpuPrimitiveState,
-    PrimitiveTopology as WgpuPrimitiveTopology, PushConstantRange as WgpuPushConstantRange,
-    ShaderLocation, ShaderStages as WgpuShaderStages, StencilFaceState as WgpuStencilFaceState,
-    StencilOperation as WgpuStencilOperation, StencilState as WgpuStencilState,
-    TextureFormat as WgpuTextureFormat, VertexAttribute as WgpuVertexAttribute,
-    VertexFormat as WgpuVertexFormat, VertexStepMode as WgpuVertexStepMode,BindingType as WgpuBindingType 
+    BindingType as WgpuBindingType, BlendComponent as WgpuBlendComponent,
+    BlendFactor as WgpuBlendFactor, BlendOperation as WgpuBlendOperation,
+    BlendState as WgpuBlendState, BufferAddress, ColorTargetState as WgpuColorTargetState,
+    ColorWrites as WgpuColorWrites, CompareFunction as WgpuCompareFunction,
+    DepthBiasState as WgpuDepthBiasState, DepthStencilState as WgpuDepthStencilState,
+    Face as WgpuFace, FrontFace as WgpuFrontFace, IndexFormat as WgpuIndexFormat,
+    MultisampleState as WgpuMultisampleState, PolygonMode as WgpuPolygonMode,
+    PrimitiveState as WgpuPrimitiveState, PrimitiveTopology as WgpuPrimitiveTopology,
+    PushConstantRange as WgpuPushConstantRange, ShaderLocation, ShaderStages as WgpuShaderStages,
+    StencilFaceState as WgpuStencilFaceState, StencilOperation as WgpuStencilOperation,
+    StencilState as WgpuStencilState, TextureFormat as WgpuTextureFormat,
+    VertexAttribute as WgpuVertexAttribute, VertexFormat as WgpuVertexFormat,
+    VertexStepMode as WgpuVertexStepMode,
 };
 
 #[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default, PartialEq, Eq, Hash)]
@@ -54,7 +55,6 @@ pub enum BindingType {
         vertex_return: bool,
     },
 }
-
 
 impl BindingType {
     pub fn get_binding_type(&self) -> WgpuBindingType {
@@ -104,7 +104,9 @@ pub enum BufferBindingType {
     },
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, Default, Visit, Reflect, PartialEq, Eq, Hash)]
+#[derive(
+    Debug, Clone, Deserialize, Serialize, Default, Visit, Reflect, PartialEq, Eq, Hash, Copy,
+)]
 pub struct ShaderStages(u32);
 
 bitflags::bitflags! {
