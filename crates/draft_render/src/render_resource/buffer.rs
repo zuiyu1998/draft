@@ -21,8 +21,12 @@ pub struct Buffer {
 }
 
 impl Buffer {
-    pub fn new(key: String, value: GpuBuffer, desc: BufferDescriptor) -> Self {
-        Self { key, value, desc }
+    pub fn new(key: &str, value: GpuBuffer, desc: BufferDescriptor) -> Self {
+        Self {
+            key: key.to_string(),
+            value,
+            desc,
+        }
     }
 
     pub fn value(&self) -> &GpuBuffer {

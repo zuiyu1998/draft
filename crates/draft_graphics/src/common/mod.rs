@@ -1,10 +1,11 @@
 use fyrox_core::{reflect::*, visitor::*};
 use serde::{Deserialize, Serialize};
-use std::ops::Range;
+use std::{num::NonZero, ops::Range};
 use wgpu::{
     BindingType as WgpuBindingType, BlendComponent as WgpuBlendComponent,
     BlendFactor as WgpuBlendFactor, BlendOperation as WgpuBlendOperation,
-    BlendState as WgpuBlendState, BufferAddress, ColorTargetState as WgpuColorTargetState,
+    BlendState as WgpuBlendState, BufferAddress, BufferBindingType as WgpuBufferBindingType,
+    BufferUsages as WgpuBufferUsages, ColorTargetState as WgpuColorTargetState,
     ColorWrites as WgpuColorWrites, CompareFunction as WgpuCompareFunction,
     DepthBiasState as WgpuDepthBiasState, DepthStencilState as WgpuDepthStencilState,
     Face as WgpuFace, FrontFace as WgpuFrontFace, IndexFormat as WgpuIndexFormat,
@@ -12,10 +13,39 @@ use wgpu::{
     PrimitiveState as WgpuPrimitiveState, PrimitiveTopology as WgpuPrimitiveTopology,
     PushConstantRange as WgpuPushConstantRange, ShaderLocation, ShaderStages as WgpuShaderStages,
     StencilFaceState as WgpuStencilFaceState, StencilOperation as WgpuStencilOperation,
-    StencilState as WgpuStencilState, TextureFormat as WgpuTextureFormat,
-    VertexAttribute as WgpuVertexAttribute, VertexFormat as WgpuVertexFormat,
-    VertexStepMode as WgpuVertexStepMode,
+    StencilState as WgpuStencilState, StorageTextureAccess as WgpuStorageTextureAccess,
+    TextureFormat as WgpuTextureFormat, TextureSampleType as WgpuTextureSampleType,
+    TextureViewDimension as WgpuTextureViewDimension, VertexAttribute as WgpuVertexAttribute,
+    VertexFormat as WgpuVertexFormat, VertexStepMode as WgpuVertexStepMode,
 };
+
+#[derive(
+    Debug, Clone, Deserialize, Serialize, Default, Visit, Reflect, PartialEq, Eq, Hash, Copy,
+)]
+pub struct BufferUsages(u32);
+
+bitflags::bitflags! {
+     impl BufferUsages: u32 {
+        const MAP_READ = 1 << 0;
+        const MAP_WRITE = 1 << 1;
+        const COPY_SRC = 1 << 2;
+        const COPY_DST = 1 << 3;
+        const INDEX = 1 << 4;
+        const VERTEX = 1 << 5;
+        const UNIFORM = 1 << 6;
+        const STORAGE = 1 << 7;
+        const INDIRECT = 1 << 8;
+        const QUERY_RESOLVE = 1 << 9;
+        const BLAS_INPUT = 1 << 10;
+        const TLAS_INPUT = 1 << 11;
+     }
+}
+
+impl BufferUsages {
+    pub fn get_wgpu_buffer_usages(&self) -> WgpuBufferUsages {
+        WgpuBufferUsages::from_bits(self.0).unwrap()
+    }
+}
 
 #[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default, PartialEq, Eq, Hash)]
 pub struct PushConstantRange {
@@ -58,7 +88,41 @@ pub enum BindingType {
 
 impl BindingType {
     pub fn get_binding_type(&self) -> WgpuBindingType {
-        todo!()
+        match self {
+            BindingType::ExternalTexture => WgpuBindingType::ExternalTexture,
+            BindingType::Buffer {
+                ty,
+                has_dynamic_offset,
+                min_binding_size,
+            } => WgpuBindingType::Buffer {
+                ty: ty.get_wgpu_buffer_binding_type(),
+                has_dynamic_offset: *has_dynamic_offset,
+                min_binding_size: NonZero::new(*min_binding_size),
+            },
+            BindingType::Texture {
+                sample_type,
+                view_dimension,
+                multisampled,
+            } => WgpuBindingType::Texture {
+                sample_type: sample_type.get_wgpu_texture_sample_type(),
+                view_dimension: view_dimension.get_wgpu_texture_view_dimension(),
+                multisampled: *multisampled,
+            },
+            BindingType::StorageTexture {
+                access,
+                format,
+                view_dimension,
+            } => WgpuBindingType::StorageTexture {
+                access: access.get_wgpu_storage_texture_access(),
+                format: format.get_wgpu_texture_format(),
+                view_dimension: view_dimension.get_wgpu_texture_view_dimension(),
+            },
+            BindingType::AccelerationStructure { vertex_return } => {
+                WgpuBindingType::AccelerationStructure {
+                    vertex_return: *vertex_return,
+                }
+            }
+        }
     }
 }
 
@@ -73,6 +137,19 @@ pub enum TextureViewDimension {
     D3,
 }
 
+impl TextureViewDimension {
+    pub fn get_wgpu_texture_view_dimension(&self) -> WgpuTextureViewDimension {
+        match self {
+            TextureViewDimension::D1 => WgpuTextureViewDimension::D1,
+            TextureViewDimension::D2 => WgpuTextureViewDimension::D2,
+            TextureViewDimension::D2Array => WgpuTextureViewDimension::D2Array,
+            TextureViewDimension::Cube => WgpuTextureViewDimension::Cube,
+            TextureViewDimension::CubeArray => WgpuTextureViewDimension::CubeArray,
+            TextureViewDimension::D3 => WgpuTextureViewDimension::D3,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
 pub enum StorageTextureAccess {
     #[default]
@@ -81,12 +158,35 @@ pub enum StorageTextureAccess {
     Atomic,
 }
 
+impl StorageTextureAccess {
+    pub fn get_wgpu_storage_texture_access(&self) -> WgpuStorageTextureAccess {
+        match self {
+            StorageTextureAccess::WriteOnly => WgpuStorageTextureAccess::WriteOnly,
+            StorageTextureAccess::ReadOnly => WgpuStorageTextureAccess::ReadOnly,
+            StorageTextureAccess::Atomic => WgpuStorageTextureAccess::Atomic,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize)]
 pub enum TextureSampleType {
     Float { filterable: bool },
     Depth,
     Sint,
     Uint,
+}
+
+impl TextureSampleType {
+    pub fn get_wgpu_texture_sample_type(&self) -> WgpuTextureSampleType {
+        match self {
+            TextureSampleType::Float { filterable } => WgpuTextureSampleType::Float {
+                filterable: *filterable,
+            },
+            TextureSampleType::Depth => WgpuTextureSampleType::Depth,
+            TextureSampleType::Sint => WgpuTextureSampleType::Sint,
+            TextureSampleType::Uint => WgpuTextureSampleType::Uint,
+        }
+    }
 }
 
 impl Default for TextureSampleType {
@@ -102,6 +202,17 @@ pub enum BufferBindingType {
     Storage {
         read_only: bool,
     },
+}
+
+impl BufferBindingType {
+    pub fn get_wgpu_buffer_binding_type(&self) -> WgpuBufferBindingType {
+        match self {
+            BufferBindingType::Uniform => WgpuBufferBindingType::Uniform,
+            BufferBindingType::Storage { read_only } => WgpuBufferBindingType::Storage {
+                read_only: *read_only,
+            },
+        }
+    }
 }
 
 #[derive(

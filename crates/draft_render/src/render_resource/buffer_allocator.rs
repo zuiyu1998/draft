@@ -21,24 +21,24 @@ impl BufferAllocator {
         }
     }
 
-    pub fn get_buffer(&self, handle: BufferHandle) -> GpuBuffer {
+    pub fn get_buffer(&self, handle: &BufferHandle) -> GpuBuffer {
         self.data
             .get(&handle.desc)
             .map(|set| set.buffers[handle.index].clone())
             .expect("buffer must have")
     }
 
-    pub fn allocate(&mut self, desc: BufferDescriptor) -> BufferHandle {
+    pub fn allocate(&mut self, desc: &BufferDescriptor) -> BufferHandle {
         match self.data.get_mut(&desc) {
             None => {
                 let mut buffer_set = BufferSet::default();
                 let handle = buffer_set.allocate(&self.render_device, desc.clone());
 
-                self.data.insert(desc, buffer_set);
+                self.data.insert(desc.clone(), buffer_set);
 
                 handle
             }
-            Some(buffer_set) => buffer_set.allocate(&self.render_device, desc),
+            Some(buffer_set) => buffer_set.allocate(&self.render_device, desc.clone()),
         }
     }
 }

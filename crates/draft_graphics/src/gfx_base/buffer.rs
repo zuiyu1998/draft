@@ -1,8 +1,6 @@
+use crate::BufferUsages;
 use std::ops::{Bound, RangeBounds};
-
-use wgpu::{
-    Buffer as WgpuBuffer, BufferAddress, BufferDescriptor as WgpuBufferDescriptor, BufferUsages,
-};
+use wgpu::{Buffer as WgpuBuffer, BufferAddress, BufferDescriptor as WgpuBufferDescriptor};
 
 #[derive(Clone, Debug)]
 pub struct GpuBuffer(WgpuBuffer);
@@ -50,7 +48,7 @@ impl BufferDescriptor {
         WgpuBufferDescriptor {
             label: self.label.as_deref(),
             size: self.size,
-            usage: self.usage,
+            usage: self.usage.get_wgpu_buffer_usages(),
             mapped_at_creation: self.mapped_at_creation,
         }
     }

@@ -19,4 +19,4 @@ bitflags = { workspace = true }
 tracing = { workspace = true }
 nonmax = "0.5"
 offset-allocator = "0.2"
-
+encase = { version = "0.12" }

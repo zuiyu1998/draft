@@ -1,7 +1,10 @@
 use std::sync::Arc;
 
-use crate::gfx_base::{BufferDescriptor, BufferInitDescriptor, GpuBuffer};
-use wgpu::{BufferAddress, BufferUsages, COPY_BUFFER_ALIGNMENT};
+use crate::{
+    BufferUsages,
+    gfx_base::{BufferDescriptor, BufferInitDescriptor, GpuBuffer},
+};
+use wgpu::{BufferAddress, COPY_BUFFER_ALIGNMENT};
 
 use super::{
     AnyTransientResource, AnyTransientResourceDescriptor, ArcTransientResource,

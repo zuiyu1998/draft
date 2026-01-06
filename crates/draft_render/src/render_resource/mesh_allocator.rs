@@ -6,8 +6,9 @@ use std::{
 };
 
 use draft_graphics::{
+    BufferUsages,
     gfx_base::{BufferDescriptor, CommandEncoderDescriptor, RenderDevice, RenderQueue},
-    wgpu::{BufferSize, BufferUsages, COPY_BUFFER_ALIGNMENT},
+    wgpu::{BufferSize, COPY_BUFFER_ALIGNMENT},
 };
 use draft_mesh::{Indices, Mesh, MeshResource, MeshVertexBufferLayoutRef, MeshVertexBufferLayouts};
 use fxhash::FxHashMap;
@@ -423,10 +424,10 @@ impl MeshAllocator {
             mapped_at_creation: false,
         };
 
-        let new_buffer_handle = buffer_allocator.allocate(desc.clone());
-        let new_buffer = buffer_allocator.get_buffer(new_buffer_handle);
+        let new_buffer_handle = buffer_allocator.allocate(&desc);
+        let new_buffer = buffer_allocator.get_buffer(&new_buffer_handle);
 
-        slab.buffer = Some(Buffer::new(key, new_buffer.clone(), desc));
+        slab.buffer = Some(Buffer::new(&key, new_buffer.clone(), desc));
 
         let Some(old_buffer) = old_buffer else { return };
 
