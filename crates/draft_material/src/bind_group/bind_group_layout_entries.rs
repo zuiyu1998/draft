@@ -78,4 +78,26 @@ impl MaterialBindGroupLayoutEntry {
     }
 }
 
-pub mod binding_types {}
+pub mod binding_types {
+    use crate::{BindGroupLayoutEntryBuilder, IntoBindGroupLayoutEntryBuilder};
+    use draft_graphics::{BindingType, BufferBindingType};
+    use encase::ShaderType;
+
+    pub fn storage_buffer_read_only<T: ShaderType>(
+        has_dynamic_offset: bool,
+    ) -> BindGroupLayoutEntryBuilder {
+        storage_buffer_read_only_sized(has_dynamic_offset, T::min_size().get())
+    }
+
+    pub fn storage_buffer_read_only_sized(
+        has_dynamic_offset: bool,
+        min_binding_size: u64,
+    ) -> BindGroupLayoutEntryBuilder {
+        BindingType::Buffer {
+            ty: BufferBindingType::Storage { read_only: true },
+            has_dynamic_offset,
+            min_binding_size,
+        }
+        .into_bind_group_layout_entry_builder()
+    }
+}

@@ -529,6 +529,7 @@ dependencies = [
  "bitflags 2.10.0",
  "draft_graphics",
  "draft_shader",
+ "encase",
  "fxhash",
  "fyrox-core",
  "fyrox-resource",

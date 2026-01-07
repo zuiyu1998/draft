@@ -18,14 +18,19 @@ pub static MESH_2D: LazyLock<BuiltInResource<Shader>> = LazyLock::new(|| {
     )
 });
 
+pub struct Mesh2dUniform {}
+
 fn material_effect_2d() -> MaterialEffect {
     let mut effect = MaterialEffect::default();
     effect.name = "material_effect_2d".to_string();
 
     let mut bind_groups = vec![];
 
+    // let d = MaterialBindGroupLayoutBuilder::new("mesh2d_layout", ShaderStages::VERTEX_FRAGMENT, 1)
+    //     .with("draft_mesh_2d", 0, value);
+
     bind_groups.push(MaterialBindGroup {
-        name: "mesh2d_view_layout".to_string(),
+        name: "mesh2d_layout".to_string(),
         layouts: vec![],
     });
 

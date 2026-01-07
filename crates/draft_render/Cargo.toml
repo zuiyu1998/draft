@@ -17,6 +17,6 @@ thiserror = { workspace = true }
 fxhash = { workspace = true }
 bitflags = { workspace = true }
 tracing = { workspace = true }
+encase = { workspace = true  }
 nonmax = "0.5"
 offset-allocator = "0.2"
-encase = { version = "0.12" }
