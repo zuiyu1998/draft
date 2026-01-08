@@ -115,7 +115,14 @@ impl RenderPhase for BatchRenderMeshMaterial {
     }
 }
 
-pub struct MeshMaterialInstanceData {}
+pub struct MeshMaterialInstanceData {
+   pub data: Vec<u8>,
+   pub buffer_size: u64,
+}
+
+pub trait IntoMeshMaterialInstanceData {
+    fn into_mesh_material_instance_data(self) -> MeshMaterialInstanceData;
+}
 
 pub struct BatchMeshMaterial {
     pub mesh: MeshResource,

@@ -1,9 +1,5 @@
 use crate::{
-    BatchMeshMaterialContainer, BatchRenderMeshMaterial, BatchRenderMeshMaterialContainer,
-    BufferAllocator, MaterialEffectCache, MeshAllocator, MeshAllocatorSettings, MeshCache,
-    MeshMaterialInstanceData, MeshMaterialPipeline, PipelineCache, RenderFrame, RenderMeshInfo,
-    RenderPipeline, RenderPipelineContext, RenderPipelineExt, RenderPipelineManager, RenderServer,
-    RenderWindow, RenderWindows, error::FrameworkError,
+    BatchMeshMaterialContainer, BatchRenderMeshMaterial, BatchRenderMeshMaterialContainer, BufferAllocator, IntoMeshMaterialInstanceData, MaterialEffectCache, MeshAllocator, MeshAllocatorSettings, MeshCache, MeshMaterialInstanceData, MeshMaterialPipeline, PipelineCache, RenderFrame, RenderMeshInfo, RenderPipeline, RenderPipelineContext, RenderPipelineExt, RenderPipelineManager, RenderServer, RenderWindow, RenderWindows, error::FrameworkError
 };
 use draft_graphics::{
     frame_graph::{FrameGraph, FrameGraphContext, TransientResourceCache},
@@ -252,7 +248,17 @@ impl<'a> RenderContext<'a> {
         &mut self,
         mesh: MeshResource,
         material: MaterialResource,
-        instance: MeshMaterialInstanceData,
+        instance: impl IntoMeshMaterialInstanceData,
+    ) {
+        let instance_data = instance.into_mesh_material_instance_data();
+        self.push_with_instance_data(mesh, material, instance_data);
+    }
+
+    pub fn push_with_instance_data(
+        &mut self,
+        mesh: MeshResource,
+        material: MaterialResource,
+        instance_data: MeshMaterialInstanceData,
     ) {
         if !mesh.is_ok() {
             return;
@@ -267,7 +273,7 @@ impl<'a> RenderContext<'a> {
         self.mesh_materials.push(
             mesh,
             material,
-            instance,
+            instance_data,
             self.layouts,
             self.mesh_material_pipeline,
             self.pipeline_cache,

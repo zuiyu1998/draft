@@ -1,6 +1,7 @@
 use draft_material::{MaterialBindGroup, MaterialEffect, MaterialEffectResource};
+use draft_render::{IntoMeshMaterialInstanceData, MeshMaterialInstanceData};
 use draft_shader::{Shader, ShaderResource};
-use fyrox_core::uuid;
+use fyrox_core::{algebra::Vector4, uuid};
 use fyrox_resource::{embedded_data_source, manager::BuiltInResource, untyped::ResourceKind};
 use std::sync::LazyLock;
 
@@ -18,7 +19,16 @@ pub static MESH_2D: LazyLock<BuiltInResource<Shader>> = LazyLock::new(|| {
     )
 });
 
-pub struct Mesh2dUniform {}
+#[derive(Debug, Clone, Default)]
+pub struct Mesh2dUniform {
+    pub world_from_local: [Vector4<f32>; 3],
+}
+
+impl IntoMeshMaterialInstanceData for Mesh2dUniform {
+    fn into_mesh_material_instance_data(self) -> MeshMaterialInstanceData {
+        todo!()
+    }
+}
 
 fn material_effect_2d() -> MaterialEffect {
     let mut effect = MaterialEffect::default();

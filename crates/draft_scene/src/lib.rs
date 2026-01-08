@@ -1,7 +1,7 @@
 use draft_material::{Material, MaterialResource};
 use draft_mesh::{Circle, MeshResource};
-use draft_render::{MeshMaterialInstanceData, RenderContext, World};
-use draft_render_2d::Material2d;
+use draft_render::{RenderContext, World};
+use draft_render_2d::{Material2d, Mesh2dUniform};
 use fyrox_core::uuid;
 use fyrox_resource::untyped::ResourceKind;
 
@@ -33,7 +33,7 @@ impl World for SceneContainer {
         context.push(
             self.mesh.clone(),
             self.material.clone(),
-            MeshMaterialInstanceData {},
+            Mesh2dUniform::default(),
         );
     }
 }
