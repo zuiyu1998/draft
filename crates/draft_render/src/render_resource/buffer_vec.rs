@@ -2,31 +2,20 @@ use draft_graphics::{
     BufferUsages,
     gfx_base::{BufferDescriptor, RenderQueue},
 };
-use encase::{
-    ShaderType,
-    internal::{WriteInto, Writer},
-};
-use std::{iter, marker::PhantomData};
+use std::iter;
 
 use crate::{Buffer, BufferAllocator};
 
-pub struct BufferVec<T>
-where
-    T: ShaderType + WriteInto,
-{
+pub struct BufferVec {
     data: Vec<u8>,
     buffer: Option<Buffer>,
     capacity: usize,
     buffer_usage: BufferUsages,
     label: String,
     label_changed: bool,
-    phantom: PhantomData<T>,
 }
 
-impl<T> BufferVec<T>
-where
-    T: ShaderType + WriteInto,
-{
+impl BufferVec {
     pub fn new(buffer_usage: BufferUsages, label: &str) -> Self {
         Self {
             data: vec![],
@@ -35,12 +24,11 @@ where
             buffer_usage,
             label: label.to_string(),
             label_changed: false,
-            phantom: PhantomData,
         }
     }
 
-    pub fn push(&mut self, value: T) -> usize {
-        let element_size = u64::from(T::min_size()) as usize;
+    pub fn push(&mut self, bytes: &[u8]) -> usize {
+        let element_size = bytes.len() as usize;
         let offset = self.data.len();
 
         // TODO: Consider using unsafe code to push uninitialized, to prevent
@@ -50,10 +38,11 @@ where
         // Take a slice of the new data for `write_into` to use. This is
         // important: it hoists the bounds check up here so that the compiler
         // can eliminate all the bounds checks that `write_into` will emit.
-        let mut dest = &mut self.data[offset..(offset + element_size)];
-        value.write_into(&mut Writer::new(&value, &mut dest, 0).unwrap());
+        let dest = &mut self.data[offset..(offset + element_size)];
 
-        offset / u64::from(T::min_size()) as usize
+        dest.copy_from_slice(bytes);
+
+        offset / element_size as usize
     }
 
     pub fn reserve(&mut self, capacity: usize, buffer_allocator: &mut BufferAllocator) {
@@ -62,11 +51,10 @@ where
         }
 
         self.capacity = capacity;
-        let size = u64::from(T::min_size()) as usize * capacity;
 
         let desc = BufferDescriptor {
             label: Some(self.label.clone()),
-            size: size as u64,
+            size: capacity as u64,
             usage: BufferUsages::COPY_DST | self.buffer_usage,
             mapped_at_creation: false,
         };
@@ -82,10 +70,7 @@ where
             return;
         }
 
-        self.reserve(
-            self.data.len() / u64::from(T::min_size()) as usize,
-            buffer_allocator,
-        );
+        self.reserve(self.data.len(), buffer_allocator);
 
         let Some(buffer) = &self.buffer else { return };
         queue.write_buffer(buffer.value(), 0, &self.data);

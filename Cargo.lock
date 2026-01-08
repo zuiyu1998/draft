@@ -644,30 +644,29 @@ checksum = "48c757948c5ede0e46177b7add2e67155f70e33c07fea8284df6576da70b3719"
 
 [[package]]
 name = "encase"
-version = "0.11.2"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02ba239319a4f60905966390f5e52799d868103a533bb7e27822792332504ddd"
+checksum = "6e3e0ff2ee0b7aa97428308dd9e1e42369cb22f5fb8dc1c55546637443a60f1e"
 dependencies = [
  "const_panic",
  "encase_derive",
- "nalgebra 0.33.2",
  "thiserror 2.0.17",
 ]
 
 [[package]]
 name = "encase_derive"
-version = "0.11.2"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5223d6c647f09870553224f6e37261fe5567bc5a4f4cf13ed337476e79990f2f"
+checksum = "a4d90c5d7d527c6cb8a3b114efd26a6304d9ab772656e73d8f4e32b1f3d601a2"
 dependencies = [
  "encase_derive_impl",
 ]
 
 [[package]]
 name = "encase_derive_impl"
-version = "0.11.2"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1796db3d892515842ca2dfb11124c4bb4a9e58d9f2c5c1072e5bca1b2334507b"
+checksum = "c8bad72d8308f7a382de2391ec978ddd736e0103846b965d7e2a63a75768af30"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -852,7 +851,7 @@ dependencies = [
 [[package]]
 name = "fyrox-core"
 version = "1.0.0-rc.1"
-source = "git+https://github.com/zuiyu1998/Fyrox.git#47fd06b54f37d9ab1a5d9832b6e927923965021d"
+source = "git+https://github.com/zuiyu1998/Fyrox.git#acebfaa1b384d1be43c51670c2cecc352776d506"
 dependencies = [
  "android-activity",
  "arrayvec",
@@ -869,7 +868,7 @@ dependencies = [
  "js-sys",
  "lazy_static",
  "memoffset",
- "nalgebra 0.34.1",
+ "nalgebra",
  "notify",
  "num-traits",
  "once_cell",
@@ -887,7 +886,7 @@ dependencies = [
 [[package]]
 name = "fyrox-core-derive"
 version = "1.0.0-rc.1"
-source = "git+https://github.com/zuiyu1998/Fyrox.git#47fd06b54f37d9ab1a5d9832b6e927923965021d"
+source = "git+https://github.com/zuiyu1998/Fyrox.git#acebfaa1b384d1be43c51670c2cecc352776d506"
 dependencies = [
  "convert_case",
  "darling",
@@ -900,11 +899,11 @@ dependencies = [
 [[package]]
 name = "fyrox-math"
 version = "1.0.0-rc.1"
-source = "git+https://github.com/zuiyu1998/Fyrox.git#47fd06b54f37d9ab1a5d9832b6e927923965021d"
+source = "git+https://github.com/zuiyu1998/Fyrox.git#acebfaa1b384d1be43c51670c2cecc352776d506"
 dependencies = [
  "arrayvec",
  "bytemuck",
- "nalgebra 0.34.1",
+ "nalgebra",
  "num-traits",
  "rectutils",
  "uuid",
@@ -913,7 +912,7 @@ dependencies = [
 [[package]]
 name = "fyrox-resource"
 version = "1.0.0-rc.1"
-source = "git+https://github.com/zuiyu1998/Fyrox.git#47fd06b54f37d9ab1a5d9832b6e927923965021d"
+source = "git+https://github.com/zuiyu1998/Fyrox.git#acebfaa1b384d1be43c51670c2cecc352776d506"
 dependencies = [
  "fxhash",
  "fyrox-core",
@@ -1272,9 +1271,9 @@ checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
 name = "libc"
-version = "0.2.179"
+version = "0.2.180"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5a2d376baa530d1238d133232d15e239abad80d05838b4b59354e5268af431f"
+checksum = "bcc35a38544a891a5f7c865aca548a982ccb3b8650a5b06d0fd33a10283c56fc"
 
 [[package]]
 name = "libloading"
@@ -1443,26 +1442,13 @@ dependencies = [
 
 [[package]]
 name = "nalgebra"
-version = "0.33.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26aecdf64b707efd1310e3544d709c5c0ac61c13756046aaaba41be5c4f66a3b"
-dependencies = [
- "approx",
- "num-complex",
- "num-rational",
- "num-traits",
- "simba",
- "typenum",
-]
-
-[[package]]
-name = "nalgebra"
 version = "0.34.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4d5b3eff5cd580f93da45e64715e8c20a3996342f1e466599cf7a267a0c2f5f"
 dependencies = [
  "approx",
  "bytemuck",
+ "encase",
  "glam 0.14.0",
  "glam 0.15.2",
  "glam 0.16.0",
@@ -2128,7 +2114,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d8f59f5c269d9270f517d0292c88d6f7862d2c633e40ee26d48d4815061c86ae"
 dependencies = [
  "arrayvec",
- "nalgebra 0.34.1",
+ "nalgebra",
  "num-traits",
 ]
 

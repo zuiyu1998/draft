@@ -1,6 +1,11 @@
-use draft_material::{MaterialBindGroup, MaterialEffect, MaterialEffectResource};
+use draft_graphics::ShaderStages;
+use draft_material::{
+    MaterialBindGroup, MaterialBindGroupLayoutBuilder, MaterialEffect, MaterialEffectResource,
+    binding_types::storage_buffer_read_only,
+};
 use draft_render::{IntoMeshMaterialInstanceData, MeshMaterialInstanceData};
 use draft_shader::{Shader, ShaderResource};
+use encase::ShaderType;
 use fyrox_core::{algebra::Vector4, uuid};
 use fyrox_resource::{embedded_data_source, manager::BuiltInResource, untyped::ResourceKind};
 use std::sync::LazyLock;
@@ -19,7 +24,7 @@ pub static MESH_2D: LazyLock<BuiltInResource<Shader>> = LazyLock::new(|| {
     )
 });
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, ShaderType)]
 pub struct Mesh2dUniform {
     pub world_from_local: [Vector4<f32>; 3],
 }
@@ -36,12 +41,18 @@ fn material_effect_2d() -> MaterialEffect {
 
     let mut bind_groups = vec![];
 
-    // let d = MaterialBindGroupLayoutBuilder::new("mesh2d_layout", ShaderStages::VERTEX_FRAGMENT, 1)
-    //     .with("draft_mesh_2d", 0, value);
+    let mesh2d_layout =
+        MaterialBindGroupLayoutBuilder::new("mesh2d_layout", ShaderStages::VERTEX_FRAGMENT, 1)
+            .with(
+                "draft_mesh_2d",
+                0,
+                storage_buffer_read_only::<Mesh2dUniform>(false),
+            )
+            .build();
 
     bind_groups.push(MaterialBindGroup {
-        name: "mesh2d_layout".to_string(),
-        layouts: vec![],
+        name: "mesh2d".to_string(),
+        layouts: vec![mesh2d_layout],
     });
 
     effect.bind_groups = bind_groups;
