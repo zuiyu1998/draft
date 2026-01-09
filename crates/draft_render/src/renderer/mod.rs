@@ -1,5 +1,10 @@
 use crate::{
-    BatchMeshMaterialContainer, BatchRenderMeshMaterial, BatchRenderMeshMaterialContainer, BufferAllocator, IntoMeshMaterialInstanceData, MaterialEffectCache, MeshAllocator, MeshAllocatorSettings, MeshCache, MeshMaterialInstanceData, MeshMaterialPipeline, PipelineCache, RenderFrame, RenderMeshInfo, RenderPipeline, RenderPipelineContext, RenderPipelineExt, RenderPipelineManager, RenderServer, RenderWindow, RenderWindows, error::FrameworkError
+    BatchMeshMaterialContainer, BatchRenderMeshMaterial, BatchRenderMeshMaterialContainer,
+    BufferAllocator, IntoMeshMaterialInstanceData, MaterialEffectCache, MeshAllocator,
+    MeshAllocatorSettings, MeshCache, MeshMaterialInstanceData, MeshMaterialPipeline,
+    PipelineCache, RenderDataBundle, RenderFrame, RenderMeshInfo, RenderPipeline,
+    RenderPipelineContext, RenderPipelineExt, RenderPipelineManager, RenderServer, RenderWindow,
+    RenderWindows, error::FrameworkError,
 };
 use draft_graphics::{
     frame_graph::{FrameGraph, FrameGraphContext, TransientResourceCache},
@@ -70,6 +75,15 @@ impl WorldRenderer {
         self.pipeline_cache.update();
         self.mesh_cache.update(dt);
         self.material_effect_cache.update(dt);
+    }
+
+    fn create_render_world(&mut self) -> RenderWorld<'_> {
+        RenderWorld::new(
+            &mut self.mesh_cache,
+            &mut self.layouts,
+            &mut self.mesh_material_pipeline,
+            &mut self.pipeline_cache,
+        )
     }
 
     pub fn set_shader(&mut self, shader: Resource<Shader>) {
@@ -147,16 +161,11 @@ impl WorldRenderer {
 
         let windows = self.prepare_render_windows()?;
 
-        let mut context = RenderContext::new(
-            &mut self.mesh_cache,
-            &mut self.layouts,
-            &mut self.mesh_material_pipeline,
-            &mut self.pipeline_cache,
-        );
+        let mut render_world = self.create_render_world();
 
-        world.prepare(&mut context);
+        world.prepare(&mut render_world);
 
-        let (mesh_materials,) = context.finish();
+        let render_data_bundle = render_world.prepare_render_data_bundle();
 
         self.mesh_cache.allocate_and_free_meshes(
             &self.mesh_allocator_settings,
@@ -167,7 +176,7 @@ impl WorldRenderer {
             &mut self.mesh_allocator,
         );
 
-        let mesh_materials = self.prepare_mesh_materials(mesh_materials);
+        let mesh_materials = self.prepare_mesh_materials(render_data_bundle.mesh_materials);
 
         Ok(RenderFrame {
             windows,
@@ -220,7 +229,7 @@ impl WorldRenderer {
     }
 }
 
-pub struct RenderContext<'a> {
+pub struct RenderWorld<'a> {
     mesh_materials: BatchMeshMaterialContainer,
     mesh_cache: &'a mut MeshCache,
     layouts: &'a mut MeshVertexBufferLayouts,
@@ -228,7 +237,7 @@ pub struct RenderContext<'a> {
     pipeline_cache: &'a mut PipelineCache,
 }
 
-impl<'a> RenderContext<'a> {
+impl<'a> RenderWorld<'a> {
     pub fn new(
         mesh_cache: &'a mut MeshCache,
         layouts: &'a mut MeshVertexBufferLayouts,
@@ -280,11 +289,13 @@ impl<'a> RenderContext<'a> {
         );
     }
 
-    pub fn finish(self) -> (BatchMeshMaterialContainer,) {
-        (self.mesh_materials,)
+    pub fn prepare_render_data_bundle(self) -> RenderDataBundle {
+        RenderDataBundle {
+            mesh_materials: self.mesh_materials,
+        }
     }
 }
 
 pub trait World {
-    fn prepare(&self, context: &mut RenderContext);
+    fn prepare(&self, render_wrold: &mut RenderWorld);
 }
