@@ -1,10 +1,13 @@
+mod mesh_material;
+
+pub use mesh_material::*;
+
 use crate::{
-    BatchMeshMaterialContainer, BatchRenderMeshMaterial, BatchRenderMeshMaterialContainer,
-    BufferAllocator, IntoMeshMaterialInstanceData, MaterialEffectCache, MeshAllocator,
-    MeshAllocatorSettings, MeshCache, MeshMaterialInstanceData, MeshMaterialPipeline,
-    PipelineCache, RenderDataBundle, RenderFrame, RenderMeshInfo, RenderPipeline,
-    RenderPipelineContext, RenderPipelineExt, RenderPipelineManager, RenderServer, RenderWindow,
-    RenderWindows, error::FrameworkError,
+    BatchMeshMaterialContainer, BatchRenderMeshMaterialContainer, BufferAllocator,
+    IntoMeshMaterialInstanceData, MaterialEffectCache, MeshAllocator, MeshAllocatorSettings,
+    MeshCache, MeshMaterialInstanceData, MeshMaterialPipeline, PipelineCache, RenderDataBundle,
+    RenderFrame, RenderPipeline, RenderPipelineContext, RenderPipelineExt, RenderPipelineManager,
+    RenderServer, RenderWindow, RenderWindows, error::FrameworkError,
 };
 use draft_graphics::{
     frame_graph::{FrameGraph, FrameGraphContext, TransientResourceCache},
@@ -30,6 +33,7 @@ pub struct WorldRenderer {
     mesh_allocator: MeshAllocator,
     mesh_cache: MeshCache,
     material_effect_cache: MaterialEffectCache,
+    mesh_material_processor: MeshMaterialProcessor,
 }
 
 impl RenderPipelineExt for WorldRenderer {
@@ -68,6 +72,7 @@ impl WorldRenderer {
             mesh_allocator: MeshAllocator::new(),
             mesh_allocator_settings: Default::default(),
             mesh_cache: Default::default(),
+            mesh_material_processor: MeshMaterialProcessor::new(),
         }
     }
 
@@ -133,27 +138,8 @@ impl WorldRenderer {
         &mut self,
         mesh_materials: BatchMeshMaterialContainer,
     ) -> BatchRenderMeshMaterialContainer {
-        let mut container = BatchRenderMeshMaterialContainer::default();
-
-        for (key, batch_mesh_materials) in mesh_materials.iter() {
-            if let Some(_) = self.pipeline_cache.get_pipeline(key.pipeline_id.id()) {
-                let batch_range = 0..(batch_mesh_materials.len() as u32);
-                let mut batchs = vec![];
-
-                for batch in batch_mesh_materials {
-                    batchs.push(BatchRenderMeshMaterial {
-                        pipeline_id: key.pipeline_id.id(),
-                        mesh_info: RenderMeshInfo::from_mesh(&batch.mesh),
-                        material: batch.material.clone(),
-                        batch_range: batch_range.clone(),
-                    });
-                }
-
-                container.insert(key.clone(), batchs);
-            }
-        }
-
-        container
+        self.mesh_material_processor
+            .process(mesh_materials, &mut self.pipeline_cache, &mut self.material_effect_cache)
     }
 
     fn prepare_frame<W: World>(&mut self, world: &W) -> Result<RenderFrame, FrameworkError> {

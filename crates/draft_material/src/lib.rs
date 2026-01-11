@@ -21,7 +21,6 @@ pub type MaterialResource = Resource<Material>;
 #[derive(Debug, Clone, Reflect, Visit, Default, PartialEq, Eq, Hash)]
 pub struct MaterialEffctInfo {
     pub effect_name: String,
-    pub technique: usize,
 }
 
 #[derive(Debug, Clone, Reflect, Visit, Default)]
@@ -51,12 +50,16 @@ pub struct PipelineState {
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct MaterialClass {
-    pub effct_info: MaterialEffctInfo,
+    effct_info: MaterialEffctInfo,
 }
 
 impl MaterialClass {
     pub fn new(effct_info: MaterialEffctInfo) -> Self {
         Self { effct_info }
+    }
+
+    pub fn get_effect_name(&self) -> &str {
+        &self.effct_info.effect_name
     }
 }
 

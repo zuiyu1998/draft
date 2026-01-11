@@ -149,6 +149,12 @@ impl MaterialEffectCache {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct MaterialResourceBinding {
+    pub unique: String,
+    pub name: String,
+}
+
 pub struct MaterialEffectInstance {
     pub bind_groups: Vec<MaterialBindGroupInstance>,
 }
