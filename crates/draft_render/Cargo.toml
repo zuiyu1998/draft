@@ -3,6 +3,9 @@ name = "draft_render"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+detailed_trace = []
+
 [dependencies]
 draft_window = { path = "../draft_window" }
 draft_graphics = { path = "../draft_graphics" }

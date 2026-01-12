@@ -29,6 +29,12 @@ pub struct BindGroupLayout {
     value: GpuBindGroupLayout,
 }
 
+impl PartialEq for BindGroupLayout {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
 impl BindGroupLayout {
     pub fn new(value: GpuBindGroupLayout) -> Self {
         BindGroupLayout {

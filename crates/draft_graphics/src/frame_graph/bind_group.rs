@@ -81,7 +81,7 @@ impl TransientBindGroupEntry {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct TransientBindGroup {
     pub label: Option<String>,
     pub layout: BindGroupLayout,

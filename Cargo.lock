@@ -585,6 +585,7 @@ dependencies = [
  "encase",
  "fyrox-core",
  "fyrox-resource",
+ "tracing",
 ]
 
 [[package]]

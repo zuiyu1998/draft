@@ -107,7 +107,9 @@ impl Node for UpscalingNode {
 
         for mesh_materials in render_frame.mesh_materials.values() {
             for mesh_material in mesh_materials.iter() {
-                mesh_material.render(&mut tracked, &render_phase_context);
+                if let Err(e) = mesh_material.render(&mut tracked, &render_phase_context) {
+                    tracing::error!("Mesh material render error: {}", e);
+                }
             }
         }
     }

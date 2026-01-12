@@ -11,4 +11,5 @@ draft_render = { path = "../draft_render" }
 
 fyrox-resource = { workspace = true }
 fyrox-core = { workspace = true }
-encase = { workspace = true  }
+encase = { workspace = true }
+tracing = { workspace = true }

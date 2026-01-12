@@ -51,8 +51,8 @@ impl MeshMaterialProcessor {
             batchs.push(BatchRenderMeshMaterial {
                 pipeline_id: context.key.pipeline_id.id(),
                 mesh_info: RenderMeshInfo::from_mesh(&batch.mesh),
-                material: batch.material.clone(),
                 batch_range: context.batch_range.clone(),
+                bind_groups: vec![]
             });
         }
         batchs
