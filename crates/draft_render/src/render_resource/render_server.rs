@@ -5,6 +5,7 @@ use draft_graphics::wgpu::{
 use draft_window::RawHandleWrapper;
 use fyrox_core::futures::executor::block_on;
 
+#[derive(Clone)]
 pub struct RenderServer {
     pub device: RenderDevice,
     pub queue: RenderQueue,

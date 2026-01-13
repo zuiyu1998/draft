@@ -7,15 +7,14 @@ mod renderer;
 pub mod error;
 
 use draft_material::MaterialEffectResource;
+use draft_shader::Shader;
 pub use error::FrameworkError;
+use fyrox_resource::Resource;
 pub use render_frame::*;
 pub use render_phase::*;
 pub use render_pipeline::*;
 pub use render_resource::*;
 pub use renderer::*;
-
-use draft_shader::Shader;
-use fyrox_resource::Resource;
 
 use draft_window::Window;
 

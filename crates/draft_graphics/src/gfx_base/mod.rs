@@ -74,6 +74,7 @@ impl RenderQueue {
     }
 }
 
+#[derive(Clone)]
 pub struct RenderInstance(Arc<Instance>);
 
 impl RenderInstance {
