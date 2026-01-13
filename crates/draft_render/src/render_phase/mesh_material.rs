@@ -1,9 +1,13 @@
 use std::ops::Range;
 
-use draft_graphics::{IndexFormat, frame_graph::TransientBindGroup, gfx_base::CachedPipelineId};
+use draft_graphics::{
+    IndexFormat,
+    frame_graph::TransientBindGroup,
+    gfx_base::{BindGroupLayout, CachedPipelineId},
+};
 use draft_mesh::MeshResource;
 
-use crate::{DrawError, RenderPhase, RenderPhaseContext, TrackedRenderPassBuilder};
+use crate::{BufferHandle, DrawError, RenderPhase, RenderPhaseContext, TrackedRenderPassBuilder};
 
 pub struct RenderMeshInfo {
     pub key: u64,
@@ -73,15 +77,44 @@ pub enum RenderIndiceInfo {
     NonIndexed,
 }
 
+pub struct RenderBufferHandle {
+    pub handle: BufferHandle,
+}
+
+pub enum RenderTransientBindGroupResource {
+    Buffer(RenderBufferHandle),
+}
+
+pub struct RenderTransientBindGroupEntry {
+    pub binding: u32,
+    pub resource: RenderTransientBindGroupResource,
+}
+
+pub struct RenderTransientBindGroup {
+    pub label: Option<String>,
+    pub layout: BindGroupLayout,
+    pub entries: Vec<RenderTransientBindGroupEntry>,
+}
+
+impl RenderTransientBindGroup {
+    pub fn get_transient_bind_group(&self, _context: &RenderPhaseContext) -> TransientBindGroup {
+        todo!()
+    }
+}
+
 pub struct RenderBindGroup {
     index: usize,
-    bind_group: TransientBindGroup,
+    bind_group: RenderTransientBindGroup,
     offsets: Vec<u32>,
 }
 
 impl RenderBindGroup {
-    pub fn render(&self, builder: &mut TrackedRenderPassBuilder) {
-        builder.set_bind_group(self.index, &self.bind_group, &self.offsets);
+    pub fn render(&self, builder: &mut TrackedRenderPassBuilder, context: &RenderPhaseContext) {
+        builder.set_bind_group(
+            self.index,
+            &self.bind_group.get_transient_bind_group(context),
+            &self.offsets,
+        );
     }
 }
 
@@ -107,7 +140,7 @@ impl RenderPhase for BatchRenderMeshMaterial {
         builder.set_render_pipeline(pipeline);
 
         for bind_group in self.bind_groups.iter() {
-            bind_group.render(builder);
+            bind_group.render(builder, context);
         }
 
         self.mesh_info.render(builder, context, &self.batch_range)?;
