@@ -1,10 +1,11 @@
 use crate::{
-    BufferAllocator, IntoMeshMaterialInstanceData, MeshCache, MeshMaterialInstanceData,
-    MeshMaterialProcessor, MeshProcessor, PipelineCache, RenderDataBundle, RenderServer,
+    BufferAllocator, IntoMeshMaterialInstanceData, MaterialEffectCache, MeshCache,
+    MeshMaterialInstanceData, MeshMaterialProcessor, MeshProcessor, PipelineCache,
+    RenderDataBundle, RenderServer,
 };
 
 use draft_graphics::gfx_base::GetPipelineContainer;
-use draft_material::MaterialResource;
+use draft_material::{MaterialEffectResource, MaterialResource};
 use draft_mesh::{MeshResource, MeshVertexBufferLayouts};
 use draft_shader::Shader;
 use fyrox_resource::{Resource, manager::ResourceManager};
@@ -16,12 +17,17 @@ pub struct RenderWorld {
     mesh_material_processor: MeshMaterialProcessor,
     pub mesh_cache: MeshCache,
     pub mesh_vertex_buffer_layouts: MeshVertexBufferLayouts,
-    buffer_allocator: BufferAllocator,
+    pub buffer_allocator: BufferAllocator,
+    material_effect_cache: MaterialEffectCache,
 }
 
 impl RenderWorld {
     pub fn new(render_server: &RenderServer, resource_manager: &ResourceManager) -> Self {
         Self {
+            material_effect_cache: MaterialEffectCache::new(
+                render_server.device.clone(),
+                resource_manager,
+            ),
             pipeline_cache: PipelineCache::new(render_server.device.clone(), resource_manager),
             buffer_allocator: BufferAllocator::new(render_server.device.clone()),
             mesh_processor: Default::default(),
@@ -36,9 +42,16 @@ impl RenderWorld {
         self.pipeline_cache.set_shader(shader);
     }
 
+    pub fn set_material_effect(&mut self, material_effect: MaterialEffectResource) {
+        self.material_effect_cache
+            .set_material_effect(material_effect);
+    }
+
     pub fn update(&mut self, dt: f32) {
         self.pipeline_cache.update();
         self.mesh_cache.update(dt);
+        self.material_effect_cache.update(dt);
+        self.buffer_allocator.update(dt);
     }
 
     pub fn push(
@@ -65,6 +78,15 @@ impl RenderWorld {
             return;
         }
 
+        let effect_name = material.data_ref().effct_info.effect_name.clone();
+
+        let Some(material_effect_instance) = self
+            .material_effect_cache
+            .get_material_effect_instance(&effect_name)
+        else {
+            return;
+        };
+
         self.mesh_processor.process(&mesh);
 
         self.mesh_material_processor.process(
@@ -73,6 +95,7 @@ impl RenderWorld {
             &instance_data,
             &mut self.pipeline_cache,
             &mut self.mesh_vertex_buffer_layouts,
+            &material_effect_instance,
         );
     }
 

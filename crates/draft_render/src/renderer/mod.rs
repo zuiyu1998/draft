@@ -5,9 +5,8 @@ pub use processor::*;
 pub use render_world::*;
 
 use crate::{
-    BufferAllocator, MaterialEffectCache, RenderFrame, RenderPipeline, RenderPipelineContext,
-    RenderPipelineExt, RenderPipelineManager, RenderServer, RenderWindow, RenderWindows,
-    error::FrameworkError,
+    RenderFrame, RenderPipeline, RenderPipelineContext, RenderPipelineExt, RenderPipelineManager,
+    RenderServer, RenderWindow, RenderWindows, error::FrameworkError,
 };
 use draft_graphics::{
     frame_graph::{FrameGraph, FrameGraphContext, TransientResourceCache},
@@ -23,9 +22,7 @@ pub struct WorldRenderer {
     render_server: RenderServer,
     render_pipeline_manager: RenderPipelineManager,
     system_window_manager: SystemWindowManager,
-    buffer_allocator: BufferAllocator,
     transient_resource_cache: TransientResourceCache,
-    material_effect_cache: MaterialEffectCache,
     render_world: RenderWorld,
 }
 
@@ -50,11 +47,6 @@ impl WorldRenderer {
         resource_manager: &ResourceManager,
     ) -> Self {
         Self {
-            material_effect_cache: MaterialEffectCache::new(
-                render_server.device.clone(),
-                resource_manager,
-            ),
-            buffer_allocator: BufferAllocator::new(render_server.device.clone()),
             render_world: RenderWorld::new(&render_server, resource_manager),
             render_server,
             render_pipeline_manager: RenderPipelineManager::default(),
@@ -64,14 +56,11 @@ impl WorldRenderer {
     }
 
     pub fn update(&mut self, dt: f32) {
-        self.material_effect_cache.update(dt);
-        self.buffer_allocator.update(dt);
         self.render_world.update(dt);
     }
 
     pub fn set_material_effect(&mut self, material_effect: MaterialEffectResource) {
-        self.material_effect_cache
-            .set_material_effect(material_effect);
+        self.render_world.set_material_effect(material_effect);
     }
 
     pub fn set_shader(&mut self, shader: Resource<Shader>) {
@@ -113,7 +102,7 @@ impl WorldRenderer {
     }
 
     fn prepare_frame<W: World>(&mut self, world: &W) -> Result<RenderFrame, FrameworkError> {
-        self.buffer_allocator.unset();
+        self.render_world.buffer_allocator.unset();
 
         let windows = self.prepare_render_windows()?;
 
