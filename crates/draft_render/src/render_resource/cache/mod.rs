@@ -1,6 +1,8 @@
+mod buffer_allocator;
 mod material_effect_cache;
 mod mesh_cache;
 
+pub use buffer_allocator::*;
 pub use material_effect_cache::*;
 pub use mesh_cache::*;
 

@@ -1,6 +1,8 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, mem::take};
 
 use draft_graphics::gfx_base::{BufferDescriptor, GpuBuffer, RenderDevice};
+
+use crate::CacheEntry;
 
 pub struct BufferAllocator {
     render_device: RenderDevice,
@@ -15,6 +17,12 @@ impl BufferAllocator {
         }
     }
 
+    pub fn update(&mut self, dt: f32) {
+        for set in self.data.values_mut() {
+            set.update(dt);
+        }
+    }
+
     pub fn unset(&mut self) {
         for set in self.data.values_mut() {
             set.unset();
@@ -24,7 +32,7 @@ impl BufferAllocator {
     pub fn get_buffer(&self, handle: &BufferHandle) -> GpuBuffer {
         self.data
             .get(&handle.desc)
-            .map(|set| set.buffers[handle.index].clone())
+            .map(|set| set.buffers[handle.index].value.clone())
             .expect("buffer must have")
     }
 
@@ -50,13 +58,23 @@ pub struct BufferHandle {
 
 #[derive(Default)]
 pub struct BufferSet {
-    buffers: Vec<GpuBuffer>,
+    buffers: Vec<CacheEntry<GpuBuffer>>,
     free: usize,
 }
 
 impl BufferSet {
     pub fn unset(&mut self) {
         self.free = 0;
+    }
+
+    pub fn update(&mut self, dt: f32) {
+        let tmp = take(&mut self.buffers);
+        for mut item in tmp.into_iter() {
+            item.update(dt);
+            if !item.free() {
+                self.buffers.push(item);
+            }
+        }
     }
 
     pub fn allocate(
@@ -70,7 +88,8 @@ impl BufferSet {
             self.free += 1;
             BufferHandle { desc, index }
         } else {
-            self.buffers.push(render_device.create_buffer(&desc));
+            self.buffers
+                .push(CacheEntry::new(render_device.create_buffer(&desc)));
 
             BufferHandle { desc, index }
         }

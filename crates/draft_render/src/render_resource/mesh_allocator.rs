@@ -246,6 +246,12 @@ pub struct MeshAllocator {
     pub extra_buffer_usages: BufferUsages,
 }
 
+impl Default for MeshAllocator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MeshAllocator {
     pub fn new() -> Self {
         Self {

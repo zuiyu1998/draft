@@ -1,20 +1,20 @@
-mod mesh_material;
+mod processor;
 
-pub use mesh_material::*;
+pub use processor::*;
 
 use crate::{
     BatchMeshMaterialContainer, BatchRenderMeshMaterialContainer, BufferAllocator,
-    IntoMeshMaterialInstanceData, MaterialEffectCache, MeshAllocator, MeshAllocatorSettings,
-    MeshCache, MeshMaterialInstanceData, MeshMaterialPipeline, PipelineCache, RenderDataBundle,
-    RenderFrame, RenderPipeline, RenderPipelineContext, RenderPipelineExt, RenderPipelineManager,
-    RenderServer, RenderWindow, RenderWindows, error::FrameworkError,
+    IntoMeshMaterialInstanceData, MaterialEffectCache, MeshCache, MeshMaterialInstanceData,
+    MeshMaterialPipeline, PipelineCache, RenderDataBundle, RenderFrame, RenderPipeline,
+    RenderPipelineContext, RenderPipelineExt, RenderPipelineManager, RenderServer, RenderWindow,
+    RenderWindows, error::FrameworkError,
 };
 use draft_graphics::{
     frame_graph::{FrameGraph, FrameGraphContext, TransientResourceCache},
     gfx_base::{GetPipelineContainer, TextureView, TextureViewDescriptor},
 };
 use draft_material::{MaterialEffectResource, MaterialResource};
-use draft_mesh::{MeshResource, MeshVertexBufferLayouts};
+use draft_mesh::MeshResource;
 use draft_shader::Shader;
 use draft_window::SystemWindowManager;
 use fyrox_resource::{Resource, manager::ResourceManager};
@@ -25,15 +25,13 @@ pub struct WorldRenderer {
     pipeline_cache: PipelineCache,
     mesh_material_pipeline: MeshMaterialPipeline,
     render_pipeline_manager: RenderPipelineManager,
-    layouts: MeshVertexBufferLayouts,
     system_window_manager: SystemWindowManager,
     buffer_allocator: BufferAllocator,
     transient_resource_cache: TransientResourceCache,
-    mesh_allocator_settings: MeshAllocatorSettings,
-    mesh_allocator: MeshAllocator,
     mesh_cache: MeshCache,
     material_effect_cache: MaterialEffectCache,
     mesh_material_processor: MeshMaterialProcessor,
+    mesh_processor: MeshProcessor,
 }
 
 impl RenderPipelineExt for WorldRenderer {
@@ -66,13 +64,11 @@ impl WorldRenderer {
             render_server,
             mesh_material_pipeline: Default::default(),
             render_pipeline_manager: RenderPipelineManager::default(),
-            layouts: Default::default(),
             system_window_manager,
             transient_resource_cache: Default::default(),
-            mesh_allocator: MeshAllocator::new(),
-            mesh_allocator_settings: Default::default(),
             mesh_cache: Default::default(),
             mesh_material_processor: MeshMaterialProcessor::new(),
+            mesh_processor: MeshProcessor::default(),
         }
     }
 
@@ -80,14 +76,14 @@ impl WorldRenderer {
         self.pipeline_cache.update();
         self.mesh_cache.update(dt);
         self.material_effect_cache.update(dt);
+        self.buffer_allocator.update(dt);
     }
 
     fn create_render_world(&mut self) -> RenderWorld<'_> {
         RenderWorld::new(
-            &mut self.mesh_cache,
-            &mut self.layouts,
             &mut self.mesh_material_pipeline,
             &mut self.pipeline_cache,
+            &mut self.mesh_processor,
         )
     }
 
@@ -138,8 +134,11 @@ impl WorldRenderer {
         &mut self,
         mesh_materials: BatchMeshMaterialContainer,
     ) -> BatchRenderMeshMaterialContainer {
-        self.mesh_material_processor
-            .process(mesh_materials, &mut self.pipeline_cache, &mut self.material_effect_cache)
+        self.mesh_material_processor.process(
+            mesh_materials,
+            &mut self.pipeline_cache,
+            &mut self.material_effect_cache,
+        )
     }
 
     fn prepare_frame<W: World>(&mut self, world: &W) -> Result<RenderFrame, FrameworkError> {
@@ -153,13 +152,12 @@ impl WorldRenderer {
 
         let render_data_bundle = render_world.prepare_render_data_bundle();
 
+        self.mesh_processor.update_cache(&mut self.mesh_cache);
         self.mesh_cache.allocate_and_free_meshes(
-            &self.mesh_allocator_settings,
-            &mut self.layouts,
             &mut self.buffer_allocator,
             &self.render_server.device,
             &self.render_server.queue,
-            &mut self.mesh_allocator,
+            &mut self.mesh_processor.vertex_buffer_layouts,
         );
 
         let mesh_materials = self.prepare_mesh_materials(render_data_bundle.mesh_materials);
@@ -177,7 +175,7 @@ impl WorldRenderer {
 
         let context = RenderPipelineContext {
             pipeline_container: &pipeline_container,
-            mesh_allocator: &self.mesh_allocator,
+            mesh_allocator: &self.mesh_cache.allocator,
             render_device: &self.render_server.device,
         };
         let mut frame_graph = FrameGraph::default();
@@ -217,25 +215,22 @@ impl WorldRenderer {
 
 pub struct RenderWorld<'a> {
     mesh_materials: BatchMeshMaterialContainer,
-    mesh_cache: &'a mut MeshCache,
-    layouts: &'a mut MeshVertexBufferLayouts,
     mesh_material_pipeline: &'a mut MeshMaterialPipeline,
     pipeline_cache: &'a mut PipelineCache,
+    mesh_processor: &'a mut MeshProcessor,
 }
 
 impl<'a> RenderWorld<'a> {
     pub fn new(
-        mesh_cache: &'a mut MeshCache,
-        layouts: &'a mut MeshVertexBufferLayouts,
         mesh_material_pipeline: &'a mut MeshMaterialPipeline,
         pipeline_cache: &'a mut PipelineCache,
+        mesh_processor: &'a mut MeshProcessor,
     ) -> Self {
         Self {
             mesh_materials: BatchMeshMaterialContainer::default(),
-            mesh_cache,
-            layouts,
             mesh_material_pipeline,
             pipeline_cache,
+            mesh_processor,
         }
     }
 
@@ -263,13 +258,13 @@ impl<'a> RenderWorld<'a> {
             return;
         }
 
-        self.mesh_cache.insert_mesh(&mesh);
+        self.mesh_processor.prepare(&mesh);
 
         self.mesh_materials.push(
             mesh,
             material,
             instance_data,
-            self.layouts,
+            &mut self.mesh_processor.vertex_buffer_layouts,
             self.mesh_material_pipeline,
             self.pipeline_cache,
         );

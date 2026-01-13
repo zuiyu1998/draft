@@ -19,13 +19,16 @@ pub struct MeshCache {
     removed: HashSet<u64>,
     modified: HashSet<u64>,
     added: HashSet<u64>,
+
+    pub allocator: MeshAllocator,
+    pub settings: MeshAllocatorSettings,
 }
 
 impl MeshCache {
     pub fn insert_mesh(&mut self, mesh: &MeshResource) {
         let key = mesh.key();
 
-        self.data.insert(key, mesh.clone());
+        // self.data.insert(key, mesh.clone());
         self.removed.remove(&key);
 
         let mesh = mesh.data_ref();
@@ -59,15 +62,13 @@ impl MeshCache {
 
     pub fn allocate_and_free_meshes(
         &mut self,
-        settings: &MeshAllocatorSettings,
-        layouts: &mut MeshVertexBufferLayouts,
         buffer_allocator: &mut BufferAllocator,
         render_device: &RenderDevice,
         render_queue: &RenderQueue,
-        mesh_allocator: &mut MeshAllocator,
+        mesh_vertex_buffer_layouts: &mut MeshVertexBufferLayouts,
     ) {
         let meshes_to_free = self.removed.iter().chain(self.modified.iter());
-        mesh_allocator.free_meshes(meshes_to_free);
+        self.allocator.free_meshes(meshes_to_free);
 
         let mut added = vec![];
 
@@ -77,10 +78,10 @@ impl MeshCache {
             }
         }
 
-        mesh_allocator.allocate_meshes(
+        self.allocator.allocate_meshes(
             &added,
-            settings,
-            layouts,
+            &self.settings,
+            mesh_vertex_buffer_layouts,
             buffer_allocator,
             render_device,
             render_queue,
