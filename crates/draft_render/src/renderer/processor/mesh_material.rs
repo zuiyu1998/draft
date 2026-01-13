@@ -1,13 +1,19 @@
-use std::ops::Deref;
+use std::{mem::take, ops::Deref};
 
-use draft_graphics::{BufferUsages, gfx_base::BindGroupLayout};
+use draft_graphics::{
+    BufferUsages,
+    gfx_base::{BindGroupLayout, RenderQueue},
+};
 use draft_material::{Material, MaterialResource};
 use draft_mesh::{MeshResource, MeshVertexBufferLayouts};
 use fxhash::FxHashMap;
 
 use crate::{
-    BatchMeshMaterialKey, BatchRenderMeshMaterial, BufferAllocator, BufferVec,
-    MaterialEffectInstance, MeshMaterialInstanceData, MeshMaterialPipeline, PipelineCache,
+    BatchMeshMaterialKey, BatchRenderMeshMaterial, BatchRenderMeshMaterialContainer,
+    BufferAllocator, BufferHandle, BufferVec, CachedRenderPipelineId, MaterialEffectInstance,
+    MeshMaterialInstanceData, MeshMaterialPipeline, PipelineCache, RenderBindGroup,
+    RenderBufferHandle, RenderMeshInfo, RenderTransientBindGroup, RenderTransientBindGroupEntry,
+    RenderTransientBindGroupResource,
 };
 
 #[derive(Default)]
@@ -32,10 +38,26 @@ pub struct MaterialExtractorContext<'a> {
     pub instance_data: &'a MeshMaterialInstanceData,
     pub buffer_allocator: &'a mut BatchMeshMateriaBufferAllocator,
     pub key: &'a str,
+    pub offsets: &'a mut Vec<u32>,
 }
 
 pub enum MaterialResourceHandle {
     Buffer { key: String },
+}
+
+impl MaterialResourceHandle {
+    pub fn create_render_transient_bind_group_resource(
+        &self,
+        buffer_allocator: &FxHashMap<String, BufferHandle>,
+    ) -> RenderTransientBindGroupResource {
+        match self {
+            MaterialResourceHandle::Buffer { key } => {
+                RenderTransientBindGroupResource::Buffer(RenderBufferHandle {
+                    handle: buffer_allocator.get(key).unwrap().clone(),
+                })
+            }
+        }
+    }
 }
 
 pub struct MaterialBindGroupEntryHandle {
@@ -43,15 +65,44 @@ pub struct MaterialBindGroupEntryHandle {
     pub resource: MaterialResourceHandle,
 }
 
-pub struct MaterialBindLayoutHandle {
-    pub label: String,
-    pub layout: BindGroupLayout,
-    pub entries: Vec<MaterialBindGroupEntryHandle>,
+impl MaterialBindGroupEntryHandle {
+    pub fn create_render_transient_bind_group_entry(
+        &self,
+        buffer_allocator: &FxHashMap<String, BufferHandle>,
+    ) -> RenderTransientBindGroupEntry {
+        RenderTransientBindGroupEntry {
+            binding: self.binding,
+            resource: self
+                .resource
+                .create_render_transient_bind_group_resource(buffer_allocator),
+        }
+    }
 }
 
 pub struct MaterialBindGroupHandle {
     pub name: String,
-    pub layouts: Vec<MaterialBindLayoutHandle>,
+    pub layout: BindGroupLayout,
+    pub entries: Vec<MaterialBindGroupEntryHandle>,
+    pub offsets: Vec<u32>,
+}
+
+impl MaterialBindGroupHandle {
+    pub fn create_render_transient_bind_group(
+        &self,
+        buffer_allocator: &FxHashMap<String, BufferHandle>,
+    ) -> RenderTransientBindGroup {
+        let entries = self
+            .entries
+            .iter()
+            .map(|entry| entry.create_render_transient_bind_group_entry(buffer_allocator))
+            .collect();
+
+        RenderTransientBindGroup {
+            label: Some(self.name.clone()),
+            layout: self.layout.clone(),
+            entries,
+        }
+    }
 }
 
 pub trait MaterialExtractor: 'static {
@@ -128,7 +179,9 @@ impl MaterialExtractorContainer {
 }
 
 pub struct BatchMeshMaterialData {
+    pub pipeline_id: CachedRenderPipelineId,
     pub bind_groups: Vec<MaterialBindGroupHandle>,
+    pub mesh_info: RenderMeshInfo,
 }
 
 #[derive(Default)]
@@ -149,64 +202,84 @@ impl BatchMeshMaterial {
         let mut groups = vec![];
 
         for bind_group in material_effect_instance.bind_groups.iter() {
-            let mut layouts = vec![];
+            let mut entries = vec![];
 
-            for bind_group_layout in bind_group.bind_group_layouts.iter() {
-                let mut entries = vec![];
+            let mut offsets = vec![];
 
-                for (index, resource_binding) in
-                    bind_group_layout.resource_bindings.iter().enumerate()
-                {
-                    let material_extractor =
-                        material_extractor_container.get_material_extractor(resource_binding);
+            for (index, resource_binding) in bind_group.resource_bindings.iter().enumerate() {
+                let material_extractor =
+                    material_extractor_container.get_material_extractor(resource_binding);
 
-                    let key = format!(
-                        "{}-{}-{}",
-                        bind_group.name, bind_group_layout.name, resource_binding
-                    );
+                let key = format!("{}-{}", bind_group.name, resource_binding);
 
-                    let mut context = MaterialExtractorContext {
-                        resource_binding,
-                        material,
-                        instance_data,
-                        buffer_allocator: &mut self.buffer_allocator,
-                        key: &key,
-                    };
+                let mut context = MaterialExtractorContext {
+                    resource_binding,
+                    material,
+                    instance_data,
+                    buffer_allocator: &mut self.buffer_allocator,
+                    key: &key,
+                    offsets: &mut offsets,
+                };
 
-                    let handle = material_extractor.extra(&mut context);
+                let handle = material_extractor.extra(&mut context);
 
-                    entries.push(MaterialBindGroupEntryHandle {
-                        binding: index as u32,
-                        resource: handle,
-                    });
-                }
-
-                layouts.push(MaterialBindLayoutHandle {
-                    label: bind_group_layout.name.to_string(),
-                    layout: bind_group_layout.bind_group_layout.deref().clone(),
-                    entries,
+                entries.push(MaterialBindGroupEntryHandle {
+                    binding: index as u32,
+                    resource: handle,
                 });
             }
 
             groups.push(MaterialBindGroupHandle {
                 name: bind_group.name.clone(),
-                layouts,
+                layout: bind_group.bind_group_layout.deref().clone(),
+                entries,
+                offsets,
             });
         }
 
         groups
     }
 
-    pub fn push(&mut self, bind_groups: Vec<MaterialBindGroupHandle>) {
+    pub fn push(&mut self, data: BatchMeshMaterialData) {
         self.count += 1;
-        self.data.push(BatchMeshMaterialData { bind_groups });
+        self.data.push(data);
     }
 
-    pub fn allallocateow(
+    pub fn allocate(
         self,
-        _buffer_allocator: &mut BufferAllocator,
+        buffer_allocator: &mut BufferAllocator,
+        render_queue: &RenderQueue,
     ) -> Vec<BatchRenderMeshMaterial> {
-        todo!()
+        let buffer_allocator = self
+            .buffer_allocator
+            .buffers
+            .into_iter()
+            .map(|(key, mut buffer_vec)| {
+                let handle = buffer_vec.write_buffer(buffer_allocator, render_queue);
+                (key, handle)
+            })
+            .collect::<FxHashMap<String, BufferHandle>>();
+
+        let mut batchs = vec![];
+        for data in self.data.into_iter() {
+            let mut bind_groups = vec![];
+            for (index, handle) in data.bind_groups.into_iter().enumerate() {
+                let bind_group = handle.create_render_transient_bind_group(&buffer_allocator);
+                bind_groups.push(RenderBindGroup {
+                    index,
+                    bind_group,
+                    offsets: handle.offsets,
+                });
+            }
+
+            batchs.push(BatchRenderMeshMaterial {
+                pipeline_id: data.pipeline_id.id(),
+                bind_groups,
+                mesh_info: data.mesh_info,
+                batch_range: 0..self.count,
+            });
+        }
+        batchs
     }
 }
 
@@ -251,17 +324,50 @@ impl MeshMaterialProcessor {
             .mesh_material_pipeline
             .get(mesh, material, pipeline_cache, layouts);
 
+        println!("mesh_materials");
+
+        if pipeline_cache.get_pipeline(pipeline_id.id()).is_none() {
+            return;
+        }
+
         let key = BatchMeshMaterialKey::new(mesh, material, layouts, pipeline_id);
 
         let material = material.data_ref();
 
         let batch = self.container.get_or_create(&key);
 
-        batch.extra_material(
+        let bind_groups = batch.extra_material(
             material_effect_instance,
             &material,
             &self.material_extractor_container,
             instance_data,
         );
+
+        batch.push(BatchMeshMaterialData {
+            bind_groups,
+            pipeline_id,
+            mesh_info: RenderMeshInfo::from_mesh(mesh),
+        });
+
+        println!("mesh_materials: {}", batch.data.len());
+    }
+
+    pub fn update_cache(
+        &mut self,
+        buffer_allocator: &mut BufferAllocator,
+        render_queue: &RenderQueue,
+    ) -> BatchRenderMeshMaterialContainer {
+        let container = take(&mut self.container);
+
+        let data = container
+            .0
+            .into_iter()
+            .map(|(key, batch_mesh_material)| {
+                let batchs = batch_mesh_material.allocate(buffer_allocator, render_queue);
+                (key, batchs)
+            })
+            .collect::<FxHashMap<BatchMeshMaterialKey, Vec<BatchRenderMeshMaterial>>>();
+
+        BatchRenderMeshMaterialContainer::new(data)
     }
 }

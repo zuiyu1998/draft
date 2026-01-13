@@ -11,6 +11,14 @@ pub struct BatchRenderMeshMaterialContainer(
     FxHashMap<BatchMeshMaterialKey, Vec<BatchRenderMeshMaterial>>,
 );
 
+impl BatchRenderMeshMaterialContainer {
+    pub fn new(
+        data: FxHashMap<BatchMeshMaterialKey, Vec<BatchRenderMeshMaterial>>,
+    ) -> BatchRenderMeshMaterialContainer {
+        BatchRenderMeshMaterialContainer(data)
+    }
+}
+
 impl Deref for BatchRenderMeshMaterialContainer {
     type Target = FxHashMap<BatchMeshMaterialKey, Vec<BatchRenderMeshMaterial>>;
 
@@ -27,7 +35,6 @@ impl DerefMut for BatchRenderMeshMaterialContainer {
 
 pub struct MeshMaterialInstanceData {
     pub data: Vec<u8>,
-    pub buffer_size: u64,
 }
 
 pub trait IntoMeshMaterialInstanceData {

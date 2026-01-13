@@ -28,6 +28,7 @@ impl IMaterial for Material2d {
 
     fn info() -> MaterialInfo {
         let mut info = MaterialInfo::default();
+        info.effct_info.effect_name = "material_effect_2d".to_string();
 
         info.pipeline_state = PipelineState {
             vertex: MaterialVertexState {

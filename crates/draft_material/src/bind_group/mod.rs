@@ -10,5 +10,5 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Reflect, Visit, Deserialize, Serialize, Default)]
 pub struct MaterialBindGroup {
     pub name: String,
-    pub layouts: Vec<MaterialBindGroupLayout>,
+    pub layout: MaterialBindGroupLayout,
 }

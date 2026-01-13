@@ -103,9 +103,9 @@ impl RenderTransientBindGroup {
 }
 
 pub struct RenderBindGroup {
-    index: usize,
-    bind_group: RenderTransientBindGroup,
-    offsets: Vec<u32>,
+    pub index: usize,
+    pub bind_group: RenderTransientBindGroup,
+    pub offsets: Vec<u32>,
 }
 
 impl RenderBindGroup {

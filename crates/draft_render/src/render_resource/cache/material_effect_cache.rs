@@ -53,7 +53,6 @@ pub struct MaterialEffectCache {
     render_device: RenderDevice,
     cache: FxHashMap<u64, CacheEntry<MaterialEffectData>>,
     effect_name_to_cache: FxHashMap<String, u64>,
-    data: FxHashMap<u64, MaterialEffectInstance>,
     bind_group_layout_cache: BindGroupLayoutCache,
     material_effect_receiver: Receiver<ResourceEvent>,
 }
@@ -68,7 +67,6 @@ impl MaterialEffectCache {
             render_device,
             cache: Default::default(),
             effect_name_to_cache: Default::default(),
-            data: Default::default(),
             bind_group_layout_cache: Default::default(),
             material_effect_receiver: tx,
         }
@@ -77,6 +75,9 @@ impl MaterialEffectCache {
     pub fn set_material_effect(&mut self, material_effect: MaterialEffectResource) {
         let key = material_effect.key();
         let material_effect = material_effect.data_ref();
+
+        self.effect_name_to_cache
+            .insert(material_effect.name.clone(), key);
 
         match self.cache.entry(key) {
             Entry::Occupied(mut entry) => {
@@ -114,7 +115,7 @@ impl MaterialEffectCache {
     ) -> Option<&MaterialEffectInstance> {
         self.effect_name_to_cache
             .get(effect_name)
-            .and_then(|key| self.data.get(key))
+            .and_then(|key| self.cache.get(key).map(|v| &v.value.instance))
     }
 
     fn process(&mut self, dt: f32) {
@@ -128,7 +129,7 @@ impl MaterialEffectCache {
         }
 
         for removed in removed.into_iter() {
-            self.data.remove(&removed);
+            self.cache.remove(&removed);
         }
     }
 
@@ -161,11 +162,6 @@ pub struct MaterialEffectInstance {
 
 pub struct MaterialBindGroupInstance {
     pub name: String,
-    pub bind_group_layouts: Vec<MaterialBindGroupLayoutInstance>,
-}
-
-pub struct MaterialBindGroupLayoutInstance {
-    pub name: String,
     pub bind_group_layout: Arc<BindGroupLayout>,
     pub resource_bindings: Vec<String>,
 }
@@ -178,35 +174,25 @@ pub fn create_material_effect_instance(
     let mut bind_groups = vec![];
 
     for bind_group in material_effect.bind_groups.iter() {
-        let mut bind_group_layouts = vec![];
+        let mut resource_bindings = vec![];
+        let mut entries = vec![];
 
-        for bind_group_layout in bind_group.layouts.iter() {
-            let mut resource_bindings = vec![];
-            let mut entries = vec![];
+        bind_group.layout.entries.iter().for_each(|entry| {
+            entries.push(entry.get_bind_group_layout_entry());
+            resource_bindings.push(entry.name.clone());
+        });
 
-            bind_group_layout.entries.iter().for_each(|entry| {
-                entries.push(entry.get_bind_group_layout_entry());
-                resource_bindings.push(entry.name.clone());
-            });
+        let desc = BindGroupLayoutDescriptor {
+            label: Some(bind_group.layout.name.clone()),
+            entries,
+        };
 
-            let desc = BindGroupLayoutDescriptor {
-                label: Some(bind_group_layout.name.clone()),
-                entries,
-            };
-
-            let bind_group_layout_instance =
-                bind_group_layout_cache.get_bind_group_layout(desc, render_device);
-
-            bind_group_layouts.push(MaterialBindGroupLayoutInstance {
-                bind_group_layout: bind_group_layout_instance,
-                name: bind_group_layout.name.clone(),
-                resource_bindings,
-            });
-        }
+        let bind_group_layout = bind_group_layout_cache.get_bind_group_layout(desc, render_device);
 
         bind_groups.push(MaterialBindGroupInstance {
-            bind_group_layouts,
+            bind_group_layout,
             name: bind_group.name.clone(),
+            resource_bindings,
         });
     }
 

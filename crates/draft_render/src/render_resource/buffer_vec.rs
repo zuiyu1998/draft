@@ -4,15 +4,13 @@ use draft_graphics::{
 };
 use std::iter;
 
-use crate::{Buffer, BufferAllocator};
+use crate::{Buffer, BufferAllocator, BufferHandle};
 
 pub struct BufferVec {
     data: Vec<u8>,
     buffer: Option<Buffer>,
-    capacity: usize,
     buffer_usage: BufferUsages,
     label: String,
-    label_changed: bool,
 }
 
 impl BufferVec {
@@ -20,10 +18,8 @@ impl BufferVec {
         Self {
             data: vec![],
             buffer: None,
-            capacity: 0,
             buffer_usage,
             label: label.to_string(),
-            label_changed: false,
         }
     }
 
@@ -45,13 +41,11 @@ impl BufferVec {
         offset / element_size as usize
     }
 
-    pub fn reserve(&mut self, capacity: usize, buffer_allocator: &mut BufferAllocator) {
-        if capacity <= self.capacity && !self.label_changed {
-            return;
-        }
-
-        self.capacity = capacity;
-
+    pub fn reserve(
+        &mut self,
+        capacity: usize,
+        buffer_allocator: &mut BufferAllocator,
+    ) -> BufferHandle {
         let desc = BufferDescriptor {
             label: Some(self.label.clone()),
             size: capacity as u64,
@@ -63,16 +57,20 @@ impl BufferVec {
         let buffer = buffer_allocator.get_buffer(&handle);
 
         self.buffer = Some(Buffer::new(&self.label, buffer, desc));
+
+        handle
     }
 
-    pub fn write_buffer(&mut self, buffer_allocator: &mut BufferAllocator, queue: &RenderQueue) {
-        if self.data.is_empty() {
-            return;
-        }
+    pub fn write_buffer(
+        &mut self,
+        buffer_allocator: &mut BufferAllocator,
+        queue: &RenderQueue,
+    ) -> BufferHandle {
+        let handle = self.reserve(self.data.len(), buffer_allocator);
 
-        self.reserve(self.data.len(), buffer_allocator);
-
-        let Some(buffer) = &self.buffer else { return };
+        let buffer = self.buffer.take().unwrap();
         queue.write_buffer(buffer.value(), 0, &self.data);
+
+        handle
     }
 }

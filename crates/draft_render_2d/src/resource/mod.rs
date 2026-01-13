@@ -5,7 +5,7 @@ use draft_material::{
 };
 use draft_render::{IntoMeshMaterialInstanceData, MeshMaterialInstanceData};
 use draft_shader::{Shader, ShaderResource};
-use encase::ShaderType;
+use encase::{ShaderType, UniformBuffer};
 use fyrox_core::{algebra::Vector4, uuid};
 use fyrox_resource::{embedded_data_source, manager::BuiltInResource, untyped::ResourceKind};
 use std::sync::LazyLock;
@@ -31,7 +31,10 @@ pub struct Mesh2dUniform {
 
 impl IntoMeshMaterialInstanceData for Mesh2dUniform {
     fn into_mesh_material_instance_data(self) -> MeshMaterialInstanceData {
-        todo!()
+        let mut buffer = UniformBuffer::new(Vec::<u8>::new());
+        buffer.write(&self).unwrap();
+        let data = buffer.into_inner();
+        MeshMaterialInstanceData { data }
     }
 }
 
@@ -52,11 +55,11 @@ fn material_effect_2d() -> MaterialEffect {
 
     bind_groups.push(MaterialBindGroup {
         name: "mesh2d".to_string(),
-        layouts: vec![mesh2d_layout],
+        layout: mesh2d_layout,
     });
 
     effect.bind_groups = bind_groups;
-
+   
     effect
 }
 

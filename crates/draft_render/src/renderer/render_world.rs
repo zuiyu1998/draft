@@ -79,6 +79,7 @@ impl RenderWorld {
         }
 
         let effect_name = material.data_ref().effct_info.effect_name.clone();
+        println!("mesh_materials -- {}", effect_name);
 
         let Some(material_effect_instance) = self
             .material_effect_cache
@@ -86,6 +87,7 @@ impl RenderWorld {
         else {
             return;
         };
+        println!("mesh_materials11");
 
         self.mesh_processor.process(&mesh);
 
@@ -108,9 +110,16 @@ impl RenderWorld {
             &mut self.mesh_vertex_buffer_layouts,
         );
 
-        let _pipeline_container = self.pipeline_cache.get_pipeline_container();
+        let pipeline_container = self.pipeline_cache.get_pipeline_container();
 
-        todo!()
+        let mesh_materials = self
+            .mesh_material_processor
+            .update_cache(&mut self.buffer_allocator, &self.render_server.queue);
+
+        RenderDataBundle {
+            mesh_materials,
+            pipeline_container,
+        }
     }
 }
 

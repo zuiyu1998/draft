@@ -51,6 +51,7 @@ impl BufferAllocator {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct BufferHandle {
     pub desc: BufferDescriptor,
     pub index: usize,
