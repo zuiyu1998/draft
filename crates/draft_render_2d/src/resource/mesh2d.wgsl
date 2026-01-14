@@ -8,6 +8,12 @@ struct VertexOutput {
     @builtin(position) clip_position: vec4f,
 };
 
+struct Mesh2d {
+    world_from_local: mat3x4<f32>,
+};
+
+@group(0) @binding(0) var<storage> mesh: array<Mesh2d>;
+
 @vertex
 fn vertex(
     model: VertexInput,

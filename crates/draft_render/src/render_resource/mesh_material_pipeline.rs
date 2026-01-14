@@ -1,11 +1,14 @@
 use std::{
     collections::HashMap,
     hash::{Hash, Hasher},
+    ops::Deref,
 };
 
 use crate::{
-    CachedRenderPipelineId, PipelineCache, RenderPipelineDescriptor, render_resource::VertexState,
+    CachedRenderPipelineId, MaterialEffectInstance, PipelineCache, RenderPipelineDescriptor,
+    render_resource::VertexState,
 };
+use draft_graphics::gfx_base::BindGroupLayout;
 use draft_material::{MaterialFragmentState, MaterialResource, MaterialVertexState, PipelineState};
 
 use draft_mesh::{MeshResource, MeshVertexBufferLayoutRef, MeshVertexBufferLayouts};
@@ -129,6 +132,7 @@ impl MeshMaterialPipeline {
         material: &MaterialResource,
         pipeline_cache: &mut PipelineCache,
         layouts: &mut MeshVertexBufferLayouts,
+        material_effect_instance: &MaterialEffectInstance,
     ) -> CachedRenderPipelineId {
         let key = get_mesh_pipeline_key(mesh, material, layouts);
 
@@ -140,7 +144,12 @@ impl MeshMaterialPipeline {
 
         let pipeline_state = material.data_ref().pipeline_state.clone();
 
-        let id = self.specialize(pipeline_state, pipeline_cache, &layout);
+        let id = self.specialize(
+            pipeline_state,
+            pipeline_cache,
+            &layout,
+            material_effect_instance,
+        );
 
         self.cache.insert(key, id);
 
@@ -152,12 +161,19 @@ impl MeshMaterialPipeline {
         pipeline_state: PipelineState,
         pipeline_cache: &mut PipelineCache,
         layout: &MeshVertexBufferLayoutRef,
+        material_effect_instance: &MaterialEffectInstance,
     ) -> CachedRenderPipelineId {
         let buffer = layout.0.layout().clone();
 
+        let layout = material_effect_instance
+            .bind_groups
+            .iter()
+            .map(|bind_group| bind_group.bind_group_layout.deref().clone())
+            .collect::<Vec<BindGroupLayout>>();
+
         pipeline_cache.queue_render_pipeline(RenderPipelineDescriptor {
             label: None,
-            layout: vec![],
+            layout,
             push_constant_ranges: vec![],
             vertex: VertexState {
                 shader: pipeline_state.vertex.shader,

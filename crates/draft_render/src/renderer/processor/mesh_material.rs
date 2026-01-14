@@ -333,7 +333,7 @@ impl MeshMaterialProcessor {
     ) {
         let pipeline_id = self
             .mesh_material_pipeline
-            .get(mesh, material, pipeline_cache, layouts);
+            .get(mesh, material, pipeline_cache, layouts, material_effect_instance);
 
 
         if pipeline_cache.get_pipeline(pipeline_id.id()).is_none() {
