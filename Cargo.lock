@@ -496,6 +496,7 @@ dependencies = [
  "draft_render_2d",
  "draft_scene",
  "draft_window",
+ "fxhash",
  "fyrox-core",
  "fyrox-resource",
  "thiserror 2.0.17",

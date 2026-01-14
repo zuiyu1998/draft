@@ -17,3 +17,4 @@ downcast-rs = { workspace = true }
 variadics_please = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
+fxhash = { workspace = true }

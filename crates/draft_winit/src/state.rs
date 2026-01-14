@@ -63,6 +63,8 @@ impl<M: Message> ApplicationHandler<M> for WinitAppRunnerState<M> {
         self.app
             .initialize_graphics_context(&event_loop_ref)
             .expect("Unable to initialize graphics context!");
+
+        self.app.finish();
     }
 
     fn suspended(&mut self, _event_loop: &ActiveEventLoop) {
