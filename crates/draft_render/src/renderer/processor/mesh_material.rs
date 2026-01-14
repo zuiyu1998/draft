@@ -1,4 +1,4 @@
-use std::{mem::take, ops::Deref};
+use std::{mem::take, num::NonZero, ops::Deref};
 
 use draft_graphics::{
     BufferUsages,
@@ -42,7 +42,11 @@ pub struct MaterialExtractorContext<'a> {
 }
 
 pub enum MaterialResourceHandle {
-    Buffer { key: String },
+    Buffer {
+        key: String,
+        size: Option<NonZero<u64>>,
+        offset: u64,
+    },
 }
 
 impl MaterialResourceHandle {
@@ -51,9 +55,12 @@ impl MaterialResourceHandle {
         buffer_allocator: &FxHashMap<String, BufferHandle>,
     ) -> RenderTransientBindGroupResource {
         match self {
-            MaterialResourceHandle::Buffer { key } => {
+            MaterialResourceHandle::Buffer { key, size, offset } => {
                 RenderTransientBindGroupResource::Buffer(RenderBufferHandle {
                     handle: buffer_allocator.get(key).unwrap().clone(),
+                    size: *size,
+                    offset: *offset,
+                    key: key.clone(),
                 })
             }
         }
@@ -124,6 +131,8 @@ impl MaterialExtractor for MeshMaterialExtractor {
 
         MaterialResourceHandle::Buffer {
             key: context.key.to_string(),
+            size: None,
+            offset: 0,
         }
     }
 
@@ -143,6 +152,8 @@ impl MaterialExtractor for DefalutMaterialExtractor {
     fn extra(&self, context: &mut MaterialExtractorContext) -> MaterialResourceHandle {
         MaterialResourceHandle::Buffer {
             key: context.key.to_string(),
+            size: None,
+            offset: 0,
         }
     }
 }
@@ -324,7 +335,6 @@ impl MeshMaterialProcessor {
             .mesh_material_pipeline
             .get(mesh, material, pipeline_cache, layouts);
 
-        println!("mesh_materials");
 
         if pipeline_cache.get_pipeline(pipeline_id.id()).is_none() {
             return;
@@ -349,7 +359,6 @@ impl MeshMaterialProcessor {
             mesh_info: RenderMeshInfo::from_mesh(mesh),
         });
 
-        println!("mesh_materials: {}", batch.data.len());
     }
 
     pub fn update_cache(

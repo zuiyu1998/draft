@@ -59,7 +59,7 @@ fn material_effect_2d() -> MaterialEffect {
     });
 
     effect.bind_groups = bind_groups;
-   
+
     effect
 }
 

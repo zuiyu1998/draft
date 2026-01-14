@@ -1,13 +1,18 @@
-use std::ops::Range;
+use std::{num::NonZero, ops::Range};
 
 use draft_graphics::{
     IndexFormat,
-    frame_graph::TransientBindGroup,
+    frame_graph::{
+        PassNodeBuilderExt, TransientBindGroup, TransientBindGroupBuffer, TransientBindGroupEntry,
+        TransientBindGroupResource,
+    },
     gfx_base::{BindGroupLayout, CachedPipelineId},
 };
 use draft_mesh::MeshResource;
 
-use crate::{BufferHandle, DrawError, RenderPhase, RenderPhaseContext, TrackedRenderPassBuilder};
+use crate::{
+    Buffer, BufferHandle, DrawError, RenderPhase, RenderPhaseContext, TrackedRenderPassBuilder,
+};
 
 pub struct RenderMeshInfo {
     pub key: u64,
@@ -79,15 +84,59 @@ pub enum RenderIndiceInfo {
 
 pub struct RenderBufferHandle {
     pub handle: BufferHandle,
+    pub key: String,
+    pub size: Option<NonZero<u64>>,
+    pub offset: u64,
 }
 
 pub enum RenderTransientBindGroupResource {
     Buffer(RenderBufferHandle),
 }
 
+impl RenderTransientBindGroupResource {
+    pub fn create_transient_bind_group_resource(
+        &self,
+        builder: &mut TrackedRenderPassBuilder,
+        context: &RenderPhaseContext,
+    ) -> TransientBindGroupResource {
+        match self {
+            RenderTransientBindGroupResource::Buffer(render_buffer) => {
+                let desc = render_buffer.handle.desc.clone();
+                let key = render_buffer.key.clone();
+
+                let buffer = context.buffer_allocator.get_buffer(&render_buffer.handle);
+                let buffer = Buffer::new(&key, buffer, desc);
+
+                let buffer = builder.read_material(&buffer);
+
+                TransientBindGroupResource::Buffer(TransientBindGroupBuffer {
+                    buffer,
+                    size: None,
+                    offset: render_buffer.offset,
+                })
+            }
+        }
+    }
+}
+
 pub struct RenderTransientBindGroupEntry {
     pub binding: u32,
     pub resource: RenderTransientBindGroupResource,
+}
+
+impl RenderTransientBindGroupEntry {
+    pub fn create_transient_bind_group_entry(
+        &self,
+        builder: &mut TrackedRenderPassBuilder,
+        context: &RenderPhaseContext,
+    ) -> TransientBindGroupEntry {
+        TransientBindGroupEntry {
+            binding: self.binding,
+            resource: self
+                .resource
+                .create_transient_bind_group_resource(builder, context),
+        }
+    }
 }
 
 pub struct RenderTransientBindGroup {
@@ -97,8 +146,22 @@ pub struct RenderTransientBindGroup {
 }
 
 impl RenderTransientBindGroup {
-    pub fn get_transient_bind_group(&self, _context: &RenderPhaseContext) -> TransientBindGroup {
-        todo!()
+    pub fn create_transient_bind_group(
+        &self,
+        builder: &mut TrackedRenderPassBuilder,
+        context: &RenderPhaseContext,
+    ) -> TransientBindGroup {
+        let entries = self
+            .entries
+            .iter()
+            .map(|entry| entry.create_transient_bind_group_entry(builder, context))
+            .collect();
+
+        TransientBindGroup {
+            label: self.label.clone(),
+            layout: self.layout.clone(),
+            entries,
+        }
     }
 }
 
@@ -110,11 +173,11 @@ pub struct RenderBindGroup {
 
 impl RenderBindGroup {
     pub fn render(&self, builder: &mut TrackedRenderPassBuilder, context: &RenderPhaseContext) {
-        builder.set_bind_group(
-            self.index,
-            &self.bind_group.get_transient_bind_group(context),
-            &self.offsets,
-        );
+        let bind_group = self
+            .bind_group
+            .create_transient_bind_group(builder, context);
+
+        builder.set_bind_group(self.index, &bind_group, &self.offsets);
     }
 }
 

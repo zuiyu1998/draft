@@ -28,7 +28,7 @@ impl MeshCache {
     pub fn insert_mesh(&mut self, mesh: &MeshResource) {
         let key = mesh.key();
 
-        // self.data.insert(key, mesh.clone());
+        self.data.insert(key, mesh.clone());
         self.removed.remove(&key);
 
         let mesh = mesh.data_ref();

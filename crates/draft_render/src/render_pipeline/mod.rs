@@ -5,11 +5,12 @@ use draft_graphics::{
     gfx_base::{PipelineContainer, RenderDevice},
 };
 
-use crate::{MeshAllocator, RenderFrame};
+use crate::{BufferAllocator, MeshAllocator, RenderFrame};
 
 pub struct RenderPipelineContext<'a> {
     pub pipeline_container: &'a PipelineContainer,
     pub mesh_allocator: &'a MeshAllocator,
+    pub buffer_allocator: &'a BufferAllocator,
     pub render_device: &'a RenderDevice,
 }
 

@@ -8,13 +8,13 @@ use std::ops::Range;
 use draft_graphics::{
     IndexFormat,
     frame_graph::{
-        PassNodeBuilderExt, Ref, RenderPassBuilder, ResourceRead, TransientBindGroup,
-        TransientBuffer,
+        Handle, PassNodeBuilderExt, Ref, RenderPassBuilder, ResourceMaterial, ResourceRead,
+        ResourceWrite, TransientBindGroup, TransientBuffer, TransientResource,
     },
     gfx_base::{GpuRenderPipeline, PipelineContainer, RenderDevice},
 };
 
-use crate::{BufferSlice, MeshAllocator};
+use crate::{BufferAllocator, BufferSlice, MeshAllocator};
 
 #[derive(Default)]
 pub struct DrawState {
@@ -114,6 +114,7 @@ impl DrawState {
 pub struct RenderPhaseContext<'a> {
     pub pipeline_container: &'a PipelineContainer,
     pub mesh_allocator: &'a MeshAllocator,
+    pub buffer_allocator: &'a BufferAllocator,
 }
 
 pub struct TrackedRenderPassBuilder<'a, 'b> {
@@ -121,16 +122,47 @@ pub struct TrackedRenderPassBuilder<'a, 'b> {
     state: DrawState,
 }
 
+impl<'a, 'b> PassNodeBuilderExt for TrackedRenderPassBuilder<'a, 'b> {
+    fn read_material<M: ResourceMaterial>(
+        &mut self,
+        material: &M,
+    ) -> Ref<M::ResourceType, ResourceRead> {
+        self.render_pass_builder.read_material(material)
+    }
+
+    fn write_material<M: ResourceMaterial>(
+        &mut self,
+        material: &M,
+    ) -> Ref<M::ResourceType, ResourceWrite> {
+        self.render_pass_builder.write_material(material)
+    }
+
+    fn read<ResourceType: TransientResource>(
+        &mut self,
+        resource_handle: Handle<ResourceType>,
+    ) -> Ref<ResourceType, ResourceRead> {
+        self.render_pass_builder.read(resource_handle)
+    }
+
+    fn write<ResourceType: TransientResource>(
+        &mut self,
+        resource_handle: Handle<ResourceType>,
+    ) -> Ref<ResourceType, ResourceWrite> {
+        self.render_pass_builder.write(resource_handle)
+    }
+}
+
 impl<'a, 'b> TrackedRenderPassBuilder<'a, 'b> {
     pub fn new(render_pass_builder: RenderPassBuilder<'a, 'b>, device: &RenderDevice) -> Self {
         let limits = device.limits();
-        let _max_bind_groups = limits.max_bind_groups as usize;
+        let max_bind_groups = limits.max_bind_groups as usize;
         let max_vertex_buffers = limits.max_vertex_buffers as usize;
 
         Self {
             render_pass_builder,
             state: DrawState {
                 vertex_buffers: vec![None; max_vertex_buffers],
+                bind_groups: vec![(None, Vec::new()); max_bind_groups],
                 ..Default::default()
             },
         }

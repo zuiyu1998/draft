@@ -123,6 +123,7 @@ impl WorldRenderer {
             pipeline_container: &frame.render_data_bundle.pipeline_container,
             mesh_allocator: &self.render_world.mesh_cache.allocator,
             render_device: &self.render_server.device,
+            buffer_allocator: &self.render_world.buffer_allocator,
         };
         let mut frame_graph = FrameGraph::default();
 

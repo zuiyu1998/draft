@@ -104,6 +104,7 @@ impl Node for UpscalingNode {
         let render_phase_context = RenderPhaseContext {
             pipeline_container: context.pipeline_container,
             mesh_allocator: context.mesh_allocator,
+            buffer_allocator: context.buffer_allocator
         };
 
         for mesh_materials in render_frame.render_data_bundle.mesh_materials.values() {
