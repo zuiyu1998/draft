@@ -60,17 +60,11 @@ impl<M: Message> ApplicationHandler<M> for WinitAppRunnerState<M> {
 
         let event_loop_ref = ActiveEventLoopRef::new(event_loop);
 
-        self.app
-            .initialize_graphics_context(&event_loop_ref)
-            .expect("Unable to initialize graphics context!");
-
-        self.app.finish();
+        self.app.finish(&event_loop_ref);
     }
 
     fn suspended(&mut self, _event_loop: &ActiveEventLoop) {
-        self.app
-            .destroy_graphics_context()
-            .expect("Unable to destroy graphics context!");
+        self.app.cleanup();
     }
 
     fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {

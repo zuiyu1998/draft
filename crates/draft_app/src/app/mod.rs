@@ -23,7 +23,7 @@ use thiserror::Error;
 
 use crate::{PlaceholderPlugin, Plugin, PluginContainer, PluginsState};
 
-type RunnerFn = Box<dyn FnOnce(App) -> ()>;
+type RunnerFn = Box<dyn FnOnce(App) -> AppExit>;
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -35,7 +35,9 @@ pub enum AppError {
     DuplicatePlugin { plugin_name: String },
 }
 
-fn run_once(mut _app: App) {}
+fn run_once(mut _app: App) -> AppExit {
+    AppExit::Success
+}
 
 pub trait IEventLoop {
     fn create_window(&self, window: &Window) -> WindowWrapper;
@@ -130,7 +132,7 @@ impl App {
         Ok(self)
     }
 
-    pub fn run(&mut self) {
+    pub fn run(&mut self) -> AppExit {
         if self.plugin_container.is_building_plugins() {
             panic!("App::run() was called while a plugin was building.");
         }
@@ -140,12 +142,12 @@ impl App {
         (runner)(app)
     }
 
-    pub fn set_runner(&mut self, f: impl FnOnce(App) -> () + 'static) -> &mut Self {
+    pub fn set_runner(&mut self, f: impl FnOnce(App) -> AppExit + 'static) -> &mut Self {
         self.runner = Box::new(f);
         self
     }
 
-    pub fn destroy_graphics_context(&mut self) -> Result<(), AppError> {
+    fn destroy_graphics_context(&mut self) -> Result<(), AppError> {
         let graphics_context = match &self.graphics_context {
             GraphicsContext::Initialized(params) => params,
             _ => {
@@ -166,9 +168,11 @@ impl App {
         self.plugin_container.plugins_state
     }
 
-    pub fn finish(&mut self) {
-        // plugins installed to main should see all sub-apps
-        // do hokey pokey with a boxed zst plugin (doesn't allocate)
+    pub fn finish<T: IEventLoop>(&mut self, event_loop: &T) {
+        if let Err(e) = self.initialize_graphics_context(event_loop) {
+            panic!("Initialize graphics context failed. The error is {}.", e);
+        }
+
         let mut hokeypokey: Box<dyn Plugin> = Box::new(HokeyPokey);
         for i in 0..self.plugin_container.plugin_registry.len() {
             swap(
@@ -185,6 +189,12 @@ impl App {
         self.plugin_container.plugins_state = PluginsState::Finished;
     }
 
+    pub fn cleanup(&mut self) {
+        if let Err(e) = self.destroy_graphics_context() {
+            panic!("Destroy graphics context failed. The error is {}.", e);
+        }
+    }
+
     pub fn add_plugin<T: Plugin>(&mut self, plugin: T) -> &mut Self {
         if matches!(self.plugins_state(), PluginsState::Finished) {
             panic!("Plugins cannot be added after App::finish() has been called.");
@@ -199,7 +209,7 @@ impl App {
         self
     }
 
-    pub fn initialize_graphics_context<T: IEventLoop>(
+    fn initialize_graphics_context<T: IEventLoop>(
         &mut self,
         event_loop: &T,
     ) -> Result<(), AppError> {

@@ -1,7 +1,7 @@
-use draft::{app::App, run};
+use draft::app::App;
 
 fn main() {
-    let app = App::new();
+    let mut app = App::new();
 
-    run(app);
+    app.run();
 }
