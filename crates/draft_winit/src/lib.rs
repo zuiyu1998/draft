@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use draft_app::Plugin;
 use winit::event_loop::EventLoop;
 
@@ -14,14 +12,14 @@ pub struct WakeUp;
 
 impl Message for WakeUp {}
 
-pub struct WinitPlugin<M: Message = WakeUp> {
+#[derive(Default)]
+pub struct WinitPlugin {
     pub run_on_any_thread: bool,
-    marker: PhantomData<M>,
 }
 
-impl<T: Message> Plugin for WinitPlugin<T> {
+impl Plugin for WinitPlugin {
     fn build(&self, app: &mut draft_app::App) {
-        let mut event_loop_builder = EventLoop::<T>::with_user_event();
+        let mut event_loop_builder = EventLoop::<WakeUp>::with_user_event();
 
         #[cfg(target_os = "windows")]
         {
