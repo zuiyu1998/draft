@@ -21,7 +21,7 @@ use fyrox_core::task::TaskPool;
 use fyrox_resource::{event::ResourceEvent, io::FsResourceIo, manager::ResourceManager};
 use thiserror::Error;
 
-use crate::{PlaceholderPlugin, Plugin, PluginContainer, PluginsState};
+use crate::{PlaceholderPlugin, Plugin, PluginContainer, Plugins, PluginsState};
 
 type RunnerFn = Box<dyn FnOnce(App) -> AppExit>;
 
@@ -193,18 +193,34 @@ impl App {
         if let Err(e) = self.destroy_graphics_context() {
             panic!("Destroy graphics context failed. The error is {}.", e);
         }
+
+        let mut hokeypokey: Box<dyn Plugin> = Box::new(HokeyPokey);
+        for i in 0..self.plugin_container.plugin_registry.len() {
+            core::mem::swap(
+                &mut self.plugin_container.plugin_registry[i],
+                &mut hokeypokey,
+            );
+
+            hokeypokey.cleanup(self);
+            core::mem::swap(
+                &mut self.plugin_container.plugin_registry[i],
+                &mut hokeypokey,
+            );
+        }
+        self.plugin_container.plugins_state = PluginsState::Cleaned;
     }
 
-    pub fn add_plugin<T: Plugin>(&mut self, plugin: T) -> &mut Self {
-        if matches!(self.plugins_state(), PluginsState::Finished) {
-            panic!("Plugins cannot be added after App::finish() has been called.");
+    pub fn add_plugins<M>(&mut self, plugins: impl Plugins<M>) -> &mut Self {
+        if matches!(
+            self.plugins_state(),
+            PluginsState::Finished | PluginsState::Cleaned
+        ) {
+            panic!(
+                "Plugins cannot be added after App::finish() or App::cleanup() has been called."
+            );
         }
 
-        if let Err(AppError::DuplicatePlugin { plugin_name }) =
-            self.add_boxed_plugin(Box::new(plugin))
-        {
-            panic!("Error adding plugin {plugin_name}: : plugin was already added in application")
-        }
+        plugins.add_to_app(self);
 
         self
     }

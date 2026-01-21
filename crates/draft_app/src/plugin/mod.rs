@@ -1,3 +1,7 @@
+mod group;
+
+pub use group::*;
+
 use std::{any::Any, collections::HashSet};
 
 use downcast_rs::Downcast;
@@ -18,6 +22,8 @@ pub enum PluginsState {
     Adding,
     /// Finish has been executed for all plugins added.
     Finished,
+    /// Cleanup has been executed for all plugins added.
+    Cleaned,
 }
 
 #[derive(Default)]
@@ -46,11 +52,48 @@ pub trait Plugin: Downcast + Any + Send + Sync {
 
     fn finish(&self, _app: &mut App) {}
 
+    fn cleanup(&self, _app: &mut App) {}
+
     fn name(&self) -> &str {
         core::any::type_name::<Self>()
     }
 
     fn is_unique(&self) -> bool {
         true
+    }
+}
+
+pub trait Plugins<Marker>: sealed::Plugins<Marker> {}
+
+impl<Marker, T> Plugins<Marker> for T where T: sealed::Plugins<Marker> {}
+
+mod sealed {
+    use crate::{App, AppError, Plugin, PluginGroup};
+
+    pub trait Plugins<Marker> {
+        fn add_to_app(self, app: &mut App);
+    }
+
+    pub struct PluginMarker;
+    pub struct PluginGroupMarker;
+
+    impl<P: Plugin> Plugins<PluginMarker> for P {
+        #[track_caller]
+        fn add_to_app(self, app: &mut App) {
+            if let Err(AppError::DuplicatePlugin { plugin_name }) =
+                app.add_boxed_plugin(Box::new(self))
+            {
+                panic!(
+                    "Error adding plugin {plugin_name}: : plugin was already added in application"
+                )
+            }
+        }
+    }
+
+    impl<P: PluginGroup> Plugins<PluginGroupMarker> for P {
+        #[track_caller]
+        fn add_to_app(self, app: &mut App) {
+            self.build().finish(app);
+        }
     }
 }
