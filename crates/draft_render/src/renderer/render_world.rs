@@ -121,6 +121,12 @@ impl RenderWorld {
     }
 }
 
-pub trait World {
+pub trait World: 'static {
     fn prepare(&self, render_wrold: &mut RenderWorld);
+}
+
+impl World for Box<dyn World> {
+    fn prepare(&self, render_world: &mut RenderWorld) {
+        self.as_ref().prepare(render_world);
+    }
 }

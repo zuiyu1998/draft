@@ -493,8 +493,6 @@ dependencies = [
  "downcast-rs",
  "draft_material",
  "draft_render",
- "draft_render_2d",
- "draft_scene",
  "draft_window",
  "fxhash",
  "fyrox-core",
@@ -520,6 +518,8 @@ version = "0.1.0"
 dependencies = [
  "draft_app",
  "draft_render",
+ "draft_render_2d",
+ "draft_scene",
  "draft_winit",
 ]
 
@@ -579,6 +579,7 @@ dependencies = [
 name = "draft_render_2d"
 version = "0.1.0"
 dependencies = [
+ "draft_app",
  "draft_graphics",
  "draft_material",
  "draft_render",
@@ -593,6 +594,7 @@ dependencies = [
 name = "draft_scene"
 version = "0.1.0"
 dependencies = [
+ "draft_app",
  "draft_material",
  "draft_mesh",
  "draft_render",

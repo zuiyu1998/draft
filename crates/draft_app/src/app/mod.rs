@@ -7,13 +7,11 @@ use std::{
     },
 };
 
-use draft_material::{IMaterial, MaterialEffectLoader};
+use draft_material::MaterialEffectLoader;
 use draft_render::{
-    GraphicsContext, InitializedGraphicsContext, RenderPipelineExt, WorldRenderer,
+    GraphicsContext, InitializedGraphicsContext, RenderWorld, World, WorldRenderer,
     initialize_render_server,
 };
-use draft_render_2d::{Material2d, create_core_2d_render_pipiline};
-use draft_scene::SceneContainer;
 use draft_window::{
     Error as WindowError, RawHandleWrapper, SystemWindowManager, Window, WindowWrapper,
 };
@@ -66,10 +64,33 @@ pub struct App {
     pub graphics_context: GraphicsContext,
     pub system_window_manager: SystemWindowManager,
     pub resource_manager: ResourceManager,
-    pub scene_container: SceneContainer,
+    pub world_container: WorldContainer,
     pub plugin_container: PluginContainer,
     pub runner: RunnerFn,
     _model_events_receiver: Receiver<ResourceEvent>,
+}
+
+struct EmptyWorld;
+
+impl World for EmptyWorld {
+    fn prepare(&self, _render_world: &mut RenderWorld) {}
+}
+
+pub struct WorldContainer(Box<dyn World>);
+
+impl WorldContainer {
+    pub fn set_world<W>(&mut self, world: W)
+    where
+        W: World,
+    {
+        self.0 = Box::new(world);
+    }
+}
+
+impl Default for WorldContainer {
+    fn default() -> Self {
+        Self(Box::new(EmptyWorld))
+    }
 }
 
 impl App {
@@ -92,7 +113,7 @@ impl App {
         Self {
             graphics_context: Default::default(),
             system_window_manager: Default::default(),
-            scene_container: Default::default(),
+            world_container: Default::default(),
             plugin_container: Default::default(),
             frame_count: 0,
             resource_manager,
@@ -256,31 +277,14 @@ impl App {
             winit_window,
         )?;
 
-        let mut renderer = WorldRenderer::new(
+        let renderer = WorldRenderer::new(
             render_server,
             self.system_window_manager.clone(),
             &self.resource_manager,
         );
 
-        renderer.insert_pipeline("core_2d", create_core_2d_render_pipiline());
-
         self.graphics_context =
             GraphicsContext::Initialized(InitializedGraphicsContext::new(renderer, params));
-
-        for resource in Material2d::built_in_shaders() {
-            self.resource_manager
-                .register_built_in_resource(resource.clone());
-
-            self.graphics_context.set_shader(resource.resource());
-        }
-
-        for resource in Material2d::built_in_material_effects() {
-            self.resource_manager
-                .register_built_in_resource(resource.clone());
-
-            self.graphics_context
-                .set_material_effect(resource.resource());
-        }
 
         Ok(())
     }
@@ -290,7 +294,7 @@ impl App {
     }
 
     pub fn render(&mut self) {
-        self.graphics_context.render(&self.scene_container);
+        self.graphics_context.render(&self.world_container.0);
     }
 }
 

@@ -1,3 +1,4 @@
+use draft_app::{App, Plugin};
 use draft_material::{Material, MaterialResource};
 use draft_mesh::{Circle, MeshResource};
 use draft_render::{RenderWorld, World};
@@ -35,5 +36,15 @@ impl World for SceneContainer {
             self.material.clone(),
             Mesh2dUniform::default(),
         );
+    }
+}
+
+#[derive(Default)]
+pub struct ScenePlugin;
+
+impl Plugin for ScenePlugin {
+    fn build(&self, app: &mut App) {
+        app.world_container
+            .set_world::<SceneContainer>(SceneContainer::default());
     }
 }

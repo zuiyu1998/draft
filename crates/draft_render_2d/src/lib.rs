@@ -8,13 +8,13 @@ use draft_graphics::{
     wgpu::{self},
 };
 
+use draft_app::{App, Plugin};
 use draft_material::{
     IMaterial, MaterialEffect, MaterialFragmentState, MaterialInfo, MaterialVertexState,
     PipelineState,
 };
 use draft_render::{
-    Node, RenderFrame, RenderPhase, RenderPhaseContext, RenderPipeline, RenderPipelineContext,
-    TrackedRenderPassBuilder,
+    Node, RenderFrame, RenderPhase, RenderPhaseContext, RenderPipeline, RenderPipelineContext, RenderPipelineExt, TrackedRenderPassBuilder
 };
 use draft_shader::Shader;
 use fyrox_resource::manager::BuiltInResource;
@@ -62,6 +62,33 @@ impl IMaterial for Material2d {
     }
 }
 
+#[derive(Debug, Default)]
+pub struct Material2dPlugin;
+
+impl Plugin for Material2dPlugin {
+    fn build(&self, _app: &mut App) {}
+    fn finish(&self, app: &mut App) {
+        if let Some(renderer) = app.graphics_context.renderer_mut() {
+            renderer.insert_pipeline("core_2d", create_core_2d_render_pipiline());
+        };
+
+        for resource in Material2d::built_in_shaders() {
+            app.resource_manager
+                .register_built_in_resource(resource.clone());
+
+            app.graphics_context.set_shader(resource.resource());
+        }
+
+        for resource in Material2d::built_in_material_effects() {
+            app.resource_manager
+                .register_built_in_resource(resource.clone());
+
+            app.graphics_context
+                .set_material_effect(resource.resource());
+        }
+    }
+}
+
 pub fn create_core_2d_render_pipiline() -> RenderPipeline {
     let mut pipeline = RenderPipeline::default();
 
@@ -104,7 +131,7 @@ impl Node for UpscalingNode {
         let render_phase_context = RenderPhaseContext {
             pipeline_container: context.pipeline_container,
             mesh_allocator: context.mesh_allocator,
-            buffer_allocator: context.buffer_allocator
+            buffer_allocator: context.buffer_allocator,
         };
 
         for mesh_materials in render_frame.render_data_bundle.mesh_materials.values() {

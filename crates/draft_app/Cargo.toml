@@ -6,9 +6,7 @@ edition = "2024"
 [dependencies]
 draft_material = { path = "../draft_material" }
 draft_window = { path = "../draft_window" }
-draft_scene = { path = "../draft_scene" }
 draft_render = { path = "../draft_render" }
-draft_render_2d = { path = "../draft_render_2d" }
 
 fyrox-core = { workspace = true }
 fyrox-resource = { workspace = true }

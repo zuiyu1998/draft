@@ -40,6 +40,14 @@ pub enum GraphicsContext {
 }
 
 impl GraphicsContext {
+    pub fn renderer_mut(&mut self) -> Option<&mut WorldRenderer> {
+        if let GraphicsContext::Initialized(graphics_context) = self {
+            Some(&mut graphics_context.renderer)
+        } else {
+            None
+        }
+    }
+
     pub fn update(&mut self, dt: f32) {
         if let GraphicsContext::Initialized(graphics_context) = self {
             graphics_context.renderer.update(dt);

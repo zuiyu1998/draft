@@ -7,3 +7,5 @@ edition = "2024"
 draft_app = { path = "../draft_app" }
 draft_winit = { path = "../draft_winit" }
 draft_render = { path = "../draft_render" }
+draft_render_2d = { path = "../draft_render_2d" }
+draft_scene = { path = "../draft_scene" }

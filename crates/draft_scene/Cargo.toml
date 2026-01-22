@@ -8,6 +8,7 @@ draft_render = { path = "../draft_render" }
 draft_mesh = { path = "../draft_mesh" }
 draft_material = { path = "../draft_material" }
 draft_render_2d = { path = "../draft_render_2d" }
+draft_app = { path = "../draft_app" }
 
 fyrox-resource = { workspace = true }
 fyrox-core = { workspace = true }
