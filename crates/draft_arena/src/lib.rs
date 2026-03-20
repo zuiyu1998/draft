@@ -26,6 +26,31 @@ impl<T> Default for Arena<T> {
 
 impl<T> Arena<T> {
     #[inline]
+    pub fn free(&mut self, index: Index) -> T {
+        self.try_free(index).unwrap()
+    }
+
+    #[inline]
+    pub fn try_free(&mut self, index: Index) -> Result<T, ArenaError> {
+        let slot = usize::try_from(index.slot).expect("index overflowed usize");
+        self.storage
+            .get_mut(slot)
+            .ok_or(ArenaError::InvalidIndex(index.slot))
+            .and_then(|record| {
+                if record.generation == index.generation {
+                    if let Some(payload) = record.payload.take() {
+                        self.free_stack.push(index.slot);
+                        Ok(payload)
+                    } else {
+                        Err(ArenaError::Empty(index))
+                    }
+                } else {
+                    Err(ArenaError::InvalidGeneration(index.generation))
+                }
+            })
+    }
+
+    #[inline]
     pub fn put_back(&mut self, ticket: Ticket, value: T) -> Index {
         let entry = self
             .get_mut_by_slot(ticket.index)

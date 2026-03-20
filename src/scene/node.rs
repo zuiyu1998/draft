@@ -4,10 +4,35 @@ use downcast_rs::Downcast;
 use draft_core::pool::Handle;
 
 ///场景节点共有的数据
+#[derive(Debug, Clone)]
 pub struct Node {
     pub this: Handle<SceneNode>,
     pub parent: Handle<SceneNode>,
     pub children: Vec<Handle<SceneNode>>,
+}
+
+impl Node {
+    pub fn empty() -> Self {
+        Node {
+            this: Handle::NONE,
+            parent: Handle::NONE,
+            children: vec![],
+        }
+    }
+}
+
+impl SceneNodeBehavior for Node {
+    fn get_node_ref(&self) -> &Node {
+        self
+    }
+
+    fn get_node_mut(&mut self) -> &mut Node {
+        self
+    }
+
+    fn clone_boxed(&self) -> Box<dyn SceneNodeBehavior> {
+        Box::new(self.clone())
+    }
 }
 
 /// 场景节点
@@ -37,7 +62,7 @@ impl SceneNode {
 pub trait SceneNodeBehavior: Downcast + Debug {
     fn get_node_ref(&self) -> &Node;
 
-    fn get_node_mut(&self) -> &mut Node;
+    fn get_node_mut(&mut self) -> &mut Node;
 
     fn clone_boxed(&self) -> Box<dyn SceneNodeBehavior>;
 }

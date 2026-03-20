@@ -2,6 +2,7 @@ use std::{cmp::Ordering, marker::PhantomData};
 
 use draft_arena::{Arena, ArenaError, Index, Ticket};
 
+#[derive(Debug)]
 pub struct Handle<T> {
     index: Index,
     _marker: PhantomData<T>,
@@ -41,7 +42,7 @@ impl<T> PartialOrd for Handle<T> {
 }
 
 impl<T> Handle<T> {
-    pub const INVIALD: Handle<T> = Handle {
+    pub const NONE: Handle<T> = Handle {
         index: Index::INVIALD,
         _marker: PhantomData,
     };
@@ -57,18 +58,26 @@ impl<T> Handle<T> {
         self.index.slot
     }
 
-    pub fn is_inviald(&self) -> bool {
-        *self == Self::INVIALD
-    }
-
-    pub fn is_viald(&self) -> bool {
-        !self.is_inviald()
+    pub fn is_none(&self) -> bool {
+        *self == Self::NONE
     }
 }
 
 pub struct Pool<T>(Arena<T>);
 
 impl<T> Pool<T> {
+    pub fn new() -> Self {
+        Pool(Arena::default())
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn free(&mut self, handle: Handle<T>) -> T {
+        self.0.free(handle.index)
+    }
+
     pub fn put_back(&mut self, ticket: Ticket, value: T) -> Handle<T> {
         let index = self.0.put_back(ticket, value);
         Handle::new(index)
