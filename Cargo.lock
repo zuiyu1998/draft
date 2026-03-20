@@ -13,6 +13,7 @@ name = "draft"
 version = "0.1.0"
 dependencies = [
  "downcast-rs",
+ "draft_core",
 ]
 
 [[package]]

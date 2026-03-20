@@ -7,4 +7,6 @@ edition = "2024"
 members = [".", "crates/draft_arena", 'crates/draft_core']
 
 [dependencies]
+draft_core = { path = "./crates/draft_core" }
+
 downcast-rs = "2.0"

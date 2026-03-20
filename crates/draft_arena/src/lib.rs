@@ -25,6 +25,14 @@ impl<T> Default for Arena<T> {
 }
 
 impl<T> Arena<T> {
+    pub fn is_valid_handle(&self, index: Index) -> bool {
+        if let Some(record) = self.storage.get(index.slot as usize) {
+            record.payload.is_some() && record.generation == index.generation
+        } else {
+            false
+        }
+    }
+
     pub fn remove(&mut self, index: Index) -> Option<T> {
         self.try_remove(index).ok()
     }
@@ -121,6 +129,17 @@ impl Generation {
 pub struct Index {
     pub slot: u32,
     pub generation: Generation,
+}
+
+impl Index {
+    pub const INVIALD: Index = Index {
+        slot: 0,
+        generation: Generation::INVIALD,
+    };
+
+    pub fn is_viald(&self) -> bool {
+        !(*self == Self::INVIALD)
+    }
 }
 
 pub struct Entry<T> {
