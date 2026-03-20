@@ -119,8 +119,8 @@ impl Generation {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Index {
-    pub(crate) slot: u32,
-    pub(crate) generation: Generation,
+    pub slot: u32,
+    pub generation: Generation,
 }
 
 pub struct Entry<T> {
