@@ -14,3 +14,7 @@ version = "0.1.0"
 dependencies = [
  "downcast-rs",
 ]
+
+[[package]]
+name = "draft_core"
+version = "0.1.0"
