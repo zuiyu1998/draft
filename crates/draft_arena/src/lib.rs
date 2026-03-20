@@ -25,6 +25,123 @@ impl<T> Default for Arena<T> {
 }
 
 impl<T> Arena<T> {
+    #[inline]
+    pub fn try_take_reserve(&mut self, index: Index) -> Result<(Ticket<T>, T), ArenaError> {
+        let entry = self.get_mut_by_slot(index.slot)?;
+        if entry.generation == index.generation {
+            if let Some(payload) = entry.payload.take() {
+                let ticket = Ticket {
+                    index: handle.index,
+                    marker: PhantomData,
+                };
+                Ok((ticket, payload))
+            } else {
+                Err(ArenaError::Empty(index))
+            }
+        } else {
+            Err(ArenaError::InvalidGeneration(index.generation))
+        }
+    }
+
+    pub fn try_borrow_mut(&mut self, index: Index) -> Result<&mut T, ArenaError> {
+        self.get_mut_by_slot(index.slot).and_then(|r| {
+            if r.generation == index.generation {
+                r.payload.as_mut().ok_or(ArenaError::Empty(index))
+            } else {
+                Err(ArenaError::InvalidGeneration(index.generation))
+            }
+        })
+    }
+
+    pub fn try_borrow(&self, index: Index) -> Result<&T, ArenaError> {
+        self.get_by_slot(index.slot).and_then(|r| {
+            if r.generation == index.generation {
+                r.payload.as_ref().ok_or(ArenaError::Empty(index))
+            } else {
+                Err(ArenaError::InvalidGeneration(index.generation))
+            }
+        })
+    }
+
+    pub fn get_mut_by_slot(&mut self, slot: u32) -> Result<&mut Entry<T>, ArenaError> {
+        self.storage
+            .get_mut(usize::try_from(slot).expect("Index overflowed usize"))
+            .ok_or(ArenaError::InvalidIndex(slot))
+    }
+
+    pub fn get_by_slot(&self, slot: u32) -> Result<&Entry<T>, ArenaError> {
+        self.storage
+            .get(usize::try_from(slot).expect("Index overflowed usize"))
+            .ok_or(ArenaError::InvalidIndex(slot))
+    }
+
+    pub fn next_free_index(&self) -> Index {
+        if let Some(index) = self.free_stack.last().cloned() {
+            let generation = self.storage[index as usize].generation.next();
+            Index::new(index, generation)
+        } else {
+            Index::new(self.storage.len() as u32, Generation::first())
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        self.storage.len()
+    }
+
+    pub fn insert_at_internal(&mut self, index: Index, payload: T) -> Result<Index, T> {
+        match self.storage.get_mut(index.slot as usize) {
+            Some(record) => match record.payload.as_ref() {
+                Some(_) => Err(payload),
+                None => {
+                    let position = self
+                        .free_stack
+                        .iter()
+                        .rposition(|i| *i == index.slot)
+                        .expect("free_stack must contain the index of the empty record (most likely attempting to spawn at a reserved index)!");
+
+                    self.free_stack.remove(position);
+
+                    let generation = if !index.is_viald() {
+                        record.generation.next()
+                    } else {
+                        index.generation
+                    };
+
+                    record.generation = generation;
+                    record.payload = Payload::new(payload);
+
+                    Ok(Index {
+                        slot: index.slot,
+                        generation,
+                    })
+                }
+            },
+            None => {
+                // Spawn missing records to fill gaps.
+                for i in self.len()..index.slot as usize {
+                    self.storage.push(Entry {
+                        generation: Generation::first(),
+                        payload: Payload::new_empty(),
+                    });
+                    self.free_stack.push(i as u32);
+                }
+
+                let generation = if !index.is_viald() {
+                    Generation::first()
+                } else {
+                    index.generation
+                };
+
+                self.storage.push(Entry {
+                    generation,
+                    payload: Payload::new(payload),
+                });
+
+                Ok(Index::new(index.slot, generation))
+            }
+        }
+    }
+
     pub fn is_valid_handle(&self, index: Index) -> bool {
         if let Some(record) = self.storage.get(index.slot as usize) {
             record.payload.is_some() && record.generation == index.generation
@@ -136,6 +253,10 @@ impl Index {
         slot: 0,
         generation: Generation::INVIALD,
     };
+
+    pub fn new(slot: u32, generation: Generation) -> Self {
+        Self { slot, generation }
+    }
 
     pub fn is_viald(&self) -> bool {
         !(*self == Self::INVIALD)

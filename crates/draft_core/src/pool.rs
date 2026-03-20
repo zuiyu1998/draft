@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, marker::PhantomData};
 
-use draft_arena::{Arena, Index};
+use draft_arena::{Arena, ArenaError, Index};
 
 pub struct Handle<T> {
     index: Index,
@@ -69,6 +69,29 @@ impl<T> Handle<T> {
 pub struct Pool<T>(Arena<T>);
 
 impl<T> Pool<T> {
+    pub fn get_mut(&mut self, handle: Handle<T>) -> &T {
+        self.try_get_mut(handle).unwrap()
+    }
+
+    pub fn try_get_mut(&mut self, handle: Handle<T>) -> Result<&mut T, ArenaError> {
+        self.0.try_borrow_mut(handle.index)
+    }
+
+    pub fn get(&self, handle: Handle<T>) -> &T {
+        self.0.try_borrow(handle.index).unwrap()
+    }
+
+    pub fn next_free_handle(&mut self) -> Handle<T> {
+        let index = self.0.next_free_index();
+        Handle::new(index)
+    }
+
+    pub fn insert_at_internal(&mut self, handle: Handle<T>, payload: T) -> Result<Handle<T>, T> {
+        self.0
+            .insert_at_internal(handle.index, payload)
+            .map(|index| Handle::new(index))
+    }
+
     pub fn is_valid_handle(&self, handle: Handle<T>) -> bool {
         self.0.is_valid_handle(handle.index)
     }

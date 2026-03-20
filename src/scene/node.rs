@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use downcast_rs::Downcast;
 use draft_core::pool::Handle;
 
@@ -9,6 +11,7 @@ pub struct Node {
 }
 
 /// 场景节点
+#[derive(Debug)]
 pub struct SceneNode(Box<dyn SceneNodeBehavior>);
 
 impl Clone for SceneNode {
@@ -31,7 +34,7 @@ impl SceneNode {
     }
 }
 
-pub trait SceneNodeBehavior: Downcast {
+pub trait SceneNodeBehavior: Downcast + Debug {
     fn get_node_ref(&self) -> &Node;
 
     fn get_node_mut(&self) -> &mut Node;
