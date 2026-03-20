@@ -42,6 +42,8 @@ impl SceneGraph {
 
     pub fn add_node_at_handle(&mut self, mut node: SceneNode, handle: Handle<SceneNode>) {
         let children = node.get_node_ref().children.clone();
+        node.get_node_mut().this = handle;
+
         node.get_node_mut().children.clear();
         self.pool
             .insert_at_internal(handle, node)
