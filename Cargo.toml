@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace]
-members = [".", 'crates/draft_core']
+members = [".", "crates/draft_arena", 'crates/draft_core']
 
 [dependencies]
 downcast-rs = "2.0"
