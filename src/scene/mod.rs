@@ -35,10 +35,14 @@ impl SceneGraph {
     }
 
     #[inline]
-    pub fn link_nodes(&mut self, _child: Handle<SceneNode>, _parent: Handle<SceneNode>) {
-        // self.isolate_node(child);
-        // self.pool[child].parent = parent;
-        // self.pool[parent].children.push(child);
+    pub fn link_nodes(&mut self, child: Handle<SceneNode>, parent: Handle<SceneNode>) {
+        self.isolate_node(child);
+        self.pool.get_mut(child).get_node_mut().parent = parent;
+        self.pool
+            .get_mut(parent)
+            .get_node_mut()
+            .children
+            .push(child);
     }
 
     #[inline]
@@ -61,7 +65,7 @@ impl SceneGraph {
             }
         }
 
-        let (ticket, mut node) = self.pool.take_reserve(node_handle);
+        let (ticket, node) = self.pool.take_reserve(node_handle);
         self.pool.put_back(ticket, node);
     }
 }

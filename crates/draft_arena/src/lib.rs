@@ -26,14 +26,27 @@ impl<T> Default for Arena<T> {
 
 impl<T> Arena<T> {
     #[inline]
-    pub fn try_take_reserve(&mut self, index: Index) -> Result<(Ticket<T>, T), ArenaError> {
+    pub fn put_back(&mut self, ticket: Ticket, value: T) -> Index {
+        let entry = self
+            .get_mut_by_slot(ticket.index)
+            .expect("Ticket index was invalid");
+        let old = entry.payload.replace(value);
+        assert!(old.is_none());
+        let index = Index::new(ticket.index, entry.generation);
+        std::mem::forget(ticket);
+        index
+    }
+
+    pub fn take_reserve(&mut self, index: Index) -> (Ticket, T) {
+        self.try_take_reserve(index).unwrap()
+    }
+
+    #[inline]
+    pub fn try_take_reserve(&mut self, index: Index) -> Result<(Ticket, T), ArenaError> {
         let entry = self.get_mut_by_slot(index.slot)?;
         if entry.generation == index.generation {
             if let Some(payload) = entry.payload.take() {
-                let ticket = Ticket {
-                    index: handle.index,
-                    marker: PhantomData,
-                };
+                let ticket = Ticket { index: index.slot };
                 Ok((ticket, payload))
             } else {
                 Err(ArenaError::Empty(index))
@@ -222,6 +235,21 @@ impl<T> Arena<T> {
 
             handle
         }
+    }
+}
+
+#[derive(Debug)]
+pub struct Ticket {
+    index: u32,
+}
+
+impl Drop for Ticket {
+    fn drop(&mut self) {
+        panic!(
+            "An object at index {} must be returned to a arena it was taken from! \
+            Call Arena::forget_ticket if you don't need the object anymore.",
+            self.index
+        )
     }
 }
 

@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, marker::PhantomData};
 
-use draft_arena::{Arena, ArenaError, Index};
+use draft_arena::{Arena, ArenaError, Index, Ticket};
 
 pub struct Handle<T> {
     index: Index,
@@ -69,7 +69,16 @@ impl<T> Handle<T> {
 pub struct Pool<T>(Arena<T>);
 
 impl<T> Pool<T> {
-    pub fn get_mut(&mut self, handle: Handle<T>) -> &T {
+    pub fn put_back(&mut self, ticket: Ticket, value: T) -> Handle<T> {
+        let index = self.0.put_back(ticket, value);
+        Handle::new(index)
+    }
+
+    pub fn take_reserve(&mut self, handle: Handle<T>) -> (Ticket, T) {
+        self.0.take_reserve(handle.index)
+    }
+
+    pub fn get_mut(&mut self, handle: Handle<T>) -> &mut T {
         self.try_get_mut(handle).unwrap()
     }
 
