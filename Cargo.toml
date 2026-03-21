@@ -4,10 +4,15 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace]
-members = [".", "crates/draft_arena", 'crates/draft_core', "crates/draft_render", "crates/draft_window"]
+members = [
+    ".",
+    "crates/draft_app",
+    "crates/draft_arena",
+    'crates/draft_core',
+    "crates/draft_render",
+    "crates/draft_window",
+]
 
 [dependencies]
-draft_core = { path = "./crates/draft_core" }
-draft_render = { path = "./crates/draft_render" }
 
-downcast-rs = "2.0"
+draft_app = { path = "./crates/draft_app" }

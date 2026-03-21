@@ -1,0 +1,10 @@
+[package]
+name = "draft_app"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+draft_core = { path = "../draft_core" }
+draft_render = { path = "../draft_render" }
+
+downcast-rs = "2.0"

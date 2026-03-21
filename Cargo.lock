@@ -12,6 +12,13 @@ checksum = "117240f60069e65410b3ae1bb213295bd828f707b5bec6596a1afc8793ce0cbc"
 name = "draft"
 version = "0.1.0"
 dependencies = [
+ "draft_app",
+]
+
+[[package]]
+name = "draft_app"
+version = "0.1.0"
+dependencies = [
  "downcast-rs",
  "draft_core",
  "draft_render",
