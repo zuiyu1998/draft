@@ -4,3 +4,17 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+draft_window = { path = "../draft_window" }
+
+pollster = { version = "0.4" }
+
+thiserror = { version = "2.0" }
+
+wgpu = { version = "29", default-features = false, features = [
+    "wgsl",
+    "dx12",
+    "metal",
+    "vulkan",
+    "naga-ir",
+    "fragile-send-sync-non-atomic-wasm",
+] }
