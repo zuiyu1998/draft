@@ -11,6 +11,7 @@ members = [
     'crates/draft_core',
     "crates/draft_render",
     "crates/draft_window",
+    "crates/draft_winit",
 ]
 
 [dependencies]
