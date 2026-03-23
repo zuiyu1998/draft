@@ -6,5 +6,6 @@ edition = "2024"
 [dependencies]
 draft_core = { path = "../draft_core" }
 draft_render = { path = "../draft_render" }
+draft_window = { path = "../draft_window" }
 
 downcast-rs = "2.0"

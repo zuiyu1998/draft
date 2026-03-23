@@ -1,5 +1,5 @@
 pub struct RenderDevice {
-    device: wgpu::Device,
+    pub device: wgpu::Device,
 }
 
 impl RenderDevice {

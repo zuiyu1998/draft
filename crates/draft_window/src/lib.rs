@@ -1,20 +1,20 @@
 use downcast_rs::{Downcast, impl_downcast};
 use draft_core::pool::Pool;
 use raw_window_handle::{
-    DisplayHandle, HandleError, HasDisplayHandle, HasWindowHandle, RawDisplayHandle, RawWindowHandle, WindowHandle
+    DisplayHandle, HandleError, HasDisplayHandle, HasWindowHandle, RawDisplayHandle,
+    RawWindowHandle, WindowHandle,
 };
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
+#[derive(Debug, Default, Clone)]
 pub struct Window {}
 
 pub trait WindowBuilder {
     fn create_window(&self, window: Window) -> SystemWindow;
 }
 
-pub struct SystemWindowManager(Arc<Mutex<SystemWindowManagerState>>);
-
 pub struct SystemWindowManagerState {
-    pool: Pool<SystemWindow>,
+    pub pool: Pool<SystemWindow>,
 }
 
 #[derive(Clone)]

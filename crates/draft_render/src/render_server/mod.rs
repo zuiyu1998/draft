@@ -2,14 +2,14 @@ mod render_device;
 
 pub use render_device::*;
 
-use crate::{FrameworkError, GraphicsContextParams};
+use crate::FrameworkError;
 use draft_window::{SystemWindow, Window};
 use std::sync::Arc;
 
 pub trait RenderServerConstructor {
     fn construct(
         &self,
-        params: &GraphicsContextParams,
+        setting: &RenderServerSetting,
         window: Window,
     ) -> Result<(RenderServer, SystemWindow), FrameworkError>;
 }
@@ -29,10 +29,13 @@ pub struct RenderServer {
 
 impl RenderServer {
     pub fn new<T: RenderServerConstructor>(
-        params: &GraphicsContextParams,
+        setting: &RenderServerSetting,
         window: Window,
         constructor: &T,
     ) -> Result<(Self, SystemWindow), FrameworkError> {
-        constructor.construct(params, window)
+        constructor.construct(setting, window)
     }
 }
+
+#[derive(Default, Clone, Debug)]
+pub struct RenderServerSetting {}

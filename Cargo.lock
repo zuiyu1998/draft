@@ -340,6 +340,7 @@ dependencies = [
  "downcast-rs",
  "draft_core",
  "draft_render",
+ "draft_window",
 ]
 
 [[package]]
