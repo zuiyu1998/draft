@@ -1,5 +1,8 @@
 use downcast_rs::{Downcast, impl_downcast};
-use draft_core::pool::Pool;
+use draft_core::{
+    parking_lot::{Mutex, MutexGuard},
+    pool::{Handle, Pool},
+};
 use raw_window_handle::{
     DisplayHandle, HandleError, HasDisplayHandle, HasWindowHandle, RawDisplayHandle,
     RawWindowHandle, WindowHandle,
@@ -9,12 +12,42 @@ use std::sync::Arc;
 #[derive(Debug, Default, Clone)]
 pub struct Window {}
 
-pub trait WindowBuilder {
-    fn create_window(&self, window: Window) -> SystemWindow;
+#[derive(Clone, Default)]
+pub struct SystemWindowManager {
+    state: Arc<Mutex<SystemWindowManagerState>>,
+}
+
+impl SystemWindowManager {
+    pub fn state(&self) -> MutexGuard<'_, SystemWindowManagerState> {
+        self.state.lock()
+    }
 }
 
 pub struct SystemWindowManagerState {
-    pub pool: Pool<SystemWindow>,
+    primary: Handle<SystemWindow>,
+    pool: Pool<SystemWindow>,
+}
+
+impl Default for SystemWindowManagerState {
+    fn default() -> Self {
+        SystemWindowManagerState {
+            primary: Handle::NONE,
+            pool: Pool::new(),
+        }
+    }
+}
+
+impl SystemWindowManagerState {
+    pub fn spawn_primary_window(&mut self, window: SystemWindow) -> Handle<SystemWindow> {
+        let handle = self.spawn_window(window);
+        self.primary = handle;
+
+        handle
+    }
+
+    pub fn spawn_window(&mut self, window: SystemWindow) -> Handle<SystemWindow> {
+        self.pool.spawn(window)
+    }
 }
 
 #[derive(Clone)]
@@ -23,6 +56,12 @@ pub struct SystemWindow {
 }
 
 impl SystemWindow {
+    pub fn new<T: ISystemWindow>(window: T) -> Self {
+        Self {
+            reference: Arc::new(window),
+        }
+    }
+
     pub fn downcast_ref<T: ISystemWindow>(&self) -> Option<&T> {
         self.reference.downcast_ref()
     }
@@ -32,6 +71,8 @@ pub trait ISystemWindow:
     'static + Send + Sync + Downcast + HasWindowHandle + HasDisplayHandle
 {
 }
+
+impl<T> ISystemWindow for T where T: 'static + Send + Sync + HasWindowHandle + HasDisplayHandle {}
 
 impl_downcast!(ISystemWindow);
 

@@ -4,7 +4,7 @@ use draft_render::{
     FrameworkError, WorldRenderer,
     render_server::{RenderServerConstructor, RenderServerSetting},
 };
-use draft_window::Window;
+use draft_window::{SystemWindowManager, Window};
 pub use plugin::*;
 
 use crate::scene::Scene;
@@ -15,6 +15,7 @@ fn run_once(mut _app: App) {}
 
 pub struct App {
     pub scene: Scene,
+    pub system_window_manager: SystemWindowManager,
     pub graphics_context: GraphicsContext,
     pub(crate) plugin_container: PluginContainer,
 
@@ -28,6 +29,7 @@ impl App {
             graphics_context: GraphicsContext::default(),
             runner: Box::new(run_once),
             plugin_container: PluginContainer::default(),
+            system_window_manager: Default::default(),
         }
     }
 
@@ -39,7 +41,11 @@ impl App {
             let (render_server, window) =
                 constructor.construct(&params.render_server_setting, params.window.clone())?;
 
-            let renderer = WorldRenderer::new(render_server);
+            self.system_window_manager
+                .state()
+                .spawn_primary_window(window);
+
+            let renderer = WorldRenderer::new(render_server, self.system_window_manager.clone());
 
             self.graphics_context = GraphicsContext::Initialized(InitializedGraphicsContext {
                 params: params.clone(),

@@ -1,6 +1,7 @@
 pub mod render_resource;
 pub mod render_server;
 
+use draft_window::SystemWindowManager;
 use thiserror::Error;
 
 use crate::render_server::RenderServer;
@@ -10,10 +11,14 @@ pub enum FrameworkError {}
 
 pub struct WorldRenderer {
     pub render_server: RenderServer,
+    pub system_window_manager: SystemWindowManager,
 }
 
 impl WorldRenderer {
-    pub fn new(render_server: RenderServer) -> Self {
-        Self { render_server }
+    pub fn new(render_server: RenderServer, system_window_manager: SystemWindowManager) -> Self {
+        Self {
+            render_server,
+            system_window_manager,
+        }
     }
 }

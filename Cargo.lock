@@ -331,6 +331,8 @@ name = "draft"
 version = "0.1.0"
 dependencies = [
  "draft_app",
+ "draft_render",
+ "draft_winit",
 ]
 
 [[package]]
@@ -352,6 +354,7 @@ name = "draft_core"
 version = "0.1.0"
 dependencies = [
  "draft_arena",
+ "parking_lot",
 ]
 
 [[package]]
@@ -362,6 +365,7 @@ dependencies = [
  "pollster",
  "thiserror 2.0.18",
  "wgpu",
+ "winit",
 ]
 
 [[package]]
@@ -378,6 +382,8 @@ name = "draft_winit"
 version = "0.1.0"
 dependencies = [
  "draft_app",
+ "draft_render",
+ "draft_window",
  "winit",
 ]
 

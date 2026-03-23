@@ -43,11 +43,12 @@ impl WinitAppRunnerState {
 }
 
 impl ApplicationHandler<WinitUserEvent> for WinitAppRunnerState {
-    fn new_events(&mut self, _event_loop: &ActiveEventLoop, _cause: winit::event::StartCause) {
+    fn new_events(&mut self, _event_loop: &ActiveEventLoop, _cause: winit::event::StartCause) {}
+
+    fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+        self.app.initialize_graphics_context(event_loop);
         self.app.finish();
     }
-
-    fn resumed(&mut self, _event_loop: &ActiveEventLoop) {}
 
     fn window_event(
         &mut self,

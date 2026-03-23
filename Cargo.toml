@@ -17,3 +17,5 @@ members = [
 [dependencies]
 
 draft_app = { path = "./crates/draft_app" }
+draft_render = { path = "./crates/draft_render" }
+draft_winit = { path = "./crates/draft_winit" }
