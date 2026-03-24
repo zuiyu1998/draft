@@ -1,10 +1,8 @@
-use draft_app::app::App;
-use draft_winit::WinitPlugin;
+use draft_app::app::{App, Executor, WinitExecutor};
 
 fn main() {
-    let mut app = App::empty();
+    let app = App::empty();
 
-    app.add_plugin(WinitPlugin::default());
-
-    app.run();
+    let mut executor = WinitExecutor::default();
+    executor.run(app);
 }

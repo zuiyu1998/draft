@@ -332,7 +332,6 @@ version = "0.1.0"
 dependencies = [
  "draft_app",
  "draft_render",
- "draft_winit",
 ]
 
 [[package]]
@@ -375,16 +374,6 @@ dependencies = [
  "downcast-rs",
  "draft_core",
  "raw-window-handle",
-]
-
-[[package]]
-name = "draft_winit"
-version = "0.1.0"
-dependencies = [
- "draft_app",
- "draft_render",
- "draft_window",
- "winit",
 ]
 
 [[package]]
