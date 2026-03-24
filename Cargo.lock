@@ -343,6 +343,8 @@ dependencies = [
  "draft_core",
  "draft_render",
  "draft_window",
+ "pollster",
+ "winit",
 ]
 
 [[package]]
@@ -362,10 +364,8 @@ name = "draft_render"
 version = "0.1.0"
 dependencies = [
  "draft_window",
- "pollster",
  "thiserror 2.0.18",
  "wgpu",
- "winit",
 ]
 
 [[package]]

@@ -3,9 +3,19 @@ name = "draft_app"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = ["winit"]
+
+winit = ["dep:winit"]
+
 [dependencies]
 draft_core = { path = "../draft_core" }
 draft_render = { path = "../draft_render" }
 draft_window = { path = "../draft_window" }
 
 downcast-rs = "2.0"
+pollster = { version = "0.4" }
+
+winit = { version = "0.30", default-features = false, features = [
+    "rwh_06",
+], optional = true }

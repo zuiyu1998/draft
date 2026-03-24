@@ -3,15 +3,9 @@ name = "draft_render"
 version = "0.1.0"
 edition = "2024"
 
-[features]
-default = ["winit"]
-
-winit = ["dep:winit"]
-
 [dependencies]
 draft_window = { path = "../draft_window" }
 
-pollster = { version = "0.4" }
 thiserror = { version = "2.0" }
 wgpu = { version = "29", default-features = false, features = [
     "wgsl",
@@ -21,7 +15,3 @@ wgpu = { version = "29", default-features = false, features = [
     "naga-ir",
     "fragile-send-sync-non-atomic-wasm",
 ] }
-
-winit = { version = "0.30", default-features = false, features = [
-    "rwh_06",
-], optional = true }
