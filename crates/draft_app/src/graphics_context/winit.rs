@@ -3,7 +3,7 @@ use std::sync::Arc;
 use draft_core::parking_lot::Mutex;
 use draft_render::{
     FrameworkError,
-    render_server::{RenderDevice, RenderQueue, RenderServer},
+    render_server::{RenderAdapter, RenderDevice, RenderInstance, RenderQueue, RenderServer},
     wgpu,
 };
 use draft_window::{SystemWindow, Window};
@@ -58,6 +58,8 @@ async fn initialize_render_server(
     let render_server = RenderServer {
         device: RenderDevice::new(device),
         queue: RenderQueue::new(queue),
+        instance: RenderInstance::new(instance),
+        adapter: RenderAdapter::new(adapter),
     };
 
     let mut guard = future_render_server.0.lock();

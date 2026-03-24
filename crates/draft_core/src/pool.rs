@@ -1,4 +1,8 @@
-use std::{cmp::Ordering, marker::PhantomData};
+use std::{
+    cmp::Ordering,
+    hash::{Hash, Hasher},
+    marker::PhantomData,
+};
 
 use draft_arena::{Arena, ArenaError, Index, Ticket};
 
@@ -38,6 +42,16 @@ impl<T> PartialOrd for Handle<T> {
     #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
+    }
+}
+
+impl<T> Hash for Handle<T> {
+    #[inline]
+    fn hash<H>(&self, state: &mut H)
+    where
+        H: Hasher,
+    {
+        self.index.hash(state);
     }
 }
 

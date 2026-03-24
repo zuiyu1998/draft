@@ -374,6 +374,7 @@ dependencies = [
  "downcast-rs",
  "draft_core",
  "raw-window-handle",
+ "winit",
 ]
 
 [[package]]

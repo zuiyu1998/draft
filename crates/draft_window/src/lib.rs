@@ -1,13 +1,15 @@
+#[cfg(feature = "winit")]
+mod winit;
+
 use downcast_rs::{Downcast, impl_downcast};
 use draft_core::{
     parking_lot::{Mutex, MutexGuard},
     pool::{Handle, Pool},
 };
 use raw_window_handle::{
-    DisplayHandle, HandleError, HasDisplayHandle, HasWindowHandle, RawDisplayHandle,
-    RawWindowHandle, WindowHandle,
+    HandleError, HasDisplayHandle, HasWindowHandle, RawDisplayHandle, RawWindowHandle,
 };
-use std::sync::Arc;
+use std::{collections::HashSet, sync::Arc};
 
 #[derive(Debug, Default, Clone)]
 pub struct Window {}
@@ -26,6 +28,7 @@ impl SystemWindowManager {
 pub struct SystemWindowManagerState {
     primary: Handle<SystemWindow>,
     pool: Pool<SystemWindow>,
+    windows: HashSet<Handle<SystemWindow>>,
 }
 
 impl Default for SystemWindowManagerState {
@@ -33,11 +36,16 @@ impl Default for SystemWindowManagerState {
         SystemWindowManagerState {
             primary: Handle::NONE,
             pool: Pool::new(),
+            windows: HashSet::new(),
         }
     }
 }
 
 impl SystemWindowManagerState {
+    pub fn windows(&self) -> &HashSet<Handle<SystemWindow>> {
+        &self.windows
+    }
+
     pub fn spawn_primary_window(&mut self, window: SystemWindow) -> Handle<SystemWindow> {
         let handle = self.spawn_window(window);
         self.primary = handle;
@@ -46,7 +54,9 @@ impl SystemWindowManagerState {
     }
 
     pub fn spawn_window(&mut self, window: SystemWindow) -> Handle<SystemWindow> {
-        self.pool.spawn(window)
+        let handle = self.pool.spawn(window);
+        self.windows.insert(handle);
+        handle
     }
 }
 
@@ -65,14 +75,22 @@ impl SystemWindow {
     pub fn downcast_ref<T: ISystemWindow>(&self) -> Option<&T> {
         self.reference.downcast_ref()
     }
+
+    pub fn inner_size(&self) -> PhysicalSize {
+        self.reference.inner_size()
+    }
+}
+
+pub struct PhysicalSize {
+    pub width: u32,
+    pub height: u32,
 }
 
 pub trait ISystemWindow:
     'static + Send + Sync + Downcast + HasWindowHandle + HasDisplayHandle
 {
+    fn inner_size(&self) -> PhysicalSize;
 }
-
-impl<T> ISystemWindow for T where T: 'static + Send + Sync + HasWindowHandle + HasDisplayHandle {}
 
 impl_downcast!(ISystemWindow);
 
@@ -91,24 +109,12 @@ pub struct RawHandleWrapper {
 
 impl RawHandleWrapper {
     /// Creates a `RawHandleWrapper` from a `WindowWrapper`.
-    pub fn new<W: HasWindowHandle + HasDisplayHandle + 'static>(
-        window: &SystemWindow,
-    ) -> Result<RawHandleWrapper, HandleError> {
+    pub fn new(window: &SystemWindow) -> Result<RawHandleWrapper, HandleError> {
         Ok(RawHandleWrapper {
             _window: window.reference.clone(),
             window_handle: window.reference.window_handle()?.as_raw(),
             display_handle: window.reference.display_handle()?.as_raw(),
         })
-    }
-
-    /// Returns a [`HasWindowHandle`] + [`HasDisplayHandle`] impl, which exposes [`WindowHandle`] and [`DisplayHandle`].
-    ///
-    /// # Safety
-    ///
-    /// Some platforms have constraints on where/how this handle can be used. For example, some platforms don't support doing window
-    /// operations off of the main thread. The caller must ensure the [`RawHandleWrapper`] is only used in valid contexts.
-    pub unsafe fn get_handle(&self) -> ThreadLockedRawWindowHandleWrapper {
-        ThreadLockedRawWindowHandleWrapper(self.clone())
     }
 
     /// Gets the stored window handle.
@@ -155,36 +161,3 @@ impl RawHandleWrapper {
 unsafe impl Send for RawHandleWrapper {}
 // SAFETY: This is safe for the same reasons as the Send impl above.
 unsafe impl Sync for RawHandleWrapper {}
-
-/// A [`RawHandleWrapper`] that cannot be sent across threads.
-///
-/// This safely exposes [`RawWindowHandle`] and [`RawDisplayHandle`], but care must be taken to ensure that the construction itself is correct.
-///
-/// This can only be constructed via the [`RawHandleWrapper::get_handle()`] method;
-/// be sure to read the safety docs there about platform-specific limitations.
-/// In many cases, this should only be constructed on the main thread.
-pub struct ThreadLockedRawWindowHandleWrapper(RawHandleWrapper);
-
-impl HasWindowHandle for ThreadLockedRawWindowHandleWrapper {
-    fn window_handle(&self) -> Result<WindowHandle<'_>, HandleError> {
-        // SAFETY: the caller has validated that this is a valid context to get [`RawHandleWrapper`]
-        // as otherwise an instance of this type could not have been constructed
-        // NOTE: we cannot simply impl HasRawWindowHandle for RawHandleWrapper,
-        // as the `raw_window_handle` method is safe. We cannot guarantee that all calls
-        // of this method are correct (as it may be off the main thread on an incompatible platform),
-        // and so exposing a safe method to get a [`RawWindowHandle`] directly would be UB.
-        Ok(unsafe { WindowHandle::borrow_raw(self.0.window_handle) })
-    }
-}
-
-impl HasDisplayHandle for ThreadLockedRawWindowHandleWrapper {
-    fn display_handle(&self) -> Result<DisplayHandle<'_>, HandleError> {
-        // SAFETY: the caller has validated that this is a valid context to get [`RawDisplayHandle`]
-        // as otherwise an instance of this type could not have been constructed
-        // NOTE: we cannot simply impl HasRawDisplayHandle for RawHandleWrapper,
-        // as the `raw_display_handle` method is safe. We cannot guarantee that all calls
-        // of this method are correct (as it may be off the main thread on an incompatible platform),
-        // and so exposing a safe method to get a [`RawDisplayHandle`] directly would be UB.
-        Ok(unsafe { DisplayHandle::borrow_raw(self.0.display_handle) })
-    }
-}
