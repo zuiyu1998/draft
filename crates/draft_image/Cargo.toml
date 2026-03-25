@@ -6,3 +6,7 @@ edition = "2024"
 [dependencies]
 fyrox-resource = { workspace = true }
 fyrox-core = { workspace = true }
+
+serde = { workspace = true }
+thiserror = { workspace = true }
+image = { version = "0.25.2", default-features = false }

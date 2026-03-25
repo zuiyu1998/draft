@@ -1,18 +1,64 @@
 mod loader;
 
+use std::path::Path;
+
 pub use loader::*;
 
 use fyrox_core::{
     TypeUuidProvider, Uuid,
+    io::FileError,
     reflect::*,
     uuid,
     visitor::{pod::PodVecView, *},
 };
-use fyrox_resource::ResourceData;
+use fyrox_resource::{ResourceData, io::ResourceIo, options::ImportOptions};
+use serde::{Deserialize, Serialize};
+use thiserror::Error;
+
+#[derive(Debug, Default, Reflect, Clone, Deserialize, Serialize)]
+pub struct ImageImportOptions {}
+
+impl ImportOptions for ImageImportOptions {}
+
+#[derive(Debug, Error)]
+pub enum ImageError {
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+    #[error(transparent)]
+    FileLoadError(#[from] FileError),
+}
 
 #[derive(Debug, Reflect, Clone)]
 pub struct Image {
     pub data: Vec<u8>,
+}
+
+pub enum ImageFormat {
+    Png,
+    Jpeg,
+    Bmp,
+}
+
+impl Image {
+    pub fn load_from_memory(
+        _data: &[u8],
+        _import_options: ImageImportOptions,
+    ) -> Result<Self, ImageError> {
+        // let mut reader = image::ImageReader::new(std::io::Cursor::new(data));
+        // reader.set_format(image_crate_format);
+        // reader.no_limits();
+
+        todo!()
+    }
+
+    pub(crate) async fn load_from_file<P: AsRef<Path>>(
+        path: P,
+        io: &dyn ResourceIo,
+        import_options: ImageImportOptions,
+    ) -> Result<Self, ImageError> {
+        let data = io.load_file(path.as_ref()).await?;
+        Self::load_from_memory(&data, import_options)
+    }
 }
 
 impl Visit for Image {

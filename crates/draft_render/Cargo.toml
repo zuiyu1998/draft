@@ -8,7 +8,7 @@ draft_window = { path = "../draft_window" }
 draft_core = { path = "../draft_core" }
 draft_image = { path = "../draft_image" }
 
-thiserror = { version = "2.0" }
+thiserror = { workspace = true }
 wgpu = { version = "29", default-features = false, features = [
     "wgsl",
     "dx12",
