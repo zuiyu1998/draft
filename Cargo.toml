@@ -9,9 +9,13 @@ members = [
     "crates/draft_app",
     "crates/draft_arena",
     'crates/draft_core',
+    "crates/draft_image",
     "crates/draft_render",
     "crates/draft_window",
 ]
+
+[workspace.dependencies]
+fyrox-resource = { git = "https://github.com/zuiyu1998/Fyrox.git" }
 
 [dependencies]
 
