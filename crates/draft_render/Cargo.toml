@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 draft_window = { path = "../draft_window" }
+draft_core = { path = "../draft_core" }
 
 thiserror = { version = "2.0" }
 wgpu = { version = "29", default-features = false, features = [

@@ -1,18 +1,19 @@
 use std::collections::HashMap;
 
-use draft_window::{PhysicalSize, RawHandleWrapper, SystemWindow};
-use wgpu::{SurfaceTargetUnsafe, TextureFormat, naga::Handle};
+use draft_core::pool::Handle;
+use draft_window::{RawHandleWrapper, SystemWindow};
+use wgpu::{SurfaceTargetUnsafe, TextureFormat};
 
 use crate::render_server::{RenderAdapter, RenderDevice, RenderInstance};
 
 pub struct WindowSurface {
     surface: wgpu::Surface<'static>,
-    surface_format: TextureFormat,
-    size: PhysicalSize,
+    pub surface_format: TextureFormat,
+    surface_configuration: wgpu::SurfaceConfiguration,
 }
 
 impl WindowSurface {
-    pub fn new(instance: &RenderInstance, adapter: &RenderAdapter, window: SystemWindow) -> Self {
+    pub fn new(instance: &RenderInstance, adapter: &RenderAdapter, window: &SystemWindow) -> Self {
         let size = window.inner_size();
         let window = RawHandleWrapper::new(&window).unwrap();
 
@@ -32,26 +33,34 @@ impl WindowSurface {
         let cap = surface.get_capabilities(&adapter.0);
         let surface_format = cap.formats[0];
 
-        Self {
-            surface,
-            surface_format,
-            size,
-        }
-    }
-
-    pub fn configure_surface(&self, device: &RenderDevice) {
-        let surface_config = wgpu::SurfaceConfiguration {
+        let surface_configuration = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: self.surface_format,
+            format: surface_format,
             // Request compatibility with the sRGB-format texture view we‘re going to create later.
-            view_formats: vec![self.surface_format.add_srgb_suffix()],
+            view_formats: vec![surface_format.add_srgb_suffix()],
             alpha_mode: wgpu::CompositeAlphaMode::Auto,
-            width: self.size.width,
-            height: self.size.height,
+            width: size.width,
+            height: size.height,
             desired_maximum_frame_latency: 2,
             present_mode: wgpu::PresentMode::AutoVsync,
         };
-        self.surface.configure(&device.device, &surface_config);
+
+        Self {
+            surface,
+            surface_format,
+            surface_configuration,
+        }
+    }
+
+    pub fn configure_surface(&mut self, device: &RenderDevice, window: &SystemWindow) {
+        let size = window.inner_size();
+
+        self.surface_configuration.height = size.height;
+        self.surface_configuration.width = size.width;
+        self.surface_configuration.view_formats = vec![self.surface_format.add_srgb_suffix()];
+
+        self.surface
+            .configure(&device.device, &self.surface_configuration);
     }
 }
 

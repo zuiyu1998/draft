@@ -42,6 +42,10 @@ impl Default for SystemWindowManagerState {
 }
 
 impl SystemWindowManagerState {
+    pub fn get_window(&self, handle: &Handle<SystemWindow>) -> SystemWindow {
+        self.pool.get(*handle).clone()
+    }
+
     pub fn windows(&self) -> &HashSet<Handle<SystemWindow>> {
         &self.windows
     }
