@@ -2,12 +2,15 @@ mod render_pass;
 
 pub use render_pass::*;
 
-use wgpu::{CommandBuffer, CommandEncoder, CommandEncoderDescriptor, Device, RenderPipeline};
+use wgpu::{CommandBuffer, CommandEncoder, CommandEncoderDescriptor, RenderPipeline};
 
-use crate::frame_graph::{PipelineContainer, ResourceRef, ResourceTable, ResourceView, TransientResource};
+use crate::{
+    frame_graph::{PipelineContainer, ResourceRef, ResourceTable, ResourceView, TransientResource},
+    render_server::RenderDevice,
+};
 
 pub struct PassContext<'a> {
-    device: &'a Device,
+    device: &'a RenderDevice,
     command_encoder: CommandEncoder,
     resource_table: &'a ResourceTable,
     pipeline_container: &'a PipelineContainer,
@@ -18,7 +21,7 @@ impl PassContext<'_> {
         self.resource_table
     }
 
-    pub fn device(&self) -> &Device {
+    pub fn device(&self) -> &RenderDevice {
         self.device
     }
 
@@ -58,13 +61,16 @@ impl Pass {
     pub fn render(
         &self,
         command_buffers: &mut Vec<CommandBuffer>,
-        device: &Device,
+        device: &RenderDevice,
         resource_table: &ResourceTable,
         pipeline_container: &PipelineContainer,
     ) {
-        let command_encoder = device.create_command_encoder(&CommandEncoderDescriptor {
-            label: self.label.as_deref(),
-        });
+        let command_encoder =
+            device
+                .wgpu_device()
+                .create_command_encoder(&CommandEncoderDescriptor {
+                    label: self.label.as_deref(),
+                });
 
         let mut pass_context = PassContext {
             device,

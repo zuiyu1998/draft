@@ -1,6 +1,6 @@
+pub mod frame_graph;
 pub mod render_resource;
 pub mod render_server;
-pub mod frame_graph;
 
 use std::mem::take;
 
@@ -107,7 +107,7 @@ impl WorldRenderer {
         let mut encoder = self
             .render_server
             .device
-            .device
+            .wgpu_device()
             .create_command_encoder(&Default::default());
         // Create the renderpass which will clear the screen.
         let renderpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {

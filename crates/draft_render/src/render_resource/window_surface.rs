@@ -60,7 +60,7 @@ impl WindowSurface {
         self.surface_configuration.view_formats = vec![self.surface_format.add_srgb_suffix()];
 
         self.surface
-            .configure(&device.device, &self.surface_configuration);
+            .configure(&device.wgpu_device(), &self.surface_configuration);
     }
 
     pub fn get_current_texture(&self) -> wgpu::CurrentSurfaceTexture {
