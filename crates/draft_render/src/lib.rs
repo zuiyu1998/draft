@@ -1,5 +1,6 @@
 pub mod render_resource;
 pub mod render_server;
+pub mod frame_graph;
 
 use std::mem::take;
 
