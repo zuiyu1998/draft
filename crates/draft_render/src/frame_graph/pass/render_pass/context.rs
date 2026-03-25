@@ -2,7 +2,9 @@ use std::ops::Range;
 
 use wgpu::{IndexFormat, RenderPipeline};
 
-use crate::frame_graph::{GpuRenderPass, PassContext, ResourceRead, ResourceRef, TransientBuffer};
+use crate::frame_graph::{
+    GpuRenderPass, PassContext, ResourceRead, ResourceRef, TransientBindGroup, TransientBuffer,
+};
 
 pub struct RenderPassContext<'a, 'b> {
     render_pass: GpuRenderPass,
@@ -15,6 +17,14 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
             render_pass,
             pass_context,
         }
+    }
+
+    pub fn set_bind_group(&mut self, index: u32, bind_group: &TransientBindGroup, offsets: &[u32]) {
+        let bind_group = bind_group.create_bind_group(self.pass_context);
+
+        self.render_pass
+            .get_render_pass_mut()
+            .set_bind_group(index, &bind_group, offsets);
     }
 
     pub fn draw_indexed(&mut self, indices: Range<u32>, base_vertex: i32, instances: Range<u32>) {

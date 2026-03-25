@@ -7,6 +7,8 @@ mod resource_node;
 mod resource_table;
 mod texture_view;
 mod transient_resource;
+mod graph;
+mod resource_board;
 
 pub use bind_group::*;
 pub use handle::*;
@@ -17,6 +19,8 @@ pub use resource_node::*;
 pub use resource_table::*;
 pub use texture_view::*;
 pub use transient_resource::*;
+pub use graph::*;
+pub use resource_board::*;
 
 use crate::render_server::RenderDevice;
 use wgpu::{BindGroup, BindGroupEntry};
