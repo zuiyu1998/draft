@@ -66,6 +66,9 @@ impl ApplicationHandler<WinitUserEvent> for WinitAppRunnerState {
                 println!("app exit");
                 event_loop.exit();
             }
+            WindowEvent::RedrawRequested => {
+                self.app.render();
+            }
             _ => (),
         }
     }

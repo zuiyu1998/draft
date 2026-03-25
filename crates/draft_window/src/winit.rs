@@ -10,4 +10,8 @@ impl ISystemWindow for Window {
             height: size.height,
         }
     }
+
+    fn pre_present_notify(&self) {
+        self.pre_present_notify();
+    }
 }

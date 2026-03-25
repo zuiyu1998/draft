@@ -62,6 +62,10 @@ impl WindowSurface {
         self.surface
             .configure(&device.device, &self.surface_configuration);
     }
+
+    pub fn get_current_texture(&self) -> wgpu::CurrentSurfaceTexture {
+        self.surface.get_current_texture()
+    }
 }
 
 #[derive(Default)]

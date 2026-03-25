@@ -42,6 +42,17 @@ impl Default for SystemWindowManagerState {
 }
 
 impl SystemWindowManagerState {
+    pub fn pre_present_notify(&self) {
+        for window in self.windows.iter() {
+            let window = self.pool.get(*window);
+            window.pre_present_notify();
+        }
+    }
+
+    pub fn get_primary_window_handle(&self) -> Handle<SystemWindow> {
+        self.primary
+    }
+
     pub fn get_window(&self, handle: &Handle<SystemWindow>) -> SystemWindow {
         self.pool.get(*handle).clone()
     }
@@ -83,6 +94,10 @@ impl SystemWindow {
     pub fn inner_size(&self) -> PhysicalSize {
         self.reference.inner_size()
     }
+
+    pub fn pre_present_notify(&self) {
+        self.reference.pre_present_notify();
+    }
 }
 
 pub struct PhysicalSize {
@@ -94,6 +109,8 @@ pub trait ISystemWindow:
     'static + Send + Sync + Downcast + HasWindowHandle + HasDisplayHandle
 {
     fn inner_size(&self) -> PhysicalSize;
+
+    fn pre_present_notify(&self);
 }
 
 impl_downcast!(ISystemWindow);

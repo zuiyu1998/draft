@@ -29,6 +29,14 @@ impl App {
         }
     }
 
+    pub fn render(&mut self) {
+        if let GraphicsContext::Initialized(initialized_graphics_context) =
+            &mut self.graphics_context
+        {
+            initialized_graphics_context.renderer.render();
+        }
+    }
+
     pub fn initialize_graphics_context<T: RenderServerConstructor>(
         &mut self,
         constructor: &T,
