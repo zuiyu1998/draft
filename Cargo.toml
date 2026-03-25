@@ -16,6 +16,7 @@ members = [
 
 [workspace.dependencies]
 fyrox-resource = { git = "https://github.com/zuiyu1998/Fyrox.git" }
+fyrox-core = { git = "https://github.com/zuiyu1998/Fyrox.git" }
 
 [dependencies]
 
