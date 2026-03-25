@@ -1,3 +1,7 @@
+mod loader;
+
+pub use loader::*;
+
 use fyrox_core::{
     TypeUuidProvider, Uuid,
     reflect::*,
