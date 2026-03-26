@@ -470,11 +470,13 @@ dependencies = [
 name = "draft_image"
 version = "0.1.0"
 dependencies = [
+ "bytemuck",
  "fyrox-core",
  "fyrox-resource",
  "image",
  "serde",
  "thiserror 2.0.18",
+ "wgpu-types",
 ]
 
 [[package]]
@@ -2651,6 +2653,7 @@ dependencies = [
  "bytemuck",
  "log",
  "raw-window-handle",
+ "serde",
 ]
 
 [[package]]
