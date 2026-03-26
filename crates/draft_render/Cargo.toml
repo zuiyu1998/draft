@@ -7,7 +7,10 @@ edition = "2024"
 draft_window = { path = "../draft_window" }
 draft_core = { path = "../draft_core" }
 draft_image = { path = "../draft_image" }
+draft_graphics = { path = "../draft_graphics" }
 
+fyrox-resource = { workspace = true }
+fyrox-core = { workspace = true }
 thiserror = { workspace = true }
 wgpu = { version = "29", default-features = false, features = [
     "wgsl",

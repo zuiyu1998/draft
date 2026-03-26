@@ -1,3 +1,5 @@
+pub mod wgpu_utils;
+
 mod texture_format;
 
 pub use texture_format::*;
@@ -209,6 +211,16 @@ pub struct Extent3d {
     pub width: u32,
     pub height: u32,
     pub depth_or_array_layers: u32,
+}
+
+impl Default for Extent3d {
+    fn default() -> Self {
+        Self {
+            width: 1,
+            height: 1,
+            depth_or_array_layers: 1,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Visit, Reflect)]

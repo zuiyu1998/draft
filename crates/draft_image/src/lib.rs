@@ -22,6 +22,17 @@ use thiserror::Error;
 
 pub type ImageResource = Resource<Image>;
 
+pub trait DraftDefault {
+    /// Returns the default value for a type.
+    fn draft_default() -> Self;
+}
+
+impl DraftDefault for TextureFormat {
+    fn draft_default() -> Self {
+        TextureFormat::Rgba8UnormSrgb
+    }
+}
+
 #[derive(Debug, Default, Reflect, Clone, Deserialize, Serialize)]
 pub struct ImageImportOptions {
     pub is_srgb: bool,
@@ -93,41 +104,38 @@ pub struct Image {
     pub data: Vec<u8>,
     pub texture_descriptor: TextureDescriptor,
     pub sampler_descriptor: SamplerDescriptor,
+
+    modifications_counter: u64,
+    sampler_properties_modifications: u64,
     #[reflect(hidden)]
     pub cache_index: Arc<AtomicIndex>,
 }
 
-pub enum ImageFormat {
-    Png,
-    Jpeg,
-    Bmp,
-}
-
-impl ImageFormat {
-    pub fn from_extension(extension: &str) -> Option<ImageFormat> {
-        match extension.to_ascii_uppercase().as_str() {
-            "png" => Some(ImageFormat::Png),
-            "jpeg" => Some(ImageFormat::Jpeg),
-            "bmp" => Some(ImageFormat::Bmp),
-            _ => None,
-        }
+impl Default for Image {
+    fn default() -> Self {
+        let mut image = Image::default_uninit();
+        image.data = vec![255; image.texture_descriptor.format.pixel_size().unwrap_or(0)];
+        image
     }
-
-    pub fn to_image_format(self) -> image::ImageFormat {
-        match self {
-            ImageFormat::Bmp => image::ImageFormat::Bmp,
-            ImageFormat::Jpeg => image::ImageFormat::Jpeg,
-            ImageFormat::Png => image::ImageFormat::Png,
-        }
-    }
-}
-
-/// Calculates the total number of pixels in the item.
-fn pixel_count(item: Extent3d) -> usize {
-    (item.width * item.height * item.depth_or_array_layers) as usize
 }
 
 impl Image {
+    pub fn modifications_count(&self) -> u64 {
+        self.modifications_counter
+    }
+
+    pub fn sampler_modifications_count(&self) -> u64 {
+        self.sampler_properties_modifications
+    }
+
+    pub fn default_uninit() -> Image {
+        Image::new_uninit(
+            Extent3d::default(),
+            TextureDimension::D2,
+            TextureFormat::draft_default(),
+        )
+    }
+
     pub fn new(
         size: Extent3d,
         dimension: TextureDimension,
@@ -163,6 +171,8 @@ impl Image {
             },
             sampler_descriptor: SamplerDescriptor::default(),
             cache_index: Default::default(),
+            modifications_counter: 0,
+            sampler_properties_modifications: 1,
         }
     }
 
@@ -380,4 +390,34 @@ impl ResourceData for Image {
     fn try_clone_box(&self) -> Option<Box<dyn ResourceData>> {
         Some(Box::new(self.clone()))
     }
+}
+
+pub enum ImageFormat {
+    Png,
+    Jpeg,
+    Bmp,
+}
+
+impl ImageFormat {
+    pub fn from_extension(extension: &str) -> Option<ImageFormat> {
+        match extension.to_ascii_uppercase().as_str() {
+            "png" => Some(ImageFormat::Png),
+            "jpeg" => Some(ImageFormat::Jpeg),
+            "bmp" => Some(ImageFormat::Bmp),
+            _ => None,
+        }
+    }
+
+    pub fn to_image_format(self) -> image::ImageFormat {
+        match self {
+            ImageFormat::Bmp => image::ImageFormat::Bmp,
+            ImageFormat::Jpeg => image::ImageFormat::Jpeg,
+            ImageFormat::Png => image::ImageFormat::Png,
+        }
+    }
+}
+
+/// Calculates the total number of pixels in the item.
+fn pixel_count(item: Extent3d) -> usize {
+    (item.width * item.height * item.depth_or_array_layers) as usize
 }

@@ -493,8 +493,11 @@ name = "draft_render"
 version = "0.1.0"
 dependencies = [
  "draft_core",
+ "draft_graphics",
  "draft_image",
  "draft_window",
+ "fyrox-core",
+ "fyrox-resource",
  "thiserror 2.0.18",
  "wgpu",
 ]

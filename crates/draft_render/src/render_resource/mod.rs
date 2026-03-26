@@ -1,10 +1,14 @@
+mod temporary_cache;
+mod texture_cache;
 mod window_surface;
 mod window_surface_texture;
 
-use std::mem::take;
-
+pub use temporary_cache::*;
+pub use texture_cache::*;
 pub use window_surface::*;
 pub use window_surface_texture::*;
+
+use std::mem::take;
 
 #[derive(Default)]
 pub struct RenderWorld {
