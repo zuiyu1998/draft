@@ -1,0 +1,9 @@
+[package]
+name = "draft_mesh"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+fyrox-core = { workspace = true }
+fyrox-resource = { workspace = true }
+draft_graphics = { path = "../draft_graphics" }
