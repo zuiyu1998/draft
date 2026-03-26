@@ -15,7 +15,8 @@ draft_window = { path = "../draft_window" }
 
 downcast-rs = "2.0"
 pollster = { version = "0.4" }
-
+fyrox-resource = { workspace = true }
+fyrox-core = { workspace = true }
 winit = { version = "0.30", default-features = false, features = [
     "rwh_06",
 ], optional = true }

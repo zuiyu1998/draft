@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use draft_core::parking_lot::Mutex;
+use fyrox_core::parking_lot::Mutex;
 use draft_render::{
     FrameworkError,
     render_server::{RenderAdapter, RenderDevice, RenderInstance, RenderQueue, RenderServer},

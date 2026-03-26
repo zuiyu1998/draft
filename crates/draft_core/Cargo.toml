@@ -6,4 +6,3 @@ edition = "2024"
 [dependencies]
 draft_arena =  { path = "../draft_arena" }
 
-parking_lot = "0.12.0"

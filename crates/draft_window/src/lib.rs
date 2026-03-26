@@ -2,10 +2,9 @@
 mod winit;
 
 use downcast_rs::{Downcast, impl_downcast};
-use draft_core::{
-    parking_lot::{Mutex, MutexGuard},
-    pool::{Handle, Pool},
-};
+use draft_core::pool::{Handle, Pool};
+use fyrox_core::parking_lot::{Mutex, MutexGuard};
+
 use raw_window_handle::{
     HandleError, HasDisplayHandle, HasWindowHandle, RawDisplayHandle, RawWindowHandle,
 };

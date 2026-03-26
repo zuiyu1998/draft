@@ -450,6 +450,8 @@ dependencies = [
  "draft_core",
  "draft_render",
  "draft_window",
+ "fyrox-core",
+ "fyrox-resource",
  "pollster",
  "winit",
 ]
@@ -463,7 +465,6 @@ name = "draft_core"
 version = "0.1.0"
 dependencies = [
  "draft_arena",
- "parking_lot",
 ]
 
 [[package]]
@@ -508,6 +509,7 @@ version = "0.1.0"
 dependencies = [
  "downcast-rs",
  "draft_core",
+ "fyrox-core",
  "raw-window-handle",
  "winit",
 ]

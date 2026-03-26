@@ -46,6 +46,32 @@ pub struct TextureCache {
 }
 
 impl TextureCache {
+    pub fn update(&mut self, dt: f32) {
+        self.cache.update(dt)
+    }
+
+    pub fn upload(
+        &mut self,
+        device: &RenderDevice,
+        resource_manager: &ResourceManager,
+        texture: &ImageResource,
+    ) -> Result<(), FrameworkError> {
+        let uuid = texture.resource_uuid();
+        let texture = texture.state();
+        if let Some(texture) = texture.data_ref() {
+            self.cache.get_entry_mut_or_insert_with(
+                &texture.cache_index,
+                Default::default(),
+                || create_gpu_texture(device, resource_manager, &uuid, texture),
+            )?;
+            Ok(())
+        } else {
+            Err(FrameworkError::Custom(
+                "Texture is not loaded yet!".to_string(),
+            ))
+        }
+    }
+
     pub fn get(
         &mut self,
         device: &RenderDevice,

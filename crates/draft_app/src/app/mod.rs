@@ -1,7 +1,10 @@
 mod executor;
 mod plugin;
 
+use std::sync::Arc;
+
 pub use executor::*;
+use fyrox_resource::{io::FsResourceIo, manager::ResourceManager};
 pub use plugin::*;
 
 use draft_render::{FrameworkError, WorldRenderer};
@@ -17,15 +20,20 @@ pub struct App {
     pub system_window_manager: SystemWindowManager,
     pub graphics_context: GraphicsContext,
     pub(crate) plugin_container: PluginContainer,
+    resource_manager: ResourceManager,
 }
 
 impl App {
     pub fn empty() -> Self {
+        let resource_manager =
+            ResourceManager::new(Arc::new(FsResourceIo), Arc::new(Default::default()));
+
         Self {
             scene: Scene::empty(),
             graphics_context: GraphicsContext::default(),
             plugin_container: PluginContainer::default(),
             system_window_manager: Default::default(),
+            resource_manager,
         }
     }
 
@@ -49,7 +57,11 @@ impl App {
                 .state()
                 .spawn_primary_window(window);
 
-            let renderer = WorldRenderer::new(render_server, self.system_window_manager.clone());
+            let renderer = WorldRenderer::new(
+                render_server,
+                self.system_window_manager.clone(),
+                &self.resource_manager,
+            );
 
             self.graphics_context = GraphicsContext::Initialized(InitializedGraphicsContext {
                 params: params.clone(),
