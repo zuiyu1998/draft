@@ -2,11 +2,12 @@ pub mod frame_graph;
 pub mod render_resource;
 pub mod render_server;
 
+pub use wgpu;
+
 use std::sync::mpsc::Receiver;
 
 use draft_image::Image;
 use fyrox_resource::{event::ResourceEvent, manager::ResourceManager};
-pub use wgpu;
 
 use draft_window::SystemWindowManager;
 use thiserror::Error;

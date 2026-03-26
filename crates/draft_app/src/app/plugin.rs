@@ -1,6 +1,7 @@
 use std::any::Any;
 
 use downcast_rs::{Downcast, impl_downcast};
+use draft_core::ImportResourcePlugin;
 
 use crate::app::App;
 
@@ -20,6 +21,14 @@ pub trait Plugin: Downcast + Any + Send + Sync {
 
     fn finish(&self, _app: &mut App) {
         // do nothing
+    }
+}
+
+impl<T: ImportResourcePlugin> Plugin for T {
+    fn build(&self, _app: &mut App) {}
+
+    fn finish(&self, app: &mut App) {
+        self.import(&app.resource_manager);
     }
 }
 

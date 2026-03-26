@@ -465,6 +465,7 @@ name = "draft_core"
 version = "0.1.0"
 dependencies = [
  "draft_arena",
+ "fyrox-resource",
 ]
 
 [[package]]

@@ -5,4 +5,5 @@ edition = "2024"
 
 [dependencies]
 draft_arena =  { path = "../draft_arena" }
+fyrox-resource = { workspace = true }
 
