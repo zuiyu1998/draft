@@ -1,8 +1,10 @@
 mod loader;
 
-use std::path::Path;
+use std::{path::Path, sync::Arc};
 
-use draft_graphics::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages};
+use draft_graphics::{
+    Extent3d, SamplerDescriptor, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
+};
 use image::DynamicImage;
 pub use loader::*;
 
@@ -10,12 +12,15 @@ use fyrox_core::{
     TypeUuidProvider, Uuid,
     io::FileError,
     reflect::*,
+    sparse::AtomicIndex,
     uuid,
     visitor::{pod::PodVecView, *},
 };
-use fyrox_resource::{ResourceData, io::ResourceIo, options::ImportOptions};
+use fyrox_resource::{Resource, ResourceData, io::ResourceIo, options::ImportOptions};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
+
+pub type ImageResource = Resource<Image>;
 
 #[derive(Debug, Default, Reflect, Clone, Deserialize, Serialize)]
 pub struct ImageImportOptions {
@@ -86,7 +91,10 @@ pub enum ImageError {
 #[derive(Debug, Reflect, Clone)]
 pub struct Image {
     pub data: Vec<u8>,
-    pub texture_descriptor: TextureDescriptor
+    pub texture_descriptor: TextureDescriptor,
+    pub sampler_descriptor: SamplerDescriptor,
+    #[reflect(hidden)]
+    pub cache_index: Arc<AtomicIndex>,
 }
 
 pub enum ImageFormat {
@@ -153,6 +161,8 @@ impl Image {
                     | TextureUsages::COPY_SRC,
                 view_formats: vec![],
             },
+            sampler_descriptor: SamplerDescriptor::default(),
+            cache_index: Default::default(),
         }
     }
 

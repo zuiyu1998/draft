@@ -5,6 +5,137 @@ pub use texture_format::*;
 use bitflags::bitflags;
 use fyrox_core::{reflect::*, visitor::*};
 
+#[derive(Debug, Clone, Visit, Reflect)]
+pub struct SamplerDescriptor {
+    pub label: Option<String>,
+    pub address_mode_u: AddressMode,
+    pub address_mode_v: AddressMode,
+    pub address_mode_w: AddressMode,
+    pub mag_filter: FilterMode,
+    pub min_filter: FilterMode,
+    pub mipmap_filter: MipmapFilterMode,
+    pub lod_min_clamp: f32,
+    pub lod_max_clamp: f32,
+    pub compare: Option<CompareFunction>,
+    pub anisotropy_clamp: u16,
+    pub border_color: Option<SamplerBorderColor>,
+}
+
+impl Default for SamplerDescriptor {
+    fn default() -> Self {
+        Self {
+            label: Default::default(),
+            address_mode_u: Default::default(),
+            address_mode_v: Default::default(),
+            address_mode_w: Default::default(),
+            mag_filter: Default::default(),
+            min_filter: Default::default(),
+            mipmap_filter: Default::default(),
+            lod_min_clamp: 0.0,
+            lod_max_clamp: 32.0,
+            compare: None,
+            anisotropy_clamp: 1,
+            border_color: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Visit, Reflect, Default)]
+
+pub enum SamplerBorderColor {
+    /// [0, 0, 0, 0]
+    #[default]
+    TransparentBlack,
+    /// [0, 0, 0, 1]
+    OpaqueBlack,
+    /// [1, 1, 1, 1]
+    OpaqueWhite,
+
+    /// On the Metal backend, this is equivalent to `TransparentBlack` for
+    /// textures that have an alpha component, and equivalent to `OpaqueBlack`
+    /// for textures that do not have an alpha component. On other backends,
+    /// this is equivalent to `TransparentBlack`. Requires
+    /// [`Features::ADDRESS_MODE_CLAMP_TO_ZERO`]. Not supported on the web.
+    Zero,
+}
+
+#[derive(Debug, Clone, Visit, Reflect, Default)]
+pub enum CompareFunction {
+    /// Function never passes
+    Never = 1,
+    /// Function passes if new value less than existing value
+    Less = 2,
+    /// Function passes if new value is equal to existing value. When using
+    /// this compare function, make sure to mark your Vertex Shader's `@builtin(position)`
+    /// output as `@invariant` to prevent artifacting.
+    Equal = 3,
+    /// Function passes if new value is less than or equal to existing value
+    LessEqual = 4,
+    /// Function passes if new value is greater than existing value
+    Greater = 5,
+    /// Function passes if new value is not equal to existing value. When using
+    /// this compare function, make sure to mark your Vertex Shader's `@builtin(position)`
+    /// output as `@invariant` to prevent artifacting.
+    NotEqual = 6,
+    /// Function passes if new value is greater than or equal to existing value
+    GreaterEqual = 7,
+    /// Function always passes
+    #[default]
+    Always = 8,
+}
+
+#[derive(Debug, Clone, Visit, Reflect, Default)]
+pub enum MipmapFilterMode {
+    /// Nearest neighbor sampling.
+    ///
+    /// Return the value of the texel nearest to the texture coordinates.
+    #[default]
+    Nearest = 0,
+    /// Linear Interpolation
+    ///
+    /// Select two texels in each dimension and return a linear interpolation between their values.
+    Linear = 1,
+}
+
+#[derive(Debug, Clone, Visit, Reflect, Default)]
+pub enum FilterMode {
+    /// Nearest neighbor sampling.
+    ///
+    /// This creates a pixelated effect.
+    #[default]
+    Nearest = 0,
+    /// Linear Interpolation
+    ///
+    /// This makes textures smooth but blurry.
+    Linear = 1,
+}
+
+#[derive(Debug, Clone, Visit, Reflect, Default)]
+pub enum AddressMode {
+    /// Clamp the value to the edge of the texture
+    ///
+    /// -0.25 -> 0.0
+    /// 1.25  -> 1.0
+    #[default]
+    ClampToEdge = 0,
+    /// Repeat the texture in a tiling fashion
+    ///
+    /// -0.25 -> 0.75
+    /// 1.25 -> 0.25
+    Repeat = 1,
+    /// Repeat the texture, mirroring it every repeat
+    ///
+    /// -0.25 -> 0.25
+    /// 1.25 -> 0.75
+    MirrorRepeat = 2,
+    /// Clamp the value to the border of the texture
+    /// Requires feature [`Features::ADDRESS_MODE_CLAMP_TO_BORDER`]
+    ///
+    /// -0.25 -> border
+    /// 1.25 -> border
+    ClampToBorder = 3,
+}
+
 #[derive(Debug, Clone, Visit, Reflect, Default)]
 pub enum TextureAspect {
     /// Depth, Stencil, and Color.
