@@ -1,0 +1,10 @@
+[package]
+name = "draft_graphics"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+fyrox-core = { workspace = true }
+
+wgpu-types = { version = "29", default-features = false, features = ["serde"] }
+bitflags = { version = "2.3", features = ["serde"] }

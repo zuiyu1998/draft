@@ -8,7 +8,7 @@ members = [
     ".",
     "crates/draft_app",
     "crates/draft_arena",
-    'crates/draft_core',
+    'crates/draft_core', "crates/draft_graphics",
     "crates/draft_image",
     "crates/draft_render",
     "crates/draft_window",

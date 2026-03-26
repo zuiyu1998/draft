@@ -2,6 +2,7 @@ mod loader;
 
 use std::path::Path;
 
+use draft_graphics::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages};
 use image::DynamicImage;
 pub use loader::*;
 
@@ -15,7 +16,6 @@ use fyrox_core::{
 use fyrox_resource::{ResourceData, io::ResourceIo, options::ImportOptions};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
-use wgpu_types::{Extent3d, TextureDimension, TextureFormat};
 
 #[derive(Debug, Default, Reflect, Clone, Deserialize, Serialize)]
 pub struct ImageImportOptions {
@@ -86,6 +86,7 @@ pub enum ImageError {
 #[derive(Debug, Reflect, Clone)]
 pub struct Image {
     pub data: Vec<u8>,
+    pub texture_descriptor: TextureDescriptor
 }
 
 pub enum ImageFormat {
@@ -140,18 +141,18 @@ impl Image {
     pub fn new_uninit(size: Extent3d, dimension: TextureDimension, format: TextureFormat) -> Self {
         Image {
             data: vec![],
-            // texture_descriptor: TextureDescriptor {
-            //     size,
-            //     format,
-            //     dimension,
-            //     label: None,
-            //     mip_level_count: 1,
-            //     sample_count: 1,
-            //     usage: TextureUsages::TEXTURE_BINDING
-            //         | TextureUsages::COPY_DST
-            //         | TextureUsages::COPY_SRC,
-            //     view_formats: &[],
-            // },
+            texture_descriptor: TextureDescriptor {
+                size,
+                format,
+                dimension,
+                label: None,
+                mip_level_count: 1,
+                sample_count: 1,
+                usage: TextureUsages::TEXTURE_BINDING
+                    | TextureUsages::COPY_DST
+                    | TextureUsages::COPY_SRC,
+                view_formats: vec![],
+            },
         }
     }
 

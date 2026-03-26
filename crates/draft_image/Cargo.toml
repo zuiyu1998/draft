@@ -7,8 +7,9 @@ edition = "2024"
 fyrox-resource = { workspace = true }
 fyrox-core = { workspace = true }
 
+draft_graphics = { path = "../draft_graphics"}
+
 serde = { workspace = true }
 thiserror = { workspace = true }
 image = { version = "0.25.2", default-features = false }
 bytemuck = { version = "1.5" }
-wgpu-types = { version = "29", default-features = false, features = ["serde"] }
