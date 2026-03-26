@@ -15,11 +15,22 @@ impl RenderDevice {
     }
 
     pub fn create_texture(&self, desc: &TextureDescriptor) -> wgpu::Texture {
-        let desc = wgpu_utils::covert_texture_descriptor(desc);
-        self.device.create_texture(&desc)
+        let desc = wgpu_utils::convert_texture_descriptor(desc);
+        self.device.create_texture(&wgpu::TextureDescriptor {
+            label: desc.label,
+            size: desc.size,
+            mip_level_count: desc.mip_level_count,
+            sample_count: desc.mip_level_count,
+            dimension: desc.dimension,
+            format: desc.format,
+            usage: desc.usage,
+            view_formats: &desc.view_formats,
+        })
     }
 
-    pub fn create_sampler(&self, _desc: &SamplerDescriptor) -> wgpu::Sampler {
-        todo!()
+    pub fn create_sampler(&self, desc: &SamplerDescriptor) -> wgpu::Sampler {
+        let desc = wgpu_utils::convert_sampler_descriptor(desc);
+
+        self.device.create_sampler(&desc)
     }
 }
