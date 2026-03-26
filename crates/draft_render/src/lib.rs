@@ -2,15 +2,13 @@ pub mod frame_graph;
 pub mod render_resource;
 pub mod render_server;
 
-use std::mem::take;
-
 pub use wgpu;
 
 use draft_window::SystemWindowManager;
 use thiserror::Error;
 
 use crate::{
-    render_resource::{WindowSurface, WindowSurfaceTextures, WindowSurfaces},
+    render_resource::{RenderWorld, WindowSurface, WindowSurfaces},
     render_server::RenderServer,
 };
 
@@ -21,7 +19,7 @@ pub struct WorldRenderer {
     pub render_server: RenderServer,
     pub system_window_manager: SystemWindowManager,
     pub window_surfaces: WindowSurfaces,
-    pub window_surface_textures: WindowSurfaceTextures,
+    pub render_world: RenderWorld,
 }
 
 impl WorldRenderer {
@@ -30,21 +28,7 @@ impl WorldRenderer {
             render_server,
             system_window_manager,
             window_surfaces: Default::default(),
-            window_surface_textures: Default::default(),
-        }
-    }
-
-    pub fn clear_window_surface_textures(&mut self) {
-        let window_surface_textures = take(&mut self.window_surface_textures);
-
-        for window_surface in window_surface_textures.data.into_values() {
-            window_surface.present();
-        }
-    }
-
-    pub fn prepare_window_surface_textures(&mut self) {
-        for (handle, window_surface) in self.window_surfaces.data.iter() {
-            self.window_surface_textures.insert(handle, window_surface);
+            render_world: Default::default(),
         }
     }
 
@@ -74,12 +58,13 @@ impl WorldRenderer {
 
     pub fn pre_render(&mut self) {
         self.prepare_window_surfaces();
-        self.prepare_window_surface_textures();
+        self.render_world
+            .prepare_window_surface_textures(&self.window_surfaces);
     }
 
     pub fn post_render(&mut self) {
         self.system_window_manager.state().pre_present_notify();
-        self.clear_window_surface_textures();
+        self.render_world.clear_window_surface_textures();
     }
 
     pub fn render(&mut self) {
@@ -90,7 +75,7 @@ impl WorldRenderer {
             .state()
             .get_primary_window_handle();
 
-        let window_surface_texture = self
+        let window_surface_texture = self.render_world
             .window_surface_textures
             .get_window_surface_texture(&window_handle)
             .unwrap();
