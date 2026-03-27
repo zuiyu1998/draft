@@ -7,3 +7,4 @@ edition = "2024"
 draft_arena =  { path = "../draft_arena" }
 fyrox-resource = { workspace = true }
 
+fxhash = "0.2.1"

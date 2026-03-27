@@ -10,7 +10,7 @@ members = [
     "crates/draft_arena",
     'crates/draft_core',
     "crates/draft_graphics",
-    "crates/draft_image",
+    "crates/draft_image", "crates/draft_material",
     "crates/draft_mesh",
     "crates/draft_render",
     "crates/draft_window",
@@ -19,6 +19,8 @@ members = [
 [workspace.dependencies]
 fyrox-resource = { git = "https://github.com/zuiyu1998/Fyrox.git" }
 fyrox-core = { git = "https://github.com/zuiyu1998/Fyrox.git" }
+fyrox-math = { git = "https://github.com/zuiyu1998/Fyrox.git" }
+
 serde = { version = "1.0", features = ["derive"] }
 thiserror = { version = "2.0" }
 

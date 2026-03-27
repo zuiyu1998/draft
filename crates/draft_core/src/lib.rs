@@ -4,6 +4,10 @@ use fyrox_resource::{ResourceData, core::sparse::AtomicIndex, manager::ResourceM
 
 pub mod pool;
 
+pub mod collections {
+    pub use fxhash::*;
+}
+
 pub trait ImportResourcePlugin: Send + Sync + 'static {
     fn import(&self, resource_manager: &ResourceManager);
 }

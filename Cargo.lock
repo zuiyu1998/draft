@@ -465,6 +465,7 @@ name = "draft_core"
 version = "0.1.0"
 dependencies = [
  "draft_arena",
+ "fxhash",
  "fyrox-resource",
 ]
 
@@ -488,6 +489,19 @@ dependencies = [
  "fyrox-resource",
  "image",
  "serde",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "draft_material"
+version = "0.1.0"
+dependencies = [
+ "draft_core",
+ "draft_graphics",
+ "draft_image",
+ "fyrox-core",
+ "fyrox-math",
+ "fyrox-resource",
  "thiserror 2.0.18",
 ]
 
