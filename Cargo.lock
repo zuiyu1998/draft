@@ -507,6 +507,7 @@ dependencies = [
  "draft_core",
  "draft_graphics",
  "draft_image",
+ "draft_mesh",
  "draft_window",
  "fyrox-core",
  "fyrox-resource",

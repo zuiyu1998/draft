@@ -3,10 +3,12 @@ mod vertex;
 pub use vertex::*;
 
 use draft_graphics::{PrimitiveTopology, VertexFormat};
-use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, uuid, visitor::*};
-use fyrox_resource::ResourceData;
-use std::collections::HashMap;
+use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, sparse::AtomicIndex, uuid, visitor::*};
+use fyrox_resource::{Resource, ResourceData};
+use std::{collections::HashMap, sync::Arc};
 use thiserror::Error;
+
+pub type MeshResource = Resource<Mesh>;
 
 #[derive(Error, Debug, Clone)]
 pub enum MeshAccessError {}
@@ -22,11 +24,15 @@ pub struct Mesh {
     primitive_topology: PrimitiveTopology,
     attributes: HashMap<MeshVertexAttributeId, MeshAttributeData>,
     indices: Option<Indices>,
+    modifications_counter: u64,
+    indices_modifications_counter: u64,
+    #[reflect(hidden)]
+    pub cache_index: Arc<AtomicIndex>,
 }
 
-impl TypeUuidProvider for Mesh {
-    fn type_uuid() -> Uuid {
-        uuid!("3930d4ce-f524-4420-b8c8-459b5e427e93")
+impl Default for Mesh {
+    fn default() -> Self {
+        Self::new(PrimitiveTopology::default())
     }
 }
 
@@ -36,6 +42,9 @@ impl Mesh {
             primitive_topology,
             attributes: Default::default(),
             indices: Default::default(),
+            cache_index: Default::default(),
+            modifications_counter: 0,
+            indices_modifications_counter: 0,
         }
     }
 
@@ -55,6 +64,12 @@ impl Mesh {
 
         self.attributes
             .insert(attribute.id, MeshAttributeData { attribute, values });
+    }
+}
+
+impl TypeUuidProvider for Mesh {
+    fn type_uuid() -> Uuid {
+        uuid!("3930d4ce-f524-4420-b8c8-459b5e427e93")
     }
 }
 
