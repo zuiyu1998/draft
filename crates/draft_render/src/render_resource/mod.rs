@@ -1,11 +1,13 @@
 mod mesh_cache;
+mod pipeline_cache;
 mod temporary_cache;
 mod texture_cache;
 mod window_surface;
 mod window_surface_texture;
 
-use draft_mesh::MeshResource;
+use draft_material::PipelineResource;
 pub use mesh_cache::*;
+pub use pipeline_cache::*;
 pub use temporary_cache::*;
 pub use texture_cache::*;
 pub use window_surface::*;
@@ -13,6 +15,7 @@ pub use window_surface_texture::*;
 
 use crate::{FrameworkError, render_server::RenderDevice};
 use draft_image::ImageResource;
+use draft_mesh::MeshResource;
 use fyrox_resource::manager::ResourceManager;
 use std::mem::take;
 
@@ -21,9 +24,18 @@ pub struct RenderWorld {
     pub(crate) window_surface_textures: WindowSurfaceTextures,
     pub(crate) texture_cache: TextureCache,
     pub(crate) mesh_cache: MeshCache,
+    pub(crate) pipeline_cache: PipelineCache,
 }
 
 impl RenderWorld {
+    pub fn upload_pipeline(&mut self, pipeline: &PipelineResource) {
+        self.pipeline_cache.get(pipeline);
+    }
+
+    pub fn update_pipeline_cache(&mut self, dt: f32) {
+        self.pipeline_cache.update(dt);
+    }
+
     pub fn upload_mesh(&mut self, mesh: &MeshResource) {
         self.mesh_cache.get(mesh);
     }

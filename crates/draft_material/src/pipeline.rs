@@ -1,8 +1,10 @@
 use std::sync::Arc;
 
-use draft_core::{RenderResource, ResourceId};
+use draft_core::RenderResource;
 use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, sparse::AtomicIndex, uuid, visitor::*};
-use fyrox_resource::ResourceData;
+use fyrox_resource::{Resource, ResourceData};
+
+pub type PipelineResource = Resource<Pipeline>;
 
 #[derive(Debug, Clone, Reflect)]
 pub struct Pipeline {
@@ -10,9 +12,17 @@ pub struct Pipeline {
     pub cache_index: Arc<AtomicIndex>,
 }
 
+impl Default for Pipeline {
+    fn default() -> Self {
+        Pipeline {
+            cache_index: Default::default(),
+        }
+    }
+}
+
 impl RenderResource for Pipeline {
-    fn get_resource_id(&self) -> ResourceId {
-        self.cache_index.clone().into()
+    fn get_cache_index(&self) -> &Arc<AtomicIndex> {
+        &self.cache_index
     }
 }
 

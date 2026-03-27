@@ -1,12 +1,14 @@
 use std::sync::Arc;
 
-use draft_core::{RenderResource, ResourceId, collections::FxHashMap};
+use draft_core::{RenderResource, collections::FxHashMap};
 use draft_image::ImageResource;
 use fyrox_core::{
     ImmutableString, TypeUuidProvider, Uuid, algebra::*, color::Color, reflect::*,
     sparse::AtomicIndex, uuid, visitor::*,
 };
 use fyrox_resource::ResourceData;
+
+use crate::PipelineResource;
 
 #[derive(Debug, Visit, Clone, Reflect)]
 pub enum MaterialProperty {
@@ -97,15 +99,26 @@ pub enum MaterialResourceBinding {
 
 #[derive(Debug, Reflect, Clone)]
 pub struct Material {
+    pipeline: PipelineResource,
     resource_bindings: FxHashMap<ImmutableString, MaterialResourceBinding>,
 
     #[reflect(hidden)]
     pub cache_index: Arc<AtomicIndex>,
 }
 
+impl Default for Material {
+    fn default() -> Self {
+        Self {
+            pipeline: PipelineResource::default(),
+            resource_bindings: Default::default(),
+            cache_index: Default::default(),
+        }
+    }
+}
+
 impl RenderResource for Material {
-    fn get_resource_id(&self) -> ResourceId {
-        self.cache_index.clone().into()
+    fn get_cache_index(&self) -> &Arc<AtomicIndex> {
+        &self.cache_index
     }
 }
 

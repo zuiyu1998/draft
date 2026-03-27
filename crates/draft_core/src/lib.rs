@@ -1,6 +1,10 @@
 use std::sync::Arc;
 
-use fyrox_resource::{ResourceData, core::sparse::AtomicIndex, manager::ResourceManager};
+use fyrox_resource::{
+    Resource, ResourceData,
+    core::{TypeUuidProvider, sparse::AtomicIndex},
+    manager::ResourceManager,
+};
 
 pub mod pool;
 
@@ -21,6 +25,23 @@ impl From<Arc<AtomicIndex>> for ResourceId {
     }
 }
 
-pub trait RenderResource: ResourceData {
-    fn get_resource_id(&self) -> ResourceId;
+pub trait RenderResource: ResourceData + Sized + Default + TypeUuidProvider {
+    fn get_cache_index(&self) -> &Arc<AtomicIndex>;
+
+    fn get_resource_id(&self) -> ResourceId {
+        self.get_cache_index().clone().into()
+    }
+}
+
+pub trait RenderResourceExt: Sized {
+    fn get_resource_cache_index(&self) -> Option<Arc<AtomicIndex>>;
+}
+
+impl<T: RenderResource> RenderResourceExt for Resource<T> {
+    fn get_resource_cache_index(&self) -> Option<Arc<AtomicIndex>> {
+        let guard = self.state();
+        guard
+            .data_ref()
+            .map(|resource| resource.get_cache_index().clone())
+    }
 }

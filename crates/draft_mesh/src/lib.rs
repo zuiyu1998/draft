@@ -1,6 +1,6 @@
 mod vertex;
 
-use draft_core::{RenderResource, ResourceId};
+use draft_core::RenderResource;
 pub use vertex::*;
 
 use draft_graphics::{PrimitiveTopology, VertexFormat};
@@ -69,8 +69,8 @@ impl Mesh {
 }
 
 impl RenderResource for Mesh {
-    fn get_resource_id(&self) -> ResourceId {
-        self.cache_index.clone().into()
+    fn get_cache_index(&self) -> &Arc<AtomicIndex> {
+        &self.cache_index
     }
 }
 
