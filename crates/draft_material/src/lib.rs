@@ -1,5 +1,5 @@
 mod material;
-mod shader;
+mod pipeline;
 
-pub use shader::*;
+pub use pipeline::*;
 pub use material::*;
