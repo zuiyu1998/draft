@@ -1,3 +1,4 @@
+mod material_cache;
 mod mesh_cache;
 mod pipeline_cache;
 mod temporary_cache;
@@ -5,7 +6,8 @@ mod texture_cache;
 mod window_surface;
 mod window_surface_texture;
 
-use draft_material::PipelineResource;
+use draft_material::{MaterialResource, PipelineResource};
+pub use material_cache::*;
 pub use mesh_cache::*;
 pub use pipeline_cache::*;
 pub use temporary_cache::*;
@@ -25,9 +27,18 @@ pub struct RenderWorld {
     pub(crate) texture_cache: TextureCache,
     pub(crate) mesh_cache: MeshCache,
     pub(crate) pipeline_cache: PipelineCache,
+    pub(crate) material_cache: MaterialCache,
 }
 
 impl RenderWorld {
+    pub fn upload_material(&mut self, material: &MaterialResource) {
+        self.material_cache.get(material);
+    }
+
+    pub fn update_material_cache(&mut self, dt: f32) {
+        self.material_cache.update(dt);
+    }
+
     pub fn upload_pipeline(&mut self, pipeline: &PipelineResource) {
         self.pipeline_cache.get(pipeline);
     }

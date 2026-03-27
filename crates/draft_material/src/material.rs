@@ -6,9 +6,11 @@ use fyrox_core::{
     ImmutableString, TypeUuidProvider, Uuid, algebra::*, color::Color, reflect::*,
     sparse::AtomicIndex, uuid, visitor::*,
 };
-use fyrox_resource::ResourceData;
+use fyrox_resource::{Resource, ResourceData};
 
 use crate::PipelineResource;
+
+pub type MaterialResource = Resource<Material>;
 
 #[derive(Debug, Visit, Clone, Reflect)]
 pub enum MaterialProperty {
