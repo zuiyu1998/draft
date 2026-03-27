@@ -7,7 +7,8 @@ edition = "2024"
 fyrox-resource = { workspace = true }
 fyrox-core = { workspace = true }
 
-draft_graphics = { path = "../draft_graphics"}
+draft_graphics = { path = "../draft_graphics" }
+draft_core = { path = "../draft_core" }
 
 serde = { workspace = true }
 thiserror = { workspace = true }

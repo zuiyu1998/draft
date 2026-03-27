@@ -2,6 +2,7 @@ mod loader;
 
 use std::{path::Path, sync::Arc};
 
+use draft_core::{RenderResource, ResourceId};
 use draft_graphics::{
     Extent3d, SamplerDescriptor, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
 };
@@ -109,6 +110,12 @@ pub struct Image {
     sampler_properties_modifications: u64,
     #[reflect(hidden)]
     pub cache_index: Arc<AtomicIndex>,
+}
+
+impl RenderResource for Image {
+    fn get_resource_id(&self) -> ResourceId {
+        self.cache_index.clone().into()
+    }
 }
 
 impl Default for Image {

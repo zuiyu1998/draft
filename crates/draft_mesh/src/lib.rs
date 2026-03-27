@@ -1,5 +1,6 @@
 mod vertex;
 
+use draft_core::{RenderResource, ResourceId};
 pub use vertex::*;
 
 use draft_graphics::{PrimitiveTopology, VertexFormat};
@@ -64,6 +65,12 @@ impl Mesh {
 
         self.attributes
             .insert(attribute.id, MeshAttributeData { attribute, values });
+    }
+}
+
+impl RenderResource for Mesh {
+    fn get_resource_id(&self) -> ResourceId {
+        self.cache_index.clone().into()
     }
 }
 
