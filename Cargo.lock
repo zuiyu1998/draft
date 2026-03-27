@@ -497,6 +497,7 @@ dependencies = [
  "draft_graphics",
  "fyrox-core",
  "fyrox-resource",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
