@@ -4,10 +4,10 @@ pub mod render_server;
 
 pub use wgpu;
 
-use std::sync::mpsc::Receiver;
-
 use draft_image::Image;
+use draft_mesh::Mesh;
 use fyrox_resource::{event::ResourceEvent, manager::ResourceManager};
+use std::sync::mpsc::Receiver;
 
 use draft_window::SystemWindowManager;
 use thiserror::Error;
@@ -30,6 +30,7 @@ pub struct WorldRenderer {
     pub render_world: RenderWorld,
 
     texture_event_receiver: Receiver<ResourceEvent>,
+    mesh_event_receiver: Receiver<ResourceEvent>,
 }
 
 impl WorldRenderer {
@@ -44,17 +45,47 @@ impl WorldRenderer {
             .event_broadcaster
             .add(texture_event_sender);
 
+        let (mesh_event_sender, mesh_event_receiver) = std::sync::mpsc::channel();
+        resource_manager
+            .state()
+            .event_broadcaster
+            .add(mesh_event_sender);
+
         Self {
             render_server,
             system_window_manager,
             window_surfaces: Default::default(),
             render_world: Default::default(),
             texture_event_receiver,
+            mesh_event_receiver,
         }
     }
 
     pub fn update_caches(&mut self, resource_manager: &ResourceManager, dt: f32) {
         self.update_texture_cache(resource_manager, dt);
+        self.update_mesh_cache(dt);
+    }
+
+    fn update_mesh_cache(&mut self, dt: f32) {
+        // Maximum amount of textures uploaded to GPU per frame. This defines throughput **only** for
+        // requests from resource manager. This is needed to prevent huge lag when there are tons of
+        // requests, so this is some kind of work load balancer.
+        const THROUGHPUT: usize = 5;
+
+        let mut uploaded = 0;
+        while let Ok(event) = self.mesh_event_receiver.try_recv() {
+            if let ResourceEvent::Loaded(resource) | ResourceEvent::Reloaded(resource) = event {
+                if let Some(mesh) = resource.try_cast::<Mesh>() {
+                    self.render_world.upload_mesh(&mesh);
+                    uploaded += 1;
+                    if uploaded >= THROUGHPUT {
+                        break;
+                    }
+                }
+            }
+        }
+
+        self.render_world.update_texture_cache(dt);
     }
 
     fn update_texture_cache(&mut self, resource_manager: &ResourceManager, dt: f32) {

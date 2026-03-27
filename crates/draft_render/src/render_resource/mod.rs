@@ -4,6 +4,7 @@ mod texture_cache;
 mod window_surface;
 mod window_surface_texture;
 
+use draft_mesh::MeshResource;
 pub use mesh_cache::*;
 pub use temporary_cache::*;
 pub use texture_cache::*;
@@ -19,9 +20,18 @@ use std::mem::take;
 pub struct RenderWorld {
     pub(crate) window_surface_textures: WindowSurfaceTextures,
     pub(crate) texture_cache: TextureCache,
+    pub(crate) mesh_cache: MeshCache,
 }
 
 impl RenderWorld {
+    pub fn upload_mesh(&mut self, mesh: &MeshResource) {
+        self.mesh_cache.get(mesh);
+    }
+
+    pub fn update_mesh_cache(&mut self, dt: f32) {
+        self.mesh_cache.update(dt);
+    }
+
     pub fn update_texture_cache(&mut self, dt: f32) {
         self.texture_cache.update(dt);
     }
