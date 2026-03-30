@@ -59,7 +59,7 @@ impl SceneNode {
     }
 }
 
-pub trait SceneNodeBehavior: Downcast + Debug {
+pub trait SceneNodeBehavior: Downcast + Debug + 'static {
     fn get_node_ref(&self) -> &Node;
 
     fn get_node_mut(&mut self) -> &mut Node;

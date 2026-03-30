@@ -1,7 +1,11 @@
 #[cfg(feature = "winit")]
 mod winit;
 
-use draft_render::{FrameworkError, WorldRenderer, render_server::{RenderServer, RenderServerSetting}};
+use draft_render::{
+    FrameworkError,
+    render_server::{RenderServer, RenderServerSetting},
+    renderer::{World, WorldRenderer},
+};
 use draft_window::{SystemWindow, Window};
 
 pub trait RenderServerConstructor {
@@ -15,6 +19,15 @@ pub trait RenderServerConstructor {
 pub enum GraphicsContext {
     Initialized(InitializedGraphicsContext),
     Uninitialized(GraphicsContextParams),
+}
+
+impl GraphicsContext {
+    pub fn render<W: World>(&mut self, world: &mut W) {
+        if let GraphicsContext::Initialized(context) = self {
+            world.render(&mut context.renderer.render_context());
+            context.renderer.render();
+        }
+    }
 }
 
 impl Default for GraphicsContext {

@@ -7,7 +7,7 @@ pub use executor::*;
 use fyrox_resource::{io::FsResourceIo, manager::ResourceManager};
 pub use plugin::*;
 
-use draft_render::{FrameworkError, WorldRenderer};
+use draft_render::{FrameworkError, renderer::WorldRenderer};
 use draft_window::SystemWindowManager;
 
 use crate::{
@@ -38,11 +38,7 @@ impl App {
     }
 
     pub fn render(&mut self) {
-        if let GraphicsContext::Initialized(initialized_graphics_context) =
-            &mut self.graphics_context
-        {
-            initialized_graphics_context.renderer.render();
-        }
+        self.graphics_context.render(&mut self.scene);
     }
 
     pub fn initialize_graphics_context<T: RenderServerConstructor>(

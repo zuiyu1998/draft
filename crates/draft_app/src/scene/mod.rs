@@ -1,8 +1,9 @@
-mod node;
 mod mesh;
+mod node;
 
-pub use node::*;
+use draft_render::renderer::{RenderContext, World};
 pub use mesh::*;
+pub use node::*;
 
 use draft_core::pool::{Handle, Pool};
 
@@ -100,6 +101,10 @@ impl SceneGraph {
 
 pub struct Scene {
     pub graph: SceneGraph,
+}
+
+impl World for Scene {
+    fn render(&mut self, _context: &mut RenderContext) {}
 }
 
 impl Scene {
