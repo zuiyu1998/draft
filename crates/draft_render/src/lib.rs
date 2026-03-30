@@ -15,7 +15,7 @@ use thiserror::Error;
 
 use crate::{
     render_pipeline::{CORE_2D, RenderPipelineContext, RenderPipelineManager},
-    render_resource::{RenderWorld, WindowSurface, WindowSurfaces},
+    render_resource::{RenderCamera, RenderWorld, WindowSurface, WindowSurfaces},
     render_server::RenderServer,
 };
 
@@ -197,6 +197,8 @@ impl WorldRenderer {
             &self.render_world,
             &self.render_server,
         );
+
+        context.set_render_camera(RenderCamera::primary());
 
         if let Some(pipeline) = self.render_pipeline_manager.get_pipeline(CORE_2D) {
             pipeline.run(&mut context);

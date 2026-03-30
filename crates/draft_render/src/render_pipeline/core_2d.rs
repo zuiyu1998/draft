@@ -4,24 +4,15 @@ pub const CORE_2D: &str = "core_2d";
 
 pub fn create_core_2d_pipeline() -> RenderPipeline {
     let mut pipeline = RenderPipeline::new();
-    pipeline.nodes.push(Box::new(Core2DNode));
+    pipeline.nodes.push(Box::new(Opaque2DNode));
     pipeline
 }
 
-pub struct Core2DNode;
+pub struct Opaque2DNode;
 
-impl Node for Core2DNode {
+impl Node for Opaque2DNode {
     fn run(&self, context: &mut RenderPipelineContext) {
-        let window_handle = context
-            .system_window_manager
-            .state()
-            .get_primary_window_handle();
-
-        let window_surface_texture = context
-            .render_world
-            .window_surface_textures
-            .get_window_surface_texture(&window_handle)
-            .unwrap();
+        let window_surface_texture = context.get_window_surface_texture();
 
         let texture_view =
             window_surface_texture

@@ -1,6 +1,7 @@
 mod material_cache;
 mod mesh_cache;
 mod pipeline_cache;
+mod render_camera;
 mod temporary_cache;
 mod texture_cache;
 mod window_surface;
@@ -9,6 +10,7 @@ mod window_surface_texture;
 pub use material_cache::*;
 pub use mesh_cache::*;
 pub use pipeline_cache::*;
+pub use render_camera::*;
 pub use temporary_cache::*;
 pub use texture_cache::*;
 pub use window_surface::*;

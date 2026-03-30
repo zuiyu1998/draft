@@ -5,7 +5,10 @@ use std::collections::HashMap;
 pub use core_2d::*;
 use draft_window::SystemWindowManager;
 
-use crate::{render_resource::RenderWorld, render_server::RenderServer};
+use crate::{
+    render_resource::{RenderCamera, RenderTarget, RenderWorld, WindowSurfaceTexture},
+    render_server::RenderServer,
+};
 
 pub struct RenderPipelineManager {
     data: HashMap<String, RenderPipeline>,
@@ -44,6 +47,7 @@ pub struct RenderPipelineContext<'a> {
     system_window_manager: &'a SystemWindowManager,
     render_world: &'a RenderWorld,
     render_server: &'a RenderServer,
+    render_camera: Option<RenderCamera>,
 }
 
 impl<'a> RenderPipelineContext<'a> {
@@ -56,7 +60,29 @@ impl<'a> RenderPipelineContext<'a> {
             system_window_manager,
             render_world,
             render_server,
+            render_camera: None,
         }
+    }
+
+    pub fn set_render_camera(&mut self, render_camera: RenderCamera) {
+        self.render_camera = Some(render_camera);
+    }
+
+    pub fn get_window_surface_texture(&self) -> &WindowSurfaceTexture {
+        let render_camera = self.render_camera.as_ref().expect("No render camera set.");
+
+        let window_handle = match render_camera.render_target {
+            RenderTarget::Primary => self
+                .system_window_manager
+                .state()
+                .get_primary_window_handle(),
+            RenderTarget::Window(handle) => handle,
+        };
+
+        self.render_world
+            .window_surface_textures
+            .get_window_surface_texture(&window_handle)
+            .expect("No window surface texture set.")
     }
 }
 
