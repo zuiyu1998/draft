@@ -6,7 +6,6 @@ mod texture_cache;
 mod window_surface;
 mod window_surface_texture;
 
-use draft_material::{MaterialResource, PipelineResource};
 pub use material_cache::*;
 pub use mesh_cache::*;
 pub use pipeline_cache::*;
@@ -17,6 +16,7 @@ pub use window_surface_texture::*;
 
 use crate::{FrameworkError, render_server::RenderDevice};
 use draft_image::ImageResource;
+use draft_material::{MaterialResource, PipelineResource};
 use draft_mesh::MeshResource;
 use fyrox_resource::manager::ResourceManager;
 use std::mem::take;

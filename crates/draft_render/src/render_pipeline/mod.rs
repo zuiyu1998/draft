@@ -13,15 +13,19 @@ pub struct RenderPipelineManager {
 
 impl Default for RenderPipelineManager {
     fn default() -> Self {
-        let mut manager = Self::new();
-        manager.add_pipeline(CORE_2D, RenderPipeline::new());
-
-        manager
+        Self::new()
     }
 }
 
 impl RenderPipelineManager {
     pub fn new() -> Self {
+        let mut manager = Self::empty();
+        manager.add_pipeline(CORE_2D, create_core_2d_pipeline());
+
+        manager
+    }
+
+    pub fn empty() -> Self {
         Self {
             data: HashMap::new(),
         }
@@ -43,7 +47,11 @@ pub struct RenderPipelineContext<'a> {
 }
 
 impl<'a> RenderPipelineContext<'a> {
-    pub fn new(system_window_manager: &'a SystemWindowManager, render_world: &'a RenderWorld, render_server: &'a RenderServer) -> Self {
+    pub fn new(
+        system_window_manager: &'a SystemWindowManager,
+        render_world: &'a RenderWorld,
+        render_server: &'a RenderServer,
+    ) -> Self {
         Self {
             system_window_manager,
             render_world,
@@ -52,59 +60,26 @@ impl<'a> RenderPipelineContext<'a> {
     }
 }
 
-pub struct RenderPipeline {}
+pub trait Node {
+    fn run(&self, _context: &mut RenderPipelineContext) {}
+}
+
+pub struct RenderPipeline {
+    nodes: Vec<Box<dyn Node>>,
+}
 
 impl RenderPipeline {
     pub fn new() -> Self {
-        Self {}
+        Self { nodes: Vec::new() }
+    }
+
+    pub fn add_boxed_node(&mut self, node: Box<dyn Node>) {
+        self.nodes.push(node);
     }
 
     pub fn run(&self, context: &mut RenderPipelineContext) {
-        let window_handle = context
-            .system_window_manager
-            .state()
-            .get_primary_window_handle();
-
-        let window_surface_texture = context
-            .render_world
-            .window_surface_textures
-            .get_window_surface_texture(&window_handle)
-            .unwrap();
-
-        let texture_view =
-            window_surface_texture
-                .surface
-                .texture
-                .create_view(&wgpu::TextureViewDescriptor {
-                    ..Default::default()
-                });
-
-        // Renders a GREEN screen
-        let mut encoder = context
-            .render_server
-            .device
-            .wgpu_device()
-            .create_command_encoder(&Default::default());
-        // Create the renderpass which will clear the screen.
-        let renderpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            label: None,
-            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                view: &texture_view,
-                depth_slice: None,
-                resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color::GREEN),
-                    store: wgpu::StoreOp::Store,
-                },
-            })],
-            depth_stencil_attachment: None,
-            timestamp_writes: None,
-            occlusion_query_set: None,
-            multiview_mask: None,
-        });
-
-        drop(renderpass);
-
-        context.render_server.queue.0.submit([encoder.finish()]);
+        for node in self.nodes.iter() {
+            node.run(context);
+        }
     }
 }
