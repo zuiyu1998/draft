@@ -1,6 +1,8 @@
 mod node;
+mod mesh;
 
 pub use node::*;
+pub use mesh::*;
 
 use draft_core::pool::{Handle, Pool};
 

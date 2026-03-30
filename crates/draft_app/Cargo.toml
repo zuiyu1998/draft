@@ -12,6 +12,8 @@ winit = ["dep:winit"]
 draft_core = { path = "../draft_core" }
 draft_render = { path = "../draft_render" }
 draft_window = { path = "../draft_window" }
+draft_mesh = { path = "../draft_mesh" }
+draft_material = { path = "../draft_material" }
 
 downcast-rs = "2.0"
 pollster = { version = "0.4" }

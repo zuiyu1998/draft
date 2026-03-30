@@ -448,6 +448,8 @@ version = "0.1.0"
 dependencies = [
  "downcast-rs",
  "draft_core",
+ "draft_material",
+ "draft_mesh",
  "draft_render",
  "draft_window",
  "fyrox-core",
