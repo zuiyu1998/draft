@@ -1,0 +1,1 @@
+pub const CORE_2D: &str = "core_2d";

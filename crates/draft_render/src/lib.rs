@@ -1,4 +1,5 @@
 pub mod frame_graph;
+pub mod render_pipeline;
 pub mod render_resource;
 pub mod render_server;
 
@@ -13,6 +14,7 @@ use std::sync::mpsc::Receiver;
 use thiserror::Error;
 
 use crate::{
+    render_pipeline::{CORE_2D, RenderPipelineContext, RenderPipelineManager},
     render_resource::{RenderWorld, WindowSurface, WindowSurfaces},
     render_server::RenderServer,
 };
@@ -28,6 +30,7 @@ pub struct WorldRenderer {
     pub system_window_manager: SystemWindowManager,
     pub window_surfaces: WindowSurfaces,
     pub render_world: RenderWorld,
+    pub render_pipeline_manager: RenderPipelineManager,
 
     texture_event_receiver: Receiver<ResourceEvent>,
     mesh_event_receiver: Receiver<ResourceEvent>,
@@ -74,6 +77,7 @@ impl WorldRenderer {
             mesh_event_receiver,
             pipeline_event_receiver,
             material_event_receiver,
+            render_pipeline_manager: Default::default(),
         }
     }
 
@@ -187,56 +191,21 @@ impl WorldRenderer {
         self.render_world.clear_window_surface_textures();
     }
 
+    pub fn update_render(&mut self) {
+        let mut context = RenderPipelineContext::new(
+            &self.system_window_manager,
+            &self.render_world,
+            &self.render_server,
+        );
+
+        if let Some(pipeline) = self.render_pipeline_manager.get_pipeline(CORE_2D) {
+            pipeline.run(&mut context);
+        }
+    }
+
     pub fn render(&mut self) {
         self.pre_render();
-
-        let window_handle = self
-            .system_window_manager
-            .state()
-            .get_primary_window_handle();
-
-        let window_surface_texture = self
-            .render_world
-            .window_surface_textures
-            .get_window_surface_texture(&window_handle)
-            .unwrap();
-
-        let texture_view =
-            window_surface_texture
-                .surface
-                .texture
-                .create_view(&wgpu::TextureViewDescriptor {
-                    ..Default::default()
-                });
-
-        // Renders a GREEN screen
-        let mut encoder = self
-            .render_server
-            .device
-            .wgpu_device()
-            .create_command_encoder(&Default::default());
-        // Create the renderpass which will clear the screen.
-        let renderpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            label: None,
-            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                view: &texture_view,
-                depth_slice: None,
-                resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color::GREEN),
-                    store: wgpu::StoreOp::Store,
-                },
-            })],
-            depth_stencil_attachment: None,
-            timestamp_writes: None,
-            occlusion_query_set: None,
-            multiview_mask: None,
-        });
-
-        drop(renderpass);
-
-        self.render_server.queue.0.submit([encoder.finish()]);
-
+        self.update_render();
         self.post_render();
     }
 }
