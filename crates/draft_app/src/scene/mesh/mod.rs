@@ -1,5 +1,6 @@
 use draft_material::MaterialResource;
 use draft_mesh::MeshResource;
+use draft_render::renderer::RenderContext;
 use fyrox_core::variable::InheritableVariable;
 
 use crate::scene::{Node, SceneNodeBehavior};
@@ -21,6 +22,18 @@ impl SceneNodeBehavior for Mesh2d {
 
     fn clone_boxed(&self) -> Box<dyn SceneNodeBehavior> {
         Box::new(self.clone())
+    }
+
+    fn render(&mut self, context: &mut RenderContext) {
+        for surface in self.surfaces.get_value_ref().iter() {
+            let mesh_id = context
+                .render_world
+                .get_or_create_mesh_resource_id(&surface.mesh)
+                .expect("Resource id should be created");
+
+            println!("Render mesh with id: {:?}", mesh_id);
+            //todo
+        }
     }
 }
 

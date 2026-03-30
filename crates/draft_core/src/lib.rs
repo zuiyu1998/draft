@@ -19,6 +19,14 @@ pub trait ImportResourcePlugin: Send + Sync + 'static {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ResourceId(usize);
 
+impl ResourceId {
+    pub const NONE: Self = ResourceId(usize::MAX);
+
+    pub fn is_none(&self) -> bool {
+        self.0 == usize::MAX
+    }
+}
+
 impl From<Arc<AtomicIndex>> for ResourceId {
     fn from(value: Arc<AtomicIndex>) -> Self {
         ResourceId(value.get())
@@ -35,6 +43,7 @@ pub trait RenderResource: ResourceData + Sized + Default + TypeUuidProvider {
 
 pub trait RenderResourceExt: Sized {
     fn get_resource_cache_index(&self) -> Option<Arc<AtomicIndex>>;
+    fn get_resource_id(&self) -> Option<ResourceId>;
 }
 
 impl<T: RenderResource> RenderResourceExt for Resource<T> {
@@ -43,5 +52,10 @@ impl<T: RenderResource> RenderResourceExt for Resource<T> {
         guard
             .data_ref()
             .map(|resource| resource.get_cache_index().clone())
+    }
+
+    fn get_resource_id(&self) -> Option<ResourceId> {
+        self.get_resource_cache_index()
+            .map(|cache_index| cache_index.clone().into())
     }
 }

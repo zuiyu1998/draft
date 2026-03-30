@@ -2,6 +2,7 @@ use std::fmt::Debug;
 
 use downcast_rs::Downcast;
 use draft_core::pool::Handle;
+use draft_render::renderer::RenderContext;
 
 ///场景节点共有的数据
 #[derive(Debug, Clone)]
@@ -65,4 +66,6 @@ pub trait SceneNodeBehavior: Downcast + Debug + 'static {
     fn get_node_mut(&mut self) -> &mut Node;
 
     fn clone_boxed(&self) -> Box<dyn SceneNodeBehavior>;
+
+    fn render(&mut self, _context: &mut RenderContext) {}
 }

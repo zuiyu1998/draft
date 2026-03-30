@@ -108,7 +108,7 @@ impl WorldRenderer {
         while let Ok(event) = self.mesh_event_receiver.try_recv() {
             if let ResourceEvent::Loaded(resource) | ResourceEvent::Reloaded(resource) = event {
                 if let Some(mesh) = resource.try_cast::<Mesh>() {
-                    self.render_world.upload_mesh(&mesh);
+                    self.render_world.get_or_create_mesh_resource_id(&mesh);
                 }
             }
         }

@@ -7,6 +7,7 @@ mod texture_cache;
 mod window_surface;
 mod window_surface_texture;
 
+use draft_core::ResourceId;
 pub use material_cache::*;
 pub use mesh_cache::*;
 pub use pipeline_cache::*;
@@ -49,8 +50,8 @@ impl RenderWorld {
         self.pipeline_cache.update(dt);
     }
 
-    pub fn upload_mesh(&mut self, mesh: &MeshResource) {
-        self.mesh_cache.get(mesh);
+    pub fn get_or_create_mesh_resource_id(&mut self, mesh: &MeshResource) -> Option<ResourceId> {
+        self.mesh_cache.get_or_create_resource_id(mesh)
     }
 
     pub fn update_mesh_cache(&mut self, dt: f32) {

@@ -1,3 +1,4 @@
+use draft_core::{RenderResourceExt, ResourceId};
 use draft_mesh::MeshResource;
 
 use crate::{FrameworkError, render_resource::TemporaryCache};
@@ -20,22 +21,25 @@ impl MeshCache {
         self.cache.update(dt)
     }
 
-    pub fn get(&mut self, mesh_resource: &MeshResource) -> Option<&MeshRenderData> {
-        if let Some(cache_index) = {
-            let mesh_data_guard = mesh_resource.state();
-            mesh_data_guard
-                .data_ref()
-                .map(|mesh| mesh.cache_index.clone())
-        } {
-            match self
-                .cache
-                .get_mut_or_insert_with(&cache_index, Default::default(), || {
-                    create_mesh_render_data(mesh_resource)
-                }) {
-                Ok(entry) => {
-                    return Some(entry);
+    pub fn get_or_create_resource_id(
+        &mut self,
+        mesh_resource: &MeshResource,
+    ) -> Option<ResourceId> {
+        if let Some(resource_id) = mesh_resource.get_resource_id() {
+            if resource_id.is_none() {
+                if let Some(cache_index) = mesh_resource.get_resource_cache_index() {
+                    self.cache
+                        .get_entry_mut_or_insert_with(&cache_index, Default::default(), || {
+                            create_mesh_render_data(mesh_resource)
+                        })
+                        .ok()?;
+
+                    Some(cache_index.into())
+                } else {
+                    None
                 }
-                Err(_e) => None,
+            } else {
+                None
             }
         } else {
             None
