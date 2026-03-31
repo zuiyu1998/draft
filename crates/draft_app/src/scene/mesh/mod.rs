@@ -25,6 +25,8 @@ impl SceneNodeBehavior for Mesh2d {
     }
 
     fn render(&mut self, context: &mut RenderContext) {
+        println!("Mesh 2d Rendering...");
+
         for surface in self.surfaces.get_value_ref().iter() {
             let mesh_id = context
                 .render_world

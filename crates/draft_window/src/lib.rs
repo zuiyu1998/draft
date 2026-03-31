@@ -41,6 +41,13 @@ impl Default for SystemWindowManagerState {
 }
 
 impl SystemWindowManagerState {
+    pub fn request_redraw(&self) {
+        for window in self.windows.iter() {
+            let window = self.pool.get(*window);
+            window.request_redraw();
+        }
+    }
+
     pub fn pre_present_notify(&self) {
         for window in self.windows.iter() {
             let window = self.pool.get(*window);
@@ -97,6 +104,10 @@ impl SystemWindow {
     pub fn pre_present_notify(&self) {
         self.reference.pre_present_notify();
     }
+
+    pub fn request_redraw(&self) {
+        self.reference.request_redraw();
+    }
 }
 
 pub struct PhysicalSize {
@@ -110,6 +121,8 @@ pub trait ISystemWindow:
     fn inner_size(&self) -> PhysicalSize;
 
     fn pre_present_notify(&self);
+
+    fn request_redraw(&self);
 }
 
 impl_downcast!(ISystemWindow);

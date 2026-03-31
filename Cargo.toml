@@ -28,3 +28,4 @@ thiserror = { version = "2.0" }
 
 draft_app = { path = "./crates/draft_app" }
 draft_render = { path = "./crates/draft_render" }
+fyrox-core = { workspace = true }

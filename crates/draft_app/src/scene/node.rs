@@ -58,6 +58,10 @@ impl SceneNode {
     pub fn get_node_mut(&mut self) -> &mut Node {
         self.0.get_node_mut()
     }
+
+    pub fn render(&mut self, context: &mut RenderContext) {
+        self.0.render(context);
+    }
 }
 
 pub trait SceneNodeBehavior: Downcast + Debug + 'static {

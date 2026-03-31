@@ -106,7 +106,7 @@ pub struct Scene {
 impl World for Scene {
     fn render(&mut self, context: &mut RenderContext) {
         self.graph.pool.iter_mut().for_each(|node| {
-            node.get_node_mut().render(context);
+            node.render(context);
         });
     }
 }

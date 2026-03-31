@@ -37,6 +37,14 @@ impl App {
         }
     }
 
+    pub fn update<C: ApplicationLoopController>(
+        &mut self,
+        _dt: f32,
+        _controller: &C,
+        _lag: &mut f32,
+    ) {
+    }
+
     pub fn render(&mut self) {
         self.graphics_context.render(&mut self.scene);
     }

@@ -28,6 +28,16 @@ impl GraphicsContext {
             context.renderer.render();
         }
     }
+
+    pub fn request_redraw(&self) {
+        if let GraphicsContext::Initialized(context) = self {
+            context
+                .renderer
+                .system_window_manager
+                .state()
+                .request_redraw();
+        }
+    }
 }
 
 impl Default for GraphicsContext {

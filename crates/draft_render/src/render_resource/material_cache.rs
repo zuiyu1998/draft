@@ -43,7 +43,7 @@ impl MaterialCache {
                     None
                 }
             } else {
-                None
+                Some(resource_id)
             }
         } else {
             None

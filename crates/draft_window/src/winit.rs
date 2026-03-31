@@ -14,4 +14,8 @@ impl ISystemWindow for Window {
     fn pre_present_notify(&self) {
         self.pre_present_notify();
     }
+
+    fn request_redraw(&self) {
+        self.request_redraw();
+    }
 }
