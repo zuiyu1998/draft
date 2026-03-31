@@ -79,7 +79,7 @@ impl<T> Handle<T> {
 
 pub struct Pool<T>(Arena<T>);
 
-impl<T> Pool<T> {
+impl<T: 'static> Pool<T> {
     pub fn new() -> Self {
         Pool(Arena::default())
     }
@@ -135,5 +135,9 @@ impl<T> Pool<T> {
 
     pub fn remove(&mut self, handle: Handle<T>) -> Option<T> {
         self.0.remove(handle.index)
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        self.0.iter_mut()
     }
 }

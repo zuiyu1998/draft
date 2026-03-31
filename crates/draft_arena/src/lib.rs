@@ -1,5 +1,7 @@
 mod payload;
 
+use std::marker::PhantomData;
+
 pub use payload::*;
 
 #[derive(Debug)]
@@ -8,6 +10,35 @@ pub enum ArenaError {
     InvalidGeneration(Generation),
     InvalidType(Index),
     Empty(Index),
+}
+
+pub struct ArenaIteratorMut<'a, T> {
+    ptr: *mut Entry<T>,
+    end: *mut Entry<T>,
+    marker: PhantomData<&'a mut T>,
+}
+
+impl<'a, T> Iterator for ArenaIteratorMut<'a, T>
+where
+    T: 'static,
+{
+    type Item = &'a mut T;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        unsafe {
+            while self.ptr != self.end {
+                let current = &mut *self.ptr;
+                if let Some(payload) = current.payload.as_mut() {
+                    self.ptr = self.ptr.offset(1);
+                    return Some(payload);
+                }
+                self.ptr = self.ptr.offset(1);
+            }
+
+            None
+        }
+    }
 }
 
 pub struct Arena<T> {
@@ -28,6 +59,18 @@ impl<T> Arena<T> {
     #[inline]
     pub fn free(&mut self, index: Index) -> T {
         self.try_free(index).unwrap()
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn iter_mut(&'_ mut self) -> ArenaIteratorMut<'_, T> {
+        unsafe {
+            ArenaIteratorMut {
+                ptr: self.storage.as_mut_ptr(),
+                end: self.storage.as_mut_ptr().add(self.storage.len()),
+                marker: PhantomData,
+            }
+        }
     }
 
     #[inline]

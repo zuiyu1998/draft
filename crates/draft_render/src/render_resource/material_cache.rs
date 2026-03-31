@@ -1,4 +1,4 @@
-use draft_core::RenderResourceExt;
+use draft_core::{RenderResourceExt, ResourceId};
 use draft_material::MaterialResource;
 
 use crate::{FrameworkError, render_resource::TemporaryCache};
@@ -25,17 +25,25 @@ impl MaterialCache {
         self.cache.update(dt)
     }
 
-    pub fn get(&mut self, material_resource: &MaterialResource) -> Option<&MaterialRenderData> {
-        if let Some(cache_index) = material_resource.get_resource_cache_index() {
-            match self
-                .cache
-                .get_mut_or_insert_with(&cache_index, Default::default(), || {
-                    create_material_render_data(material_resource)
-                }) {
-                Ok(entry) => {
-                    return Some(entry);
+    pub fn get_or_create_resource_id(
+        &mut self,
+        material_resource: &MaterialResource,
+    ) -> Option<ResourceId> {
+        if let Some(resource_id) = material_resource.get_resource_id() {
+            if resource_id.is_none() {
+                if let Some(cache_index) = material_resource.get_resource_cache_index() {
+                    self.cache
+                        .get_entry_mut_or_insert_with(&cache_index, Default::default(), || {
+                            create_material_render_data(material_resource)
+                        })
+                        .ok()?;
+
+                    Some(cache_index.into())
+                } else {
+                    None
                 }
-                Err(_e) => None,
+            } else {
+                None
             }
         } else {
             None

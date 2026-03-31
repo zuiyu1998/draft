@@ -84,7 +84,8 @@ impl WorldRenderer {
         while let Ok(event) = self.material_event_receiver.try_recv() {
             if let ResourceEvent::Loaded(resource) | ResourceEvent::Reloaded(resource) = event {
                 if let Some(material) = resource.try_cast::<Material>() {
-                    self.render_world.upload_material(&material);
+                    self.render_world
+                        .get_or_create_material_resource_id(&material);
                 }
             }
         }

@@ -34,8 +34,11 @@ pub struct RenderWorld {
 }
 
 impl RenderWorld {
-    pub fn upload_material(&mut self, material: &MaterialResource) {
-        self.material_cache.get(material);
+    pub fn get_or_create_material_resource_id(
+        &mut self,
+        material: &MaterialResource,
+    ) -> Option<ResourceId> {
+        self.material_cache.get_or_create_resource_id(material)
     }
 
     pub fn update_material_cache(&mut self, dt: f32) {

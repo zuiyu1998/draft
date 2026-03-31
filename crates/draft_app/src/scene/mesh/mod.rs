@@ -30,8 +30,14 @@ impl SceneNodeBehavior for Mesh2d {
                 .render_world
                 .get_or_create_mesh_resource_id(&surface.mesh)
                 .expect("Resource id should be created");
-
-            println!("Render mesh with id: {:?}", mesh_id);
+            let material_id = context
+                .render_world
+                .get_or_create_material_resource_id(&surface.material)
+                .expect("Resource id should be created");
+            println!(
+                "mesh with id: {:?}, material with id: {:?}",
+                mesh_id, material_id
+            );
             //todo
         }
     }
