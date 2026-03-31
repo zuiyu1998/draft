@@ -16,7 +16,7 @@ pub trait ImportResourcePlugin: Send + Sync + 'static {
     fn import(&self, resource_manager: &ResourceManager);
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ResourceId(usize);
 
 impl ResourceId {
@@ -24,6 +24,10 @@ impl ResourceId {
 
     pub fn is_none(&self) -> bool {
         self.0 == usize::MAX
+    }
+
+    pub fn get(&self) -> usize {
+        self.0
     }
 }
 

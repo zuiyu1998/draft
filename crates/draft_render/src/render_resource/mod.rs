@@ -6,8 +6,8 @@ mod temporary_cache;
 mod texture_cache;
 mod window_surface;
 mod window_surface_texture;
+mod mesh_material_cache;
 
-use draft_core::ResourceId;
 pub use material_cache::*;
 pub use mesh_cache::*;
 pub use pipeline_cache::*;
@@ -16,6 +16,7 @@ pub use temporary_cache::*;
 pub use texture_cache::*;
 pub use window_surface::*;
 pub use window_surface_texture::*;
+pub use mesh_material_cache::*;
 
 use crate::{FrameworkError, render_server::RenderDevice};
 use draft_image::ImageResource;
@@ -23,6 +24,7 @@ use draft_material::{MaterialResource, PipelineResource};
 use draft_mesh::MeshResource;
 use fyrox_resource::manager::ResourceManager;
 use std::mem::take;
+use draft_core::ResourceId;
 
 #[derive(Default)]
 pub struct RenderWorld {

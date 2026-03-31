@@ -21,6 +21,13 @@ impl MeshCache {
         self.cache.update(dt)
     }
 
+    pub fn get(&self, id: &ResourceId) -> Option<&MeshRenderData> {
+        self.cache
+            .buffer
+            .get_raw(id.get())
+            .map(|entry| &entry.value)
+    }
+
     pub fn get_or_create_resource_id(
         &mut self,
         mesh_resource: &MeshResource,
