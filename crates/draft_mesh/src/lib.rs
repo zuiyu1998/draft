@@ -3,7 +3,7 @@ mod vertex;
 use draft_core::RenderResource;
 pub use vertex::*;
 
-use draft_graphics::{PrimitiveTopology, VertexFormat};
+use draft_graphics::{PrimitiveTopology, VertexAttribute, VertexFormat};
 use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, sparse::AtomicIndex, uuid, visitor::*};
 use fyrox_resource::{Resource, ResourceData};
 use std::{collections::HashMap, sync::Arc};
@@ -47,6 +47,36 @@ impl Mesh {
             modifications_counter: 0,
             indices_modifications_counter: 0,
         }
+    }
+
+    pub fn get_mesh_vertex_buffer_layout(
+        &self,
+        mesh_vertex_buffer_layouts: &mut MeshVertexBufferLayouts,
+    ) -> MeshVertexBufferLayoutRef {
+        let mesh_attributes = &self.attributes;
+
+        let mut attributes = Vec::with_capacity(mesh_attributes.len());
+        let mut attribute_ids = Vec::with_capacity(mesh_attributes.len());
+        let mut accumulated_offset = 0;
+        for (index, data) in mesh_attributes.values().enumerate() {
+            attribute_ids.push(data.attribute.id);
+            attributes.push(VertexAttribute {
+                offset: accumulated_offset,
+                format: data.attribute.format,
+                shader_location: index as u32,
+            });
+            accumulated_offset += data.attribute.format.size();
+        }
+
+        let layout = MeshVertexBufferLayout {
+            layout: VertexBufferLayout {
+                array_stride: accumulated_offset,
+                step_mode: VertexStepMode::Vertex,
+                attributes,
+            },
+            attribute_ids,
+        };
+        mesh_vertex_buffer_layouts.insert(layout)
     }
 
     pub fn insert_attribute(

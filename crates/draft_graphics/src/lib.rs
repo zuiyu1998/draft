@@ -7,7 +7,17 @@ pub use texture_format::*;
 use bitflags::bitflags;
 use fyrox_core::{reflect::*, visitor::*};
 
-#[derive(Debug, Clone, Copy, Reflect, Visit, PartialEq)]
+#[derive(Debug, Clone, Copy, Reflect, Visit, PartialEq, Hash, Eq)]
+pub struct VertexAttribute {
+    /// Format of the input
+    pub format: VertexFormat,
+    /// Byte offset of the start of the input
+    pub offset: u64,
+    /// Location for this input. Must match the location in the shader.
+    pub shader_location: u32,
+}
+
+#[derive(Debug, Clone, Copy, Reflect, Visit, PartialEq, Hash, Eq)]
 pub enum VertexFormat {
     /// One unsigned byte (u8). `u32` in shaders.
     Uint8 = 0,
@@ -95,6 +105,48 @@ pub enum VertexFormat {
     Float64x3 = 41,
     /// Four double-precision floats (f64). `vec4<f32>` in shaders. Requires [`Features::VERTEX_ATTRIBUTE_64BIT`].
     Float64x4 = 42,
+}
+
+impl VertexFormat {
+    pub fn size(&self) -> u64 {
+        match self {
+            Self::Uint8 | Self::Sint8 | Self::Unorm8 | Self::Snorm8 => 1,
+            Self::Uint8x2
+            | Self::Sint8x2
+            | Self::Unorm8x2
+            | Self::Snorm8x2
+            | Self::Uint16
+            | Self::Sint16
+            | Self::Unorm16
+            | Self::Snorm16
+            | Self::Float16 => 2,
+            Self::Uint8x4
+            | Self::Sint8x4
+            | Self::Unorm8x4
+            | Self::Snorm8x4
+            | Self::Uint16x2
+            | Self::Sint16x2
+            | Self::Unorm16x2
+            | Self::Snorm16x2
+            | Self::Float16x2
+            | Self::Float32
+            | Self::Uint32
+            | Self::Sint32 => 4,
+            Self::Uint16x4
+            | Self::Sint16x4
+            | Self::Unorm16x4
+            | Self::Snorm16x4
+            | Self::Float16x4
+            | Self::Float32x2
+            | Self::Uint32x2
+            | Self::Sint32x2
+            | Self::Float64 => 8,
+            Self::Float32x3 | Self::Uint32x3 | Self::Sint32x3 => 12,
+            Self::Float32x4 | Self::Uint32x4 | Self::Sint32x4 | Self::Float64x2 => 16,
+            Self::Float64x3 => 24,
+            Self::Float64x4 => 32,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Visit, Reflect, Default)]

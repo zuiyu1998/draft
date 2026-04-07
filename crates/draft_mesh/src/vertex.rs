@@ -1,5 +1,82 @@
-use draft_graphics::VertexFormat;
+use std::{
+    hash::{Hash, Hasher},
+    sync::Arc,
+};
+
+use draft_core::collections::FxHashSet;
+use draft_graphics::{VertexAttribute, VertexFormat};
 use fyrox_core::{reflect::*, visitor::*};
+
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+pub struct MeshVertexBufferLayout {
+    pub(crate) attribute_ids: Vec<MeshVertexAttributeId>,
+    pub(crate) layout: VertexBufferLayout,
+}
+/// Describes the layout of the mesh vertices in GPU memory.
+///
+/// At most one copy of a mesh vertex buffer layout ever exists in GPU memory at
+/// once. Therefore, comparing these for equality requires only a single pointer
+/// comparison, and this type's [`PartialEq`] and [`Hash`] implementations take
+/// advantage of this. To that end, this type doesn't implement
+/// [`bevy_derive::Deref`] or [`bevy_derive::DerefMut`] in order to reduce the
+/// possibility of accidental deep comparisons, which would be needlessly
+/// expensive.
+#[derive(Clone, Debug)]
+pub struct MeshVertexBufferLayoutRef(pub Arc<MeshVertexBufferLayout>);
+
+/// Stores the single copy of each mesh vertex buffer layout.
+#[derive(Clone, Default)]
+pub struct MeshVertexBufferLayouts(FxHashSet<Arc<MeshVertexBufferLayout>>);
+
+impl MeshVertexBufferLayouts {
+    /// Inserts a new mesh vertex buffer layout in the store and returns a
+    /// reference to it, reusing the existing reference if this mesh vertex
+    /// buffer layout was already in the store.
+    pub fn insert(&mut self, layout: MeshVertexBufferLayout) -> MeshVertexBufferLayoutRef {
+        if let Some(layout) = self.0.get(&layout) {
+            MeshVertexBufferLayoutRef(layout.clone())
+        } else {
+            let layout = Arc::new(layout);
+            self.0.insert(layout.clone());
+            MeshVertexBufferLayoutRef(layout)
+        }
+    }
+}
+
+impl PartialEq for MeshVertexBufferLayoutRef {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.0, &other.0)
+    }
+}
+
+impl Eq for MeshVertexBufferLayoutRef {}
+
+impl Hash for MeshVertexBufferLayoutRef {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        // Hash the address of the underlying data, so two layouts that share the same
+        // `MeshVertexBufferLayout` will have the same hash.
+        (Arc::as_ptr(&self.0) as usize).hash(state);
+    }
+}
+
+#[derive(Default, Clone, Debug, Hash, Eq, PartialEq)]
+pub enum VertexStepMode {
+    /// Vertex data is advanced every vertex.
+    #[default]
+    Vertex = 0,
+    /// Vertex data is advanced every instance.
+    Instance = 1,
+}
+
+#[derive(Default, Clone, Debug, Hash, Eq, PartialEq)]
+pub struct VertexBufferLayout {
+    /// The stride, in bytes, between elements of this buffer.
+    pub array_stride: u64,
+    /// How often this vertex buffer is "stepped" forward.
+    pub step_mode: VertexStepMode,
+    /// The list of attributes which comprise a single vertex.
+    pub attributes: Vec<VertexAttribute>,
+}
 
 #[derive(Debug, Reflect, Visit, Clone)]
 pub(crate) struct MeshAttributeData {

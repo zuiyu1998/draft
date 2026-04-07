@@ -1,5 +1,6 @@
 use draft_core::{RenderResourceExt, ResourceId};
 use draft_material::MaterialResource;
+use draft_mesh::MeshVertexBufferLayouts;
 
 use crate::{FrameworkError, render_resource::TemporaryCache};
 
@@ -10,11 +11,15 @@ pub struct MaterialRenderData {
 #[derive(Default)]
 pub struct MaterialCache {
     cache: TemporaryCache<MaterialRenderData>,
+    layouts: MeshVertexBufferLayouts,
 }
 
 fn create_material_render_data(
+    _layout: &MeshVertexBufferLayouts,
     material: &MaterialResource,
 ) -> Result<MaterialRenderData, FrameworkError> {
+    let _data = material.data_ref();
+
     Ok(MaterialRenderData {
         material: material.clone(),
     })
@@ -34,7 +39,7 @@ impl MaterialCache {
                 if let Some(cache_index) = material_resource.get_resource_cache_index() {
                     self.cache
                         .get_entry_mut_or_insert_with(&cache_index, Default::default(), || {
-                            create_material_render_data(material_resource)
+                            create_material_render_data(&self.layouts, material_resource)
                         })
                         .ok()?;
 
