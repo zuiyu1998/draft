@@ -11,5 +11,17 @@ name = "draft_graphics"
 version = "0.1.0"
 
 [[package]]
+name = "draft_image"
+version = "0.1.0"
+
+[[package]]
+name = "draft_material"
+version = "0.1.0"
+
+[[package]]
+name = "draft_mesh"
+version = "0.1.0"
+
+[[package]]
 name = "draft_render"
 version = "0.1.0"
