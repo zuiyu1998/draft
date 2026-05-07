@@ -5,9 +5,9 @@ edition = "2024"
 
 [workspace]
 members = [
-    '.',
+    '.', "crates/draft_app",
     "crates/draft_graphics",
-    "crates/draft_image",
+    "crates/draft_image", "crates/draft_internal",
     "crates/draft_material",
     "crates/draft_mesh",
     'crates/draft_render',
