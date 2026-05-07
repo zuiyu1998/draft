@@ -52,6 +52,11 @@ impl App {
         self.graphics_context.update();
     }
 
+    pub fn set_runner(&mut self, f: impl FnOnce(App) + 'static) -> &mut Self {
+        self.runner = Box::new(f);
+        self
+    }
+
     pub fn run(&mut self) {
         let runner = core::mem::replace(&mut self.runner, Box::new(run_once));
         let app = core::mem::replace(self, App::empty());

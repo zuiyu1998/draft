@@ -7,7 +7,7 @@ use crate::App;
 pub trait Plugin: Any + Send + Sync + Downcast {
     fn build(&self, app: &mut App);
 
-    fn finished(&self, _app: &mut App);
+    fn finished(&self, _app: &mut App) {}
 }
 
 impl_downcast!(Plugin);
