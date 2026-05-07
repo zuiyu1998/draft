@@ -1,4 +1,7 @@
-use draft_app::{App, AppInitializeParams, Plugin};
+use draft_app::{App, AppInitializeParams, GraphicsContextParams, Plugin};
+use draft_render::RenderServer;
+use draft_window::SystemWindow;
+use fyrox_core::futures::executor::block_on;
 use winit::{application::ApplicationHandler, event::WindowEvent, event_loop::EventLoop};
 
 #[derive(Default)]
@@ -14,9 +17,25 @@ impl WinitAppRunnerState {
     }
 }
 
+fn create_render_server(
+    _graphics_context_params: &GraphicsContextParams,
+    window: SystemWindow,
+) -> RenderServer {
+    block_on(RenderServer::initialize(window))
+}
+
 impl ApplicationHandler for WinitAppRunnerState {
-    fn resumed(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
-        self.app.initialize(AppInitializeParams {});
+    fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
+        let raw_window = event_loop
+            .create_window(Default::default())
+            .expect("create window faild.");
+
+        let window = SystemWindow::new(raw_window);
+
+        self.app.initialize(AppInitializeParams {
+            window,
+            render_server_constructor: Box::new(create_render_server),
+        });
         self.app.finished();
     }
 

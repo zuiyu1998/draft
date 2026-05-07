@@ -5,3 +5,5 @@ edition = "2024"
 
 [dependencies]
 downcast-rs = { version = "2", default-features = false }
+draft_window = { path = "../draft_window" }
+draft_render = { path = "../draft_render" }

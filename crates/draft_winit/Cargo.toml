@@ -5,5 +5,9 @@ edition = "2024"
 
 [dependencies]
 draft_app = { path = "../draft_app" }
+draft_window = { path = "../draft_window" }
+draft_render = { path = "../draft_render" }
+
+fyrox-core = { workspace = true }
 
 winit = { version = "0.30" }

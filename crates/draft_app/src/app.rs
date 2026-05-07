@@ -1,14 +1,23 @@
 use std::mem::take;
 
-use crate::{GraphicsContext, Plugin, PluginContainer};
+use draft_render::WorldRenderer;
+use draft_window::{SystemWindow, SystemWindowManager};
+
+use crate::{
+    GraphicsContext, InitializedGraphicsContext, Plugin, PluginContainer, RenderServerConstructor,
+};
 
 type RunnerFn = Box<dyn FnOnce(App)>;
 
-pub struct AppInitializeParams {}
+pub struct AppInitializeParams {
+    pub window: SystemWindow,
+    pub render_server_constructor: RenderServerConstructor,
+}
 
 pub struct App {
     graphics_context: GraphicsContext,
     plugin_container: PluginContainer,
+    system_window_manager: SystemWindowManager,
 
     pub(crate) runner: RunnerFn,
 }
@@ -23,10 +32,23 @@ impl App {
             runner: Box::new(run_once),
             graphics_context: Default::default(),
             plugin_container: Default::default(),
+            system_window_manager: Default::default(),
         }
     }
 
-    pub fn initialize(&mut self, _params: AppInitializeParams) {}
+    pub fn initialize(&mut self, params: AppInitializeParams) {
+        if let GraphicsContext::Uninitialized(ref graphics_context_params) = self.graphics_context {
+            self.system_window_manager.spawn_primary_window(params.window.clone());
+            
+            let render_server =
+                (params.render_server_constructor)(graphics_context_params, params.window);
+
+            self.graphics_context = GraphicsContext::Initialized(InitializedGraphicsContext {
+                params: graphics_context_params.clone(),
+                renderer: WorldRenderer::new(render_server, self.system_window_manager.clone()),
+            })
+        }
+    }
 
     pub fn destroy(&mut self) {}
 

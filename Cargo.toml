@@ -13,8 +13,12 @@ members = [
     "crates/draft_material",
     "crates/draft_mesh",
     'crates/draft_render',
+    "crates/draft_window",
     "crates/draft_winit",
 ]
+
+[workspace.dependencies]
+fyrox-core = { version = "1.0" }
 
 [dependencies]
 draft_internal = { path = "crates/draft_internal" }
