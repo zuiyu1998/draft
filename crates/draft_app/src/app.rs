@@ -18,7 +18,7 @@ fn run_once(_app: App) {
 }
 
 impl App {
-    pub fn empty() -> Self {
+    pub fn new() -> Self {
         App {
             runner: Box::new(run_once),
             graphics_context: Default::default(),
@@ -59,7 +59,7 @@ impl App {
 
     pub fn run(&mut self) {
         let runner = core::mem::replace(&mut self.runner, Box::new(run_once));
-        let app = core::mem::replace(self, App::empty());
+        let app = core::mem::replace(self, App::new());
         (runner)(app)
     }
 }
