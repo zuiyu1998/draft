@@ -469,6 +469,7 @@ name = "draft_app"
 version = "0.1.0"
 dependencies = [
  "downcast-rs 2.0.2",
+ "draft_graphics",
  "draft_render",
  "draft_window",
 ]
@@ -477,6 +478,7 @@ dependencies = [
 name = "draft_graphics"
 version = "0.1.0"
 dependencies = [
+ "draft_window",
  "wgpu",
 ]
 
@@ -504,6 +506,7 @@ version = "0.1.0"
 name = "draft_render"
 version = "0.1.0"
 dependencies = [
+ "draft_graphics",
  "draft_window",
  "wgpu",
 ]
@@ -521,6 +524,7 @@ name = "draft_winit"
 version = "0.1.0"
 dependencies = [
  "draft_app",
+ "draft_graphics",
  "draft_render",
  "draft_window",
  "fyrox-core",

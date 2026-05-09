@@ -1,5 +1,8 @@
 mod render_server;
-mod buffer;
 
 pub use render_server::*;
-pub use buffer::*;
+
+pub enum Pipeline {
+    RenderPipeline(wgpu::RenderPipeline),
+    ComputePipeline(wgpu::ComputePipeline),
+}

@@ -1,5 +1,5 @@
 use draft_app::{App, AppInitializeParams, GraphicsContextParams, Plugin};
-use draft_render::RenderServer;
+use draft_graphics::RenderServer;
 use draft_window::SystemWindow;
 use fyrox_core::futures::executor::block_on;
 use winit::{application::ApplicationHandler, event::WindowEvent, event_loop::EventLoop};

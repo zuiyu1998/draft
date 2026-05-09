@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-downcast-rs = { version = "2", default-features = false }
 draft_window = { path = "../draft_window" }
 draft_render = { path = "../draft_render" }
+draft_graphics = { path = "../draft_graphics" }
+
+downcast-rs = { version = "2", default-features = false }

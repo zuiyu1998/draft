@@ -1,4 +1,5 @@
-use draft_render::{RenderServer, WorldRenderer};
+use draft_graphics::RenderServer;
+use draft_render::WorldRenderer;
 use draft_window::SystemWindow;
 
 pub type RenderServerConstructor =
