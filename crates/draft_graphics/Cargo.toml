@@ -6,4 +6,5 @@ edition = "2024"
 [dependencies]
 draft_window = { path = "../draft_window" }
 
+fyrox-core = { workspace = true }
 wgpu = { version = "29" }
