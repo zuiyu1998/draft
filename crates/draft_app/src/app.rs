@@ -38,14 +38,20 @@ impl App {
 
     pub fn initialize(&mut self, params: AppInitializeParams) {
         if let GraphicsContext::Uninitialized(ref graphics_context_params) = self.graphics_context {
-            self.system_window_manager.spawn_primary_window(params.window.clone());
-            
+            self.system_window_manager
+                .spawn_primary_window(params.window.clone());
+
             let render_server =
                 (params.render_server_constructor)(graphics_context_params, params.window);
 
+            let mut renderer =
+                WorldRenderer::new(render_server, self.system_window_manager.clone());
+
+            renderer.initialize();
+
             self.graphics_context = GraphicsContext::Initialized(InitializedGraphicsContext {
                 params: graphics_context_params.clone(),
-                renderer: WorldRenderer::new(render_server, self.system_window_manager.clone()),
+                renderer,
             })
         }
     }

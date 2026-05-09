@@ -7,6 +7,14 @@ impl RenderDevice {
     pub fn new(device: wgpu::Device) -> Self {
         Self { device }
     }
+
+    pub fn create_render_pipelie(
+        &self,
+        desc: &wgpu::RenderPipelineDescriptor,
+    ) -> wgpu::RenderPipeline {
+        self.device.create_render_pipeline(desc)
+    }
+
     pub fn create_command_encoder(
         &self,
         desc: &wgpu::CommandEncoderDescriptor,
