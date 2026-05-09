@@ -1,5 +1,7 @@
+mod index;
 mod vertex;
 
+pub use index::*;
 pub use vertex::*;
 
 use std::sync::Arc;
@@ -13,11 +15,8 @@ pub struct Mesh {
     primitive_topology: PrimitiveTopology,
 
     pub vertex_buffer: VertexBuffer,
-    pub index_buffer: IndexBuffer,
+    pub index_buffer: Option<IndexBuffer>,
 
     #[reflect(hidden)]
     pub cache_index: Arc<AtomicIndex>,
 }
-
-#[derive(Debug, Clone, Default, Reflect)]
-pub struct IndexBuffer {}
