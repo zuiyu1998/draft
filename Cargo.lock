@@ -525,6 +525,7 @@ version = "0.1.0"
 name = "draft_mesh"
 version = "0.1.0"
 dependencies = [
+ "bytemuck",
  "draft_graphics",
  "fyrox-core",
  "fyrox-resource",
@@ -535,7 +536,10 @@ name = "draft_render"
 version = "0.1.0"
 dependencies = [
  "draft_graphics",
+ "draft_mesh",
  "draft_window",
+ "fyrox-resource",
+ "thiserror 2.0.18",
  "wgpu",
 ]
 

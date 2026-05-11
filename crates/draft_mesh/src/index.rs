@@ -1,3 +1,4 @@
+use bytemuck::cast_slice;
 use fyrox_core::reflect::*;
 
 #[derive(Debug, Clone, Default, Reflect)]
@@ -10,6 +11,13 @@ pub struct IndexBuffer {
 impl IndexBuffer {
     pub fn get_mut<'a>(&'a mut self) -> IndexBufferMut<'a> {
         IndexBufferMut { index_buffer: self }
+    }
+
+    pub fn create_packed_index_buffer_data(&self) -> Vec<u8> {
+        match &self.indices {
+            Indices::U16(indices) => cast_slice(indices).to_vec(),
+            Indices::U32(indices) => cast_slice(indices).to_vec(),
+        }
     }
 }
 

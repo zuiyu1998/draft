@@ -19,6 +19,7 @@ members = [
 
 [workspace.dependencies]
 fyrox-core = { version = "1.0" }
+fyrox-resource = { version = "1.0" }
 
 [dependencies]
 draft_internal = { path = "crates/draft_internal" }

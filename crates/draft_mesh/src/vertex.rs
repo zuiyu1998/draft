@@ -4,6 +4,7 @@ use std::{
     sync::Arc,
 };
 
+use bytemuck::cast_slice;
 use draft_graphics::{BufferAddress, VertexAttribute, VertexFormat, VertexStepMode};
 use fyrox_core::reflect::*;
 
@@ -67,6 +68,66 @@ pub struct VertexBuffer {
 }
 
 impl VertexBuffer {
+    pub fn get_vertex_size(&self) -> u64 {
+        self.attributes
+            .values()
+            .map(|data| data.attribute.format.size())
+            .sum()
+    }
+
+    pub fn count_vertices(&self) -> usize {
+        let mut vertex_count: Option<usize> = None;
+        let mesh_attributes = &self.attributes;
+
+        for (_attribute_id, attribute_data) in mesh_attributes {
+            let attribute_len = attribute_data.values.len();
+            if let Some(previous_vertex_count) = vertex_count {
+                if previous_vertex_count != attribute_len {
+                    vertex_count = Some(core::cmp::min(previous_vertex_count, attribute_len));
+                }
+            } else {
+                vertex_count = Some(attribute_len);
+            }
+        }
+
+        vertex_count.unwrap_or(0)
+    }
+
+    pub fn get_vertex_buffer_size(&self) -> usize {
+        let vertex_size = self.get_vertex_size() as usize;
+        let vertex_count = self.count_vertices();
+        vertex_count * vertex_size
+    }
+
+    pub fn write_packed_vertex_buffer_data(&self, slice: &mut [u8]) {
+        let mesh_attributes = &self.attributes;
+
+        let vertex_size = self.get_vertex_size() as usize;
+        let vertex_count = self.count_vertices();
+        // bundle into interleaved buffers
+        let mut attribute_offset = 0;
+        for attribute_data in mesh_attributes.values() {
+            let attribute_size = attribute_data.attribute.format.size() as usize;
+            let attributes_bytes = attribute_data.values.get_bytes();
+            for (vertex_index, attribute_bytes) in attributes_bytes
+                .chunks_exact(attribute_size)
+                .take(vertex_count)
+                .enumerate()
+            {
+                let offset = vertex_index * vertex_size + attribute_offset;
+                slice[offset..offset + attribute_size].copy_from_slice(attribute_bytes);
+            }
+
+            attribute_offset += attribute_size;
+        }
+    }
+
+    pub fn create_packed_vertex_buffer_data(&self) -> Vec<u8> {
+        let mut attributes_interleaved_buffer = vec![0; self.get_vertex_buffer_size()];
+        self.write_packed_vertex_buffer_data(&mut attributes_interleaved_buffer);
+        attributes_interleaved_buffer
+    }
+
     pub fn get_mut<'a>(&'a mut self) -> VertexBufferMut<'a> {
         VertexBufferMut {
             vertex_buffer: self,
@@ -184,6 +245,100 @@ pub enum VertexAttributeValues {
     Snorm8x4(Vec<[i8; 4]>),
     Uint8x4(Vec<[u8; 4]>),
     Unorm8x4(Vec<[u8; 4]>),
+}
+
+impl VertexAttributeValues {
+    /// Returns the number of vertices in this [`VertexAttributeValues`]. For a single
+    /// mesh, all of the [`VertexAttributeValues`] must have the same length.
+    #[expect(
+        clippy::match_same_arms,
+        reason = "Although the `values` binding on some match arms may have matching types, each variant has different semantics; thus it's not guaranteed that they will use the same type forever."
+    )]
+    pub fn len(&self) -> usize {
+        match self {
+            VertexAttributeValues::Float32(values) => values.len(),
+            VertexAttributeValues::Sint32(values) => values.len(),
+            VertexAttributeValues::Uint32(values) => values.len(),
+            VertexAttributeValues::Float32x2(values) => values.len(),
+            VertexAttributeValues::Sint32x2(values) => values.len(),
+            VertexAttributeValues::Uint32x2(values) => values.len(),
+            VertexAttributeValues::Float32x3(values) => values.len(),
+            VertexAttributeValues::Sint32x3(values) => values.len(),
+            VertexAttributeValues::Uint32x3(values) => values.len(),
+            VertexAttributeValues::Float32x4(values) => values.len(),
+            VertexAttributeValues::Sint32x4(values) => values.len(),
+            VertexAttributeValues::Uint32x4(values) => values.len(),
+            VertexAttributeValues::Sint16x2(values) => values.len(),
+            VertexAttributeValues::Snorm16x2(values) => values.len(),
+            VertexAttributeValues::Uint16x2(values) => values.len(),
+            VertexAttributeValues::Unorm16x2(values) => values.len(),
+            VertexAttributeValues::Sint16x4(values) => values.len(),
+            VertexAttributeValues::Snorm16x4(values) => values.len(),
+            VertexAttributeValues::Uint16x4(values) => values.len(),
+            VertexAttributeValues::Unorm16x4(values) => values.len(),
+            VertexAttributeValues::Sint8x2(values) => values.len(),
+            VertexAttributeValues::Snorm8x2(values) => values.len(),
+            VertexAttributeValues::Uint8x2(values) => values.len(),
+            VertexAttributeValues::Unorm8x2(values) => values.len(),
+            VertexAttributeValues::Sint8x4(values) => values.len(),
+            VertexAttributeValues::Snorm8x4(values) => values.len(),
+            VertexAttributeValues::Uint8x4(values) => values.len(),
+            VertexAttributeValues::Unorm8x4(values) => values.len(),
+        }
+    }
+
+    /// Returns `true` if there are no vertices in this [`VertexAttributeValues`].
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    /// Returns the values as float triples if possible.
+    pub fn as_float3(&self) -> Option<&[[f32; 3]]> {
+        match self {
+            VertexAttributeValues::Float32x3(values) => Some(values),
+            _ => None,
+        }
+    }
+
+    // TODO: add vertex format as parameter here and perform type conversions
+    /// Flattens the [`VertexAttributeValues`] into a sequence of bytes. This is
+    /// useful for serialization and sending to the GPU.
+    #[expect(
+        clippy::match_same_arms,
+        reason = "Although the `values` binding on some match arms may have matching types, each variant has different semantics; thus it's not guaranteed that they will use the same type forever."
+    )]
+    pub fn get_bytes(&self) -> &[u8] {
+        match self {
+            VertexAttributeValues::Float32(values) => cast_slice(values),
+            VertexAttributeValues::Sint32(values) => cast_slice(values),
+            VertexAttributeValues::Uint32(values) => cast_slice(values),
+            VertexAttributeValues::Float32x2(values) => cast_slice(values),
+            VertexAttributeValues::Sint32x2(values) => cast_slice(values),
+            VertexAttributeValues::Uint32x2(values) => cast_slice(values),
+            VertexAttributeValues::Float32x3(values) => cast_slice(values),
+            VertexAttributeValues::Sint32x3(values) => cast_slice(values),
+            VertexAttributeValues::Uint32x3(values) => cast_slice(values),
+            VertexAttributeValues::Float32x4(values) => cast_slice(values),
+            VertexAttributeValues::Sint32x4(values) => cast_slice(values),
+            VertexAttributeValues::Uint32x4(values) => cast_slice(values),
+            VertexAttributeValues::Sint16x2(values) => cast_slice(values),
+            VertexAttributeValues::Snorm16x2(values) => cast_slice(values),
+            VertexAttributeValues::Uint16x2(values) => cast_slice(values),
+            VertexAttributeValues::Unorm16x2(values) => cast_slice(values),
+            VertexAttributeValues::Sint16x4(values) => cast_slice(values),
+            VertexAttributeValues::Snorm16x4(values) => cast_slice(values),
+            VertexAttributeValues::Uint16x4(values) => cast_slice(values),
+            VertexAttributeValues::Unorm16x4(values) => cast_slice(values),
+            VertexAttributeValues::Sint8x2(values) => cast_slice(values),
+            VertexAttributeValues::Snorm8x2(values) => cast_slice(values),
+            VertexAttributeValues::Uint8x2(values) => cast_slice(values),
+            VertexAttributeValues::Unorm8x2(values) => cast_slice(values),
+            VertexAttributeValues::Sint8x4(values) => cast_slice(values),
+            VertexAttributeValues::Snorm8x4(values) => cast_slice(values),
+            VertexAttributeValues::Uint8x4(values) => cast_slice(values),
+            VertexAttributeValues::Unorm8x4(values) => cast_slice(values),
+        }
+    }
 }
 
 impl From<&VertexAttributeValues> for VertexFormat {

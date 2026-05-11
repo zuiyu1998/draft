@@ -1,17 +1,24 @@
 pub mod frame_graph;
 pub mod render_pipeline;
+pub mod render_world;
+pub mod error;
 
 use draft_graphics::RenderServer;
 use draft_window::SystemWindowManager;
 
-use crate::render_pipeline::{RenderPipeline, RenderPipelineContainer, RenderPipelineRunContext};
+use crate::{
+    render_pipeline::{RenderPipeline, RenderPipelineContainer, RenderPipelineRunContext},
+    render_world::RenderWorld,
+};
 
 pub const CORE_2D: &'static str = "core_2d";
+pub use error::FrameworkError;
 
 pub struct WorldRenderer {
     pub render_server: RenderServer,
     pub system_window_manager: SystemWindowManager,
     pub render_pipeline_container: RenderPipelineContainer,
+    pub render_world: RenderWorld,
 }
 
 impl WorldRenderer {
@@ -20,6 +27,7 @@ impl WorldRenderer {
             render_server,
             system_window_manager,
             render_pipeline_container: RenderPipelineContainer::default(),
+            render_world: RenderWorld::empty()
         }
     }
 

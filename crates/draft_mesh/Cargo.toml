@@ -6,5 +6,6 @@ edition = "2024"
 [dependencies]
 draft_graphics = { path = "../draft_graphics" }
 
-fyrox-core = { version = "1.0" }
-fyrox-resource = { version = "1.0" }
+fyrox-core = { workspace = true }
+fyrox-resource = { workspace = true }
+bytemuck = { version = "1.5" }
