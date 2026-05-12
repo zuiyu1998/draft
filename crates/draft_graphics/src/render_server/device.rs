@@ -10,6 +10,10 @@ impl RenderDevice {
         Self { device }
     }
 
+    pub fn wgpu_device(&self) -> &wgpu::Device {
+        &self.device
+    }
+
     pub fn create_render_pipelie(
         &self,
         desc: &wgpu::RenderPipelineDescriptor,

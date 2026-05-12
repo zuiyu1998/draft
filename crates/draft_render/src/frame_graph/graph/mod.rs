@@ -2,20 +2,17 @@ mod device_pass;
 mod pass_node_builder;
 mod resource_material;
 
+use draft_graphics::{CommandBuffer, RenderDevice};
+use std::sync::Arc;
+
 pub use device_pass::*;
-use draft_graphics::RenderDevice;
 pub use pass_node_builder::*;
 pub use resource_material::*;
 
-use std::sync::Arc;
-use wgpu::CommandBuffer;
-
-use crate::{
-    frame_graph::{
-        Index, IntoArcAnyTransientResource, PassNode, PipelineContainer, ResourceBoard,
-        ResourceHandle, ResourceNode, ResourceTable, TransientResource, TransientResourceCache,
-        TransientResourceDescriptor, TypeEquals, VirtualResource,
-    },
+use crate::frame_graph::{
+    Index, IntoArcAnyTransientResource, PassNode, PipelineContainer, ResourceBoard, ResourceHandle,
+    ResourceNode, ResourceTable, TransientResource, TransientResourceCache,
+    TransientResourceDescriptor, TypeEquals, VirtualResource,
 };
 
 pub struct FrameGraphContext<'a> {

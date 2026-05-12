@@ -1,17 +1,24 @@
 use std::{any::Any, sync::Arc};
 
 use fyrox_core::{
-    parking_lot::Mutex,
+    SafeLock,
+    parking_lot::{Mutex, MutexGuard},
     pool::{Handle, Pool},
 };
-use raw_window_handle::{HasDisplayHandle, HasWindowHandle};
+pub use raw_window_handle::{HasDisplayHandle, RawDisplayHandle, RawWindowHandle};
 
 pub struct Window {}
 
-pub trait ISystemWindow: 'static + Any + Send + Sync + HasWindowHandle + HasDisplayHandle {}
+pub trait ISystemWindow: 'static + Any + Send + Sync {
+    fn get_physical_size(&self) -> PhysicalSize;
+    fn get_raw_window_handle(&self) -> RawWindowHandle;
+    fn get_raw_display_handle(&self) -> RawDisplayHandle;
+}
 
-impl<T> ISystemWindow for T where T: 'static + Any + Send + Sync + HasWindowHandle + HasDisplayHandle
-{}
+pub struct PhysicalSize {
+    pub width: u32,
+    pub height: u32,
+}
 
 pub struct SystemWindow(Arc<dyn ISystemWindow>);
 
@@ -37,6 +44,10 @@ pub struct SystemWindowManager {
 }
 
 impl SystemWindowManager {
+    pub fn state(&self) -> MutexGuard<'_, SystemWindowManagerState> {
+        self.state.safe_lock()
+    }
+
     pub fn spawn_primary_window(&mut self, window: SystemWindow) -> Handle<SystemWindow> {
         let mut guard = self.state.lock();
         guard.spawn_primary_window(window)
@@ -63,6 +74,10 @@ pub struct SystemWindowManagerState {
 }
 
 impl SystemWindowManagerState {
+    pub fn pool(&self) -> &Pool<SystemWindow> {
+        &self.pool
+    }
+
     pub fn spawn_window(&mut self, window: SystemWindow) -> Handle<SystemWindow> {
         self.pool.spawn(window)
     }

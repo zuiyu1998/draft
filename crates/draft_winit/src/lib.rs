@@ -1,8 +1,33 @@
 use draft_app::{App, AppInitializeParams, GraphicsContextParams, Plugin};
 use draft_graphics::RenderServer;
-use draft_window::SystemWindow;
+use draft_window::{
+    HasDisplayHandle, ISystemWindow, PhysicalSize, RawDisplayHandle, RawWindowHandle, SystemWindow,
+};
 use fyrox_core::futures::executor::block_on;
-use winit::{application::ApplicationHandler, event::WindowEvent, event_loop::EventLoop};
+use winit::{
+    application::ApplicationHandler, event::WindowEvent, event_loop::EventLoop,
+    raw_window_handle::HasWindowHandle, window::Window as WinitWindow,
+};
+
+pub struct WindowWrapper(WinitWindow);
+
+impl ISystemWindow for WindowWrapper {
+    fn get_physical_size(&self) -> PhysicalSize {
+        let size = self.0.inner_size();
+        PhysicalSize {
+            width: size.width,
+            height: size.height,
+        }
+    }
+
+    fn get_raw_display_handle(&self) -> RawDisplayHandle {
+        self.0.display_handle().unwrap().as_raw()
+    }
+
+    fn get_raw_window_handle(&self) -> RawWindowHandle {
+        self.0.window_handle().unwrap().as_raw()
+    }
+}
 
 #[derive(Default)]
 pub struct WinitPlugin;
@@ -30,7 +55,7 @@ impl ApplicationHandler for WinitAppRunnerState {
             .create_window(Default::default())
             .expect("create window faild.");
 
-        let window = SystemWindow::new(raw_window);
+        let window = SystemWindow::new(WindowWrapper(raw_window));
 
         self.app.initialize(AppInitializeParams {
             window,

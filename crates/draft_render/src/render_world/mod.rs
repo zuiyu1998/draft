@@ -1,13 +1,16 @@
 mod mesh_cache;
+mod render_window;
 mod temporary_cache;
 
 use std::marker::PhantomData;
 
 use crate::FrameworkError;
-use draft_graphics::RenderDevice;
+use draft_graphics::{RenderDevice, RenderServer};
 use draft_mesh::{Mesh, MeshResource};
+use draft_window::SystemWindowManager;
 
 pub use mesh_cache::*;
+pub use render_window::*;
 pub use temporary_cache::*;
 
 pub struct ResourceId<T> {
@@ -37,12 +40,25 @@ impl<T> Default for ResourceId<T> {
 
 pub struct RenderWorld {
     mesh_cache: MeshCache,
+    windows: RenderWindowContainer,
 }
 
 impl RenderWorld {
     pub fn empty() -> RenderWorld {
         Self {
             mesh_cache: MeshCache::default(),
+            windows: RenderWindowContainer::default(),
+        }
+    }
+
+    pub fn prepare_windows(
+        &mut self,
+        render_server: &RenderServer,
+        system_window_managerr: &SystemWindowManager,
+    ) {
+        for (handle, system_window) in system_window_managerr.state().pool().pair_iter() {
+            self.windows
+                .get_or_create(render_server, handle, system_window);
         }
     }
 
