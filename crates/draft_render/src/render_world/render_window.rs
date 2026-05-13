@@ -24,7 +24,6 @@ impl RenderWindow {
     ) -> Self {
         let size = system_window.get_window().get_physical_size();
         let surface = render_server.create_surface(&system_window);
-
         let caps = surface.get_capabilities(&render_server.adapter);
 
         let formats = caps.formats;
@@ -33,7 +32,6 @@ impl RenderWindow {
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: format,
-            // Request compatibility with the sRGB-format texture view we‘re going to create later.
             view_formats: vec![format.add_srgb_suffix()],
             alpha_mode: wgpu::CompositeAlphaMode::Auto,
             width: size.width,
@@ -88,7 +86,6 @@ impl RenderWindowContainer {
         if !self.windows.contains_key(&handle) {
             let render_window = RenderWindow::initialize(render_server, handle, &window);
             render_window.configure(&render_server.device);
-
             self.windows.insert(handle.clone(), render_window);
         }
 

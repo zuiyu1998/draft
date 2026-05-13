@@ -14,6 +14,14 @@ use crate::{
 pub const CORE_2D: &'static str = "core_2d";
 pub use error::FrameworkError;
 
+pub trait World: 'static {
+    fn render(&self, context: &mut RenderContext);
+}
+
+pub struct RenderContext<'a> {
+    pub render_world: &'a mut RenderWorld,
+}
+
 pub struct WorldRenderer {
     pub render_server: RenderServer,
     pub system_window_manager: SystemWindowManager,
@@ -36,9 +44,15 @@ impl WorldRenderer {
             .insert(CORE_2D, RenderPipeline::default());
     }
 
-    pub fn render(&mut self) {
+    pub fn render<W: World>(&mut self, world: &W) {
         self.render_world
             .prepare_windows(&self.render_server, &self.system_window_manager);
+
+        let mut context = RenderContext {
+            render_world: &mut self.render_world,
+        };
+
+        world.render(&mut context);
 
         let mut context = RenderPipelineRunContext {};
 

@@ -8,6 +8,23 @@ use wgpu::{Surface, SurfaceTargetUnsafe};
 pub use device::*;
 
 #[derive(Clone)]
+pub struct RenderQueue(Arc<wgpu::Queue>);
+
+impl Deref for RenderQueue {
+    type Target = wgpu::Queue;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl RenderQueue {
+    pub fn new(queue: wgpu::Queue) -> Self {
+        Self(Arc::new(queue))
+    }
+}
+
+#[derive(Clone)]
 pub struct RenderInstance(Arc<wgpu::Instance>);
 
 impl RenderInstance {
@@ -38,6 +55,7 @@ pub struct RenderServer {
     pub device: RenderDevice,
     pub instance: RenderInstance,
     pub adapter: RenderAdapter,
+    pub queue: RenderQueue,
 }
 
 impl RenderServer {
@@ -66,7 +84,7 @@ impl RenderServer {
             .request_adapter(&wgpu::RequestAdapterOptions::default())
             .await
             .unwrap();
-        let (device, _queue) = adapter
+        let (device, queue) = adapter
             .request_device(&wgpu::DeviceDescriptor::default())
             .await
             .unwrap();
@@ -75,6 +93,7 @@ impl RenderServer {
             device: RenderDevice::new(device),
             instance: RenderInstance::new(instance),
             adapter: RenderAdapter::new(adapter),
+            queue: RenderQueue::new(queue)
         }
     }
 }

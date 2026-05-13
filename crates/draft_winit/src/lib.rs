@@ -83,6 +83,10 @@ impl ApplicationHandler for WinitAppRunnerState {
                 event_loop.exit();
             }
 
+            WindowEvent::RedrawRequested => {
+                self.app.render();
+            }
+
             _ => {}
         }
     }

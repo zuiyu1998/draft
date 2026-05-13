@@ -5,6 +5,7 @@ use draft_window::{SystemWindow, SystemWindowManager};
 
 use crate::{
     GraphicsContext, InitializedGraphicsContext, Plugin, PluginContainer, RenderServerConstructor,
+    SceneTree,
 };
 
 type RunnerFn = Box<dyn FnOnce(App)>;
@@ -18,6 +19,7 @@ pub struct App {
     graphics_context: GraphicsContext,
     plugin_container: PluginContainer,
     system_window_manager: SystemWindowManager,
+    scene_tree: SceneTree,
 
     pub(crate) runner: RunnerFn,
 }
@@ -33,6 +35,7 @@ impl App {
             graphics_context: Default::default(),
             plugin_container: Default::default(),
             system_window_manager: Default::default(),
+            scene_tree: SceneTree::empty(),
         }
     }
 
@@ -56,7 +59,13 @@ impl App {
         }
     }
 
-    pub fn destroy(&mut self) {}
+    pub fn destroy(&mut self) {
+        if let GraphicsContext::Initialized(initialized_graphics_context) = &self.graphics_context {
+            let params = initialized_graphics_context.params.clone();
+
+            self.graphics_context = GraphicsContext::Uninitialized(params);
+        }
+    }
 
     pub fn add_plugin<P: Plugin>(&mut self, plugin: P) -> &mut Self {
         self.add_boxed_plugin(Box::new(plugin))
@@ -74,6 +83,10 @@ impl App {
         let plugin_container = take(&mut self.plugin_container);
         plugin_container.finished(self);
         self.plugin_container = plugin_container;
+    }
+
+    pub fn render(&mut self) {
+        self.graphics_context.render(&self.scene_tree);
     }
 
     pub fn update(&mut self) {

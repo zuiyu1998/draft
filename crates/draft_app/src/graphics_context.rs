@@ -1,5 +1,5 @@
 use draft_graphics::RenderServer;
-use draft_render::WorldRenderer;
+use draft_render::{World, WorldRenderer};
 use draft_window::SystemWindow;
 
 pub type RenderServerConstructor =
@@ -16,6 +16,12 @@ pub enum GraphicsContext {
 impl GraphicsContext {
     pub fn update(&mut self) {
         //todo
+    }
+
+    pub fn render<W: World>(&mut self, world: &W) {
+        if let GraphicsContext::Initialized(initialized_graphics_context) = self {
+            initialized_graphics_context.renderer.render(world);
+        }
     }
 }
 
