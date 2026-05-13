@@ -12,7 +12,7 @@ members = [
     "crates/draft_internal",
     "crates/draft_material",
     "crates/draft_mesh",
-    'crates/draft_render',
+    'crates/draft_render', "crates/draft_shader",
     "crates/draft_window",
     "crates/draft_winit",
 ]

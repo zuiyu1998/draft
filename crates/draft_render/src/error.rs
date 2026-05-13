@@ -2,6 +2,8 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum FrameworkError {
-    #[error("mesh not loaded.")]
+    #[error("Mesh not loaded.")]
     MeshNotLoaded,
+    #[error("Shader not loaded.")]
+    ShaderNotLoaded,
 }

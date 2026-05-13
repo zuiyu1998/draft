@@ -537,10 +537,20 @@ version = "0.1.0"
 dependencies = [
  "draft_graphics",
  "draft_mesh",
+ "draft_shader",
  "draft_window",
  "fyrox-resource",
  "thiserror 2.0.18",
  "wgpu",
+]
+
+[[package]]
+name = "draft_shader"
+version = "0.1.0"
+dependencies = [
+ "fyrox-core",
+ "fyrox-resource",
+ "thiserror 2.0.18",
 ]
 
 [[package]]

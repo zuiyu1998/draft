@@ -46,6 +46,6 @@ impl ResourceData for Mesh {
     }
 
     fn try_clone_box(&self) -> Option<Box<dyn ResourceData>> {
-        todo!()
+        Some(Box::new(self.clone()))
     }
 }

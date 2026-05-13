@@ -22,11 +22,6 @@ pub struct MeshRenderData {
     pub index_buffer: Option<IndexBufferRenderData>,
 }
 
-#[derive(Default)]
-pub struct MeshCache {
-    cache: TemporaryCache<MeshRenderData>,
-}
-
 fn create_index_buffer_render_data(
     index_buffer: &IndexBuffer,
     device: &RenderDevice,
@@ -78,6 +73,11 @@ fn create_mesh_render_data(
         vertex_buffer,
         index_buffer,
     })
+}
+
+#[derive(Default)]
+pub struct MeshCache {
+    cache: TemporaryCache<MeshRenderData>,
 }
 
 impl MeshCache {

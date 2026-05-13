@@ -1,6 +1,8 @@
 mod mesh_cache;
 mod render_window;
 mod temporary_cache;
+mod pipeline_cache;
+mod shader_cache;
 
 use std::marker::PhantomData;
 
@@ -12,6 +14,8 @@ use draft_window::SystemWindowManager;
 pub use mesh_cache::*;
 pub use render_window::*;
 pub use temporary_cache::*;
+pub use pipeline_cache::*;
+pub use shader_cache::*;
 
 pub struct ResourceId<T> {
     pub slot: usize,
