@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use draft_graphics::{RenderDevice, RenderServer, Surface, SurfaceConfiguration, SurfaceTexture};
 use draft_window::SystemWindow;
 use fyrox_resource::core::pool::Handle;
-use wgpu::TextureFormat;
+use wgpu::{CurrentSurfaceTexture, TextureFormat};
 
 pub struct RenderWindow {
     pub handle: Handle<SystemWindow>,
@@ -57,6 +57,20 @@ impl RenderWindow {
         self.surface
             .configure(device.wgpu_device(), &self.surface_config);
     }
+
+    pub fn spawn_swapchain_texture(&mut self) {
+        if let CurrentSurfaceTexture::Success(swap_chain_texture) =
+            self.surface.get_current_texture()
+        {
+            self.swap_chain_texture = Some(swap_chain_texture);
+        }
+    }
+
+    pub fn clear_swapchain_texture(&mut self) {
+        if let Some(swap_chain_texture) = self.swap_chain_texture.take() {
+            swap_chain_texture.present();
+        }
+    }
 }
 
 #[derive(Default)]
@@ -74,6 +88,7 @@ impl RenderWindowContainer {
         if !self.windows.contains_key(&handle) {
             let render_window = RenderWindow::initialize(render_server, handle, &window);
             render_window.configure(&render_server.device);
+
             self.windows.insert(handle.clone(), render_window);
         }
 

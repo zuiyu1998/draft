@@ -1,7 +1,7 @@
+pub mod error;
 pub mod frame_graph;
 pub mod render_pipeline;
 pub mod render_world;
-pub mod error;
 
 use draft_graphics::RenderServer;
 use draft_window::SystemWindowManager;
@@ -27,7 +27,7 @@ impl WorldRenderer {
             render_server,
             system_window_manager,
             render_pipeline_container: RenderPipelineContainer::default(),
-            render_world: RenderWorld::empty()
+            render_world: RenderWorld::empty(),
         }
     }
 
@@ -37,10 +37,16 @@ impl WorldRenderer {
     }
 
     pub fn render(&mut self) {
+        self.render_world
+            .prepare_windows(&self.render_server, &self.system_window_manager);
+
         let mut context = RenderPipelineRunContext {};
 
         if let Some(pipeline) = self.render_pipeline_container.get(CORE_2D) {
             pipeline.run(&mut context);
         }
+
+        self.render_world
+            .clear_windows(&self.render_server, &self.system_window_manager);
     }
 }

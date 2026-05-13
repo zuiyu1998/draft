@@ -54,11 +54,28 @@ impl RenderWorld {
     pub fn prepare_windows(
         &mut self,
         render_server: &RenderServer,
-        system_window_managerr: &SystemWindowManager,
+        system_window_manager: &SystemWindowManager,
     ) {
-        for (handle, system_window) in system_window_managerr.state().pool().pair_iter() {
-            self.windows
+        for (handle, system_window) in system_window_manager.state().pool().pair_iter() {
+            let render_window = self
+                .windows
                 .get_or_create(render_server, handle, system_window);
+
+            render_window.spawn_swapchain_texture();
+        }
+    }
+
+    pub fn clear_windows(
+        &mut self,
+        render_server: &RenderServer,
+        system_window_manager: &SystemWindowManager,
+    ) {
+        for (handle, system_window) in system_window_manager.state().pool().pair_iter() {
+            let render_window = self
+                .windows
+                .get_or_create(render_server, handle, system_window);
+
+            render_window.clear_swapchain_texture();
         }
     }
 
