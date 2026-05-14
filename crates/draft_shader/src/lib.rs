@@ -2,6 +2,7 @@ mod loader;
 
 use std::{path::Path, sync::Arc};
 
+use draft_graphics::ShaderSource;
 use fyrox_core::{
     TypeUuidProvider, Uuid, io::FileError, reflect::*, sparse::AtomicIndex, uuid, visitor::*,
 };
@@ -81,6 +82,12 @@ pub enum Source {
 impl Source {
     pub fn from_str(str: &str) -> Self {
         Source::Wgsl(str.to_string())
+    }
+
+    pub fn get_shader_soource(&self) -> ShaderSource<'_> {
+        match self {
+            Self::Wgsl(wgsl) => ShaderSource::Wgsl(wgsl.into()),
+        }
     }
 }
 

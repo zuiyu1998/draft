@@ -14,6 +14,10 @@ impl RenderDevice {
         &self.device
     }
 
+    pub fn create_shader_module(&self, desc: wgpu::ShaderModuleDescriptor) -> wgpu::ShaderModule {
+        self.device.create_shader_module(desc)
+    }
+
     pub fn create_render_pipelie(
         &self,
         desc: &wgpu::RenderPipelineDescriptor,

@@ -4,9 +4,9 @@ mod render_server;
 pub use common::*;
 pub use render_server::*;
 pub use wgpu::{
-    DepthStencilState,MultisampleState,
-    BufferAddress, CommandBuffer, RenderPipeline, RenderPipelineDescriptor, Surface,
-    SurfaceConfiguration, SurfaceTexture, VertexStepMode, util::BufferInitDescriptor,PrimitiveState
+    BufferAddress, CommandBuffer, DepthStencilState, MultisampleState, PrimitiveState,
+    RenderPipeline, RenderPipelineDescriptor, ShaderModule, ShaderModuleDescriptor, ShaderSource,
+    Surface, SurfaceConfiguration, SurfaceTexture, VertexStepMode, util::BufferInitDescriptor,
 };
 
 pub enum Pipeline {
