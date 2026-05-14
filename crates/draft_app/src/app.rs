@@ -1,11 +1,11 @@
 use std::mem::take;
 
-use draft_render::WorldRenderer;
+use draft_render::{IWorld, WorldRenderer};
 use draft_window::{SystemWindow, SystemWindowManager};
 
 use crate::{
     GraphicsContext, InitializedGraphicsContext, Plugin, PluginContainer, RenderServerConstructor,
-    SceneTree,
+    World,
 };
 
 type RunnerFn = Box<dyn FnOnce(App)>;
@@ -19,7 +19,7 @@ pub struct App {
     graphics_context: GraphicsContext,
     plugin_container: PluginContainer,
     system_window_manager: SystemWindowManager,
-    scene_tree: SceneTree,
+    world: World,
 
     pub(crate) runner: RunnerFn,
 }
@@ -35,8 +35,13 @@ impl App {
             graphics_context: Default::default(),
             plugin_container: Default::default(),
             system_window_manager: Default::default(),
-            scene_tree: SceneTree::empty(),
+            world: World::empty(),
         }
+    }
+
+    pub fn set_world<W: IWorld>(&mut self, world: W) -> &mut Self {
+        self.world = World::new(world);
+        self
     }
 
     pub fn initialize(&mut self, params: AppInitializeParams) {
@@ -86,7 +91,7 @@ impl App {
     }
 
     pub fn render(&mut self) {
-        self.graphics_context.render(&self.scene_tree);
+        self.graphics_context.render(&self.world);
     }
 
     pub fn update(&mut self) {
