@@ -1,21 +1,20 @@
-mod mesh_cache;
-mod render_window;
-mod temporary_cache;
 mod pipeline_cache;
-mod shader_cache;
+mod render_window;
+mod resource_cache;
+mod temporary_cache;
 
 use std::marker::PhantomData;
 
 use crate::FrameworkError;
-use draft_graphics::{RenderDevice, RenderServer};
+use draft_graphics::RenderServer;
 use draft_mesh::{Mesh, MeshResource};
+use draft_shader::{Shader, ShaderResource};
 use draft_window::SystemWindowManager;
 
-pub use mesh_cache::*;
-pub use render_window::*;
-pub use temporary_cache::*;
 pub use pipeline_cache::*;
-pub use shader_cache::*;
+pub use render_window::*;
+pub use resource_cache::*;
+pub use temporary_cache::*;
 
 pub struct ResourceId<T> {
     pub slot: usize,
@@ -43,14 +42,16 @@ impl<T> Default for ResourceId<T> {
 }
 
 pub struct RenderWorld {
-    mesh_cache: MeshCache,
+    mesh_cache: ResourceCache<Mesh>,
+    shader_cache: ResourceCache<Shader>,
     windows: RenderWindowContainer,
 }
 
 impl RenderWorld {
     pub fn empty() -> RenderWorld {
         Self {
-            mesh_cache: MeshCache::default(),
+            mesh_cache: ResourceCache::default(),
+            shader_cache: ResourceCache::default(),
             windows: RenderWindowContainer::default(),
         }
     }
@@ -83,11 +84,17 @@ impl RenderWorld {
         }
     }
 
-    pub fn get_create_mesh(
+    pub fn get_or_create_mesh_id(
         &mut self,
         mesh: &MeshResource,
-        device: &RenderDevice,
     ) -> Result<ResourceId<Mesh>, FrameworkError> {
-        self.mesh_cache.get_create_mesh(mesh, device)
+        self.mesh_cache.get_or_create_resource_id(mesh)
+    }
+
+    pub fn get_or_create_shader_id(
+        &mut self,
+        shader: &ShaderResource,
+    ) -> Result<ResourceId<Shader>, FrameworkError> {
+        self.shader_cache.get_or_create_resource_id(shader)
     }
 }
