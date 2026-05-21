@@ -1,5 +1,5 @@
 use fyrox_core::reflect::*;
-use wgpu::{BufferAddress, ShaderLocation};
+use wgpu::{BufferAddress, ShaderLocation, VertexAttribute as WgpuVertexAttribute};
 
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, Reflect)]
 pub struct VertexAttribute {
@@ -9,6 +9,16 @@ pub struct VertexAttribute {
     pub offset: BufferAddress,
     /// Location for this input. Must match the location in the shader.
     pub shader_location: ShaderLocation,
+}
+
+impl VertexAttribute {
+    pub fn get_wgpu_vertex_attribute(&self) -> WgpuVertexAttribute {
+        WgpuVertexAttribute {
+            format: self.format.get_wgpu_vertex_format(),
+            offset: self.offset,
+            shader_location: self.shader_location,
+        }
+    }
 }
 
 #[repr(C)]
@@ -103,6 +113,15 @@ pub enum VertexFormat {
 }
 
 impl VertexFormat {
+    pub fn get_wgpu_vertex_format(&self) -> wgpu::VertexFormat {
+        match self {
+            VertexFormat::Float16 => wgpu::VertexFormat::Float16,
+            _ => {
+                unimplemented!()
+            }
+        }
+    }
+
     pub const fn size(&self) -> u64 {
         match self {
             Self::Uint8 | Self::Sint8 | Self::Unorm8 | Self::Snorm8 => 1,

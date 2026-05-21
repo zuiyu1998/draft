@@ -38,12 +38,16 @@ impl Shader {
         io: &dyn ResourceIo,
     ) -> Result<Self, ShaderError> {
         let bytes = io.load_file(path.as_ref()).await?;
+        Ok(Self::from_string_bytes(&bytes))
+    }
+
+    pub fn from_string_bytes(bytes: &[u8]) -> Self {
         let content = String::from_utf8_lossy(&bytes);
-        Ok(Self {
+        Self {
             source: Source::from_str(&content),
             cache_index: Default::default(),
             modifications_counter: 0,
-        })
+        }
     }
 }
 
@@ -84,7 +88,7 @@ impl Source {
         Source::Wgsl(str.to_string())
     }
 
-    pub fn get_shader_soource(&self) -> ShaderSource<'_> {
+    pub fn get_shader_source(&self) -> ShaderSource<'_> {
         match self {
             Self::Wgsl(wgsl) => ShaderSource::Wgsl(wgsl.into()),
         }

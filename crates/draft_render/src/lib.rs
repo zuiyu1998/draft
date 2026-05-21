@@ -1,5 +1,6 @@
 pub mod error;
 pub mod frame_graph;
+pub mod processor;
 pub mod render_pipeline;
 pub mod render_world;
 
@@ -7,11 +8,11 @@ use draft_graphics::RenderServer;
 use draft_window::SystemWindowManager;
 
 use crate::{
+    processor::{CORE_2D, ProcessorContianer},
     render_pipeline::{RenderPipeline, RenderPipelineContainer, RenderPipelineRunContext},
     render_world::RenderWorld,
 };
 
-pub const CORE_2D: &'static str = "core_2d";
 pub use error::FrameworkError;
 
 pub trait IWorld: 'static {
@@ -20,6 +21,7 @@ pub trait IWorld: 'static {
 
 pub struct RenderContext<'a> {
     pub render_world: &'a mut RenderWorld,
+    pub processor_contianer: &'a mut ProcessorContianer,
 }
 
 pub struct WorldRenderer {
@@ -27,15 +29,17 @@ pub struct WorldRenderer {
     pub system_window_manager: SystemWindowManager,
     pub render_pipeline_container: RenderPipelineContainer,
     pub render_world: RenderWorld,
+    pub processor_contianer: ProcessorContianer,
 }
 
 impl WorldRenderer {
     pub fn new(render_server: RenderServer, system_window_manager: SystemWindowManager) -> Self {
         Self {
+            render_world: RenderWorld::new(&render_server.device),
             render_server,
             system_window_manager,
             render_pipeline_container: RenderPipelineContainer::default(),
-            render_world: RenderWorld::empty(),
+            processor_contianer: ProcessorContianer::default(),
         }
     }
 
@@ -50,6 +54,7 @@ impl WorldRenderer {
 
         let mut context = RenderContext {
             render_world: &mut self.render_world,
+            processor_contianer: &mut self.processor_contianer,
         };
 
         world.render(&mut context);

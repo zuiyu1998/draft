@@ -106,4 +106,11 @@ impl<R: RenderResource> ResourceCache<R> {
 
         Ok(ResourceId::new(cache_index.get()))
     }
+
+    pub fn get(&self, id: ResourceId<R>) -> Option<Resource<R>> {
+        self.cache
+            .buffer
+            .get_raw(id.slot)
+            .map(|etnry| etnry.resource.clone())
+    }
 }

@@ -4,9 +4,11 @@ mod render_server;
 pub use common::*;
 pub use render_server::*;
 pub use wgpu::{
-    BufferAddress, CommandBuffer, DepthStencilState, MultisampleState, PrimitiveState,
-    RenderPipeline, RenderPipelineDescriptor, ShaderModule, ShaderModuleDescriptor, ShaderSource,
-    Surface, SurfaceConfiguration, SurfaceTexture, VertexStepMode, util::BufferInitDescriptor,
+    BlendState, BufferAddress, ColorTargetState, ColorWrites, CommandBuffer, DepthStencilState,
+    FragmentState, MultisampleState, PipelineCompilationOptions, PrimitiveState, RenderPipeline,
+    RenderPipelineDescriptor, ShaderModule, ShaderModuleDescriptor, ShaderSource, Surface,
+    SurfaceConfiguration, SurfaceTexture, VertexBufferLayout, VertexState, VertexStepMode,
+    util::BufferInitDescriptor,TextureFormat
 };
 
 pub enum Pipeline {

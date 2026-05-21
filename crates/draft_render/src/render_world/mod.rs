@@ -6,10 +6,11 @@ mod temporary_cache;
 use std::marker::PhantomData;
 
 use crate::FrameworkError;
-use draft_graphics::RenderServer;
-use draft_mesh::{Mesh, MeshResource};
+use draft_graphics::{RenderDevice, RenderServer};
+use draft_mesh::{Mesh, MeshResource, MeshVertexBufferLayoutRef, MeshVertexBufferLayouts};
 use draft_shader::{Shader, ShaderResource};
 use draft_window::SystemWindowManager;
+use fyrox_resource::Resource;
 
 pub use pipeline_cache::*;
 pub use render_window::*;
@@ -20,6 +21,17 @@ pub struct ResourceId<T> {
     pub slot: usize,
     _marker: PhantomData<T>,
 }
+
+impl<T> Clone for ResourceId<T> {
+    fn clone(&self) -> Self {
+        Self {
+            slot: self.slot,
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<T> Copy for ResourceId<T> {}
 
 impl<T> ResourceId<T> {
     const INVAID: ResourceId<T> = ResourceId {
@@ -43,17 +55,43 @@ impl<T> Default for ResourceId<T> {
 
 pub struct RenderWorld {
     mesh_cache: ResourceCache<Mesh>,
+    mesh_vertex_buffer_layouts: MeshVertexBufferLayouts,
     shader_cache: ResourceCache<Shader>,
     windows: RenderWindowContainer,
+    pipeline_cache: PipelineCache,
 }
 
 impl RenderWorld {
-    pub fn empty() -> RenderWorld {
+    pub fn new(device: &RenderDevice) -> RenderWorld {
         Self {
             mesh_cache: ResourceCache::default(),
+            mesh_vertex_buffer_layouts: MeshVertexBufferLayouts::default(),
             shader_cache: ResourceCache::default(),
             windows: RenderWindowContainer::default(),
+            pipeline_cache: PipelineCache::new(device),
         }
+    }
+
+    pub fn get_or_create_render_pipeline(
+        &mut self,
+        desc: GpuRenderPipelineDescriptor,
+    ) -> Result<CachePipelineId, FrameworkError> {
+        self.get_or_create_shader_id(&desc.vertex.shader)?;
+
+        if let Some(ref fragment) = desc.fragment {
+            self.get_or_create_shader_id(&fragment.shader)?;
+        }
+
+        self.pipeline_cache.create_render_pipeline(&desc)
+    }
+
+    pub fn get_mesh_vertex_buffer_layout(
+        &mut self,
+        mesh: &MeshResource,
+    ) -> MeshVertexBufferLayoutRef {
+        let data = mesh.data_ref();
+        data.vertex_buffer
+            .get_mesh_vertex_buffer_layout(&mut self.mesh_vertex_buffer_layouts)
     }
 
     pub fn prepare_windows(
@@ -96,5 +134,9 @@ impl RenderWorld {
         shader: &ShaderResource,
     ) -> Result<ResourceId<Shader>, FrameworkError> {
         self.shader_cache.get_or_create_resource_id(shader)
+    }
+
+    pub fn get_mesh(&self, id: ResourceId<Mesh>) -> Option<Resource<Mesh>> {
+        self.mesh_cache.get(id)
     }
 }
