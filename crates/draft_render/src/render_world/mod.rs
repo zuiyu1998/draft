@@ -55,8 +55,8 @@ impl<T> Default for ResourceId<T> {
 
 pub struct RenderWorld {
     mesh_cache: ResourceCache<Mesh>,
-    mesh_vertex_buffer_layouts: MeshVertexBufferLayouts,
     shader_cache: ResourceCache<Shader>,
+    mesh_vertex_buffer_layouts: MeshVertexBufferLayouts,
     windows: RenderWindowContainer,
     pipeline_cache: PipelineCache,
 }
