@@ -2,12 +2,18 @@ use std::collections::HashMap;
 
 use draft_mesh::Mesh;
 
-use crate::render_world::ResourceId;
+use crate::{
+    render_world::{RenderWorld, ResourceId},
+    renderer::MeshMaterialRenderer,
+};
 
-pub const CORE_2D: &str = "core_2d";
+pub struct RenderCommandContext<'a> {
+    pub render_world: &'a mut RenderWorld,
+    pub mesh_material_renderer: &'a mut dyn MeshMaterialRenderer,
+}
 
 pub trait RenderCommand: 'static {
-    fn execute(&self);
+    fn execute(&self, context: &mut RenderCommandContext);
 }
 
 pub struct MeshMaterialRenderCommand {
@@ -15,13 +21,26 @@ pub struct MeshMaterialRenderCommand {
 }
 
 impl RenderCommand for MeshMaterialRenderCommand {
-    fn execute(&self) {}
+    fn execute(&self, _context: &mut RenderCommandContext) {}
 }
 
 pub struct RenderCommands {
-    pub commands: Vec<Box<dyn RenderCommand>>,
+    commands: Vec<Box<dyn RenderCommand>>,
 }
 
+impl RenderCommands {
+    pub fn add_command(&mut self, command: impl RenderCommand) {
+        self.commands.push(Box::new(command));
+    }
+
+    pub fn execute(&self, context: &mut RenderCommandContext) {
+        for command in self.commands.iter() {
+            command.execute(context);
+        }
+    }
+}
+
+#[derive(Default)]
 pub struct RenderCommandsContainer {
     data: HashMap<String, RenderCommands>,
 }
@@ -42,9 +61,7 @@ impl RenderCommandsContainer {
     }
 
     pub fn new() -> Self {
-        let mut container = Self::empty();
-
-        container.get_or_insert(CORE_2D);
+        let container = Self::empty();
 
         container
     }
