@@ -8,12 +8,13 @@ use draft_graphics::{Color, RenderServer};
 use draft_mesh::Mesh;
 use draft_window::SystemWindowManager;
 
-pub const CORE_2D: &str = "core_2d";
-
 use crate::{
-    render_pipeline::{RenderPipeline, RenderPipelineContainer, RenderPipelineRunContext},
-    render_world::{RenderWorld, ResourceId},
-    renderer_2d::Renderer2d,
+    frame_graph::{FrameGraph, FrameGraphContext, TransientResourceCache},
+    render_pipeline::{
+        RenderPipelineContainer, RenderPipelineRunContext, initialize_2d_render_pipeline,
+    },
+    render_world::{CachePipelineId, RenderWorld, ResourceId},
+    renderer_2d::{CORE_2D, Renderer2d},
 };
 
 pub use error::FrameworkError;
@@ -35,10 +36,13 @@ impl<'a> RenderContext<'a> {
     pub fn create_2d_render_pipeline(
         &mut self,
         mesh_id: ResourceId<Mesh>,
-    ) -> Result<(), FrameworkError> {
+    ) -> Result<CachePipelineId, FrameworkError> {
         self.renderer_2d
-            .create_render_pipeline(self.render_world, mesh_id)?;
-        Ok(())
+            .create_render_pipeline(self.render_world, mesh_id)
+    }
+
+    pub fn add_render_phase(&mut self, mesh_id: ResourceId<Mesh>, pipeline_id: CachePipelineId) {
+        self.renderer_2d.add_render_phase(mesh_id, pipeline_id);
     }
 }
 
@@ -67,6 +71,7 @@ pub struct WorldRenderer {
     pub render_world: RenderWorld,
     pub options: RenderOptions,
     pub renderer_2d: Renderer2d,
+    pub transient_resource_cache: TransientResourceCache,
 }
 
 impl WorldRenderer {
@@ -82,15 +87,18 @@ impl WorldRenderer {
             render_pipeline_container: RenderPipelineContainer::default(),
             options,
             renderer_2d: Default::default(),
+            transient_resource_cache: TransientResourceCache::default(),
         }
     }
 
     pub fn initialize(&mut self) {
         self.render_pipeline_container
-            .insert(CORE_2D, RenderPipeline::default());
+            .insert(CORE_2D, initialize_2d_render_pipeline());
     }
 
     pub fn prepare<W: IWorld>(&mut self, world: &W) {
+        self.renderer_2d.unset();
+
         self.render_world
             .prepare_windows(&self.render_server, &self.system_window_manager);
 
@@ -146,10 +154,32 @@ impl WorldRenderer {
     }
 
     pub fn render_frame(&mut self) {
-        let mut context = RenderPipelineRunContext {};
+        let pipeline_container = self.render_world.get_pipeline_container();
+
+        let mut context = RenderPipelineRunContext {
+            phases: &mut self.renderer_2d.phases,
+            world: &mut self.render_world,
+            options: &self.options,
+        };
 
         if let Some(pipeline) = self.render_pipeline_container.get(CORE_2D) {
-            pipeline.run(&mut context);
+            let mut frame_graph = FrameGraph::default();
+
+            pipeline.run(&mut frame_graph, &mut context);
+
+            frame_graph.compile();
+
+            let mut context = FrameGraphContext::new(
+                &pipeline_container,
+                &self.render_server.device,
+                &mut self.transient_resource_cache,
+            );
+
+            frame_graph.execute(&mut context);
+
+            let command_buffers = context.finish();
+
+            self.render_server.queue.submit(command_buffers);
         }
     }
 

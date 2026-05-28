@@ -9,7 +9,10 @@ use draft_mesh::VertexBufferLayout;
 use draft_shader::ShaderResource;
 use wgpu::ShaderModuleDescriptor;
 
-use crate::FrameworkError;
+use crate::{
+    FrameworkError,
+    frame_graph::{GetPipelineContainer, PipelineContainer},
+};
 
 pub type CachePipelineId = usize;
 
@@ -39,6 +42,18 @@ pub struct PipelineCache {
     device: RenderDevice,
     shader_cache: HashMap<usize, Arc<ShaderModule>>,
     pipelines: Vec<Option<Pipeline>>,
+}
+
+impl GetPipelineContainer for PipelineCache {
+    fn get_pipeline_container(&self) -> PipelineContainer {
+        let mut pipelines = PipelineContainer::default();
+
+        for pipeline in self.pipelines.iter() {
+            pipelines.push(pipeline.as_ref().map(|pipeline| pipeline.clone()));
+        }
+
+        pipelines
+    }
 }
 
 impl PipelineCache {

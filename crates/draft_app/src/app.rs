@@ -18,8 +18,8 @@ pub struct AppInitializeParams {
 pub struct App {
     graphics_context: GraphicsContext,
     plugin_container: PluginContainer,
-    system_window_manager: SystemWindowManager,
     world: World,
+    system_window_manager: SystemWindowManager,
 
     pub(crate) runner: RunnerFn,
 }
@@ -37,6 +37,10 @@ impl App {
             system_window_manager: Default::default(),
             world: World::empty(),
         }
+    }
+
+    pub fn request_redraw(&self) {
+        self.system_window_manager.request_redraw();
     }
 
     pub fn set_world<W: IWorld>(&mut self, world: W) -> &mut Self {

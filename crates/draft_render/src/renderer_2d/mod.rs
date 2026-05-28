@@ -14,6 +14,12 @@ use crate::{
 };
 
 pub use resource::*;
+pub const CORE_2D: &str = "core_2d";
+
+pub struct RenderPhase {
+    pub mesh_id: ResourceId<Mesh>,
+    pub pipeline_id: CachePipelineId,
+}
 
 #[derive(PartialEq, Hash, Clone, Eq)]
 pub struct MeshMaterial {
@@ -22,9 +28,21 @@ pub struct MeshMaterial {
 
 pub struct Renderer2d {
     mesh_material_cache: HashMap<MeshMaterial, CachePipelineId>,
+    pub phases: Vec<RenderPhase>,
 }
 
 impl Renderer2d {
+    pub fn unset(&mut self) {
+        self.phases.clear();
+    }
+
+    pub fn add_render_phase(&mut self, mesh_id: ResourceId<Mesh>, pipeline_id: CachePipelineId) {
+        self.phases.push(RenderPhase {
+            mesh_id,
+            pipeline_id,
+        });
+    }
+
     pub fn create_render_pipeline(
         &mut self,
         render_world: &mut RenderWorld,
@@ -99,6 +117,7 @@ impl Default for Renderer2d {
     fn default() -> Self {
         Self {
             mesh_material_cache: HashMap::default(),
+            phases: Vec::new(),
         }
     }
 }

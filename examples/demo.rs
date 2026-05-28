@@ -41,9 +41,11 @@ impl IWorld for SceneTree {
             .get_or_create_mesh_id(&self.mesh)
             .expect("get_or_create_mesh_id failed");
 
-        let _pipeline_id = context
+        let pipeline_id = context
             .create_2d_render_pipeline(mesh_id)
             .expect("create_2d_render_pipeline failed");
+
+        context.add_render_phase(mesh_id, pipeline_id);
     }
 }
 

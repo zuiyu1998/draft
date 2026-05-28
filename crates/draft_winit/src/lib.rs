@@ -27,6 +27,10 @@ impl ISystemWindow for WindowWrapper {
     fn get_raw_window_handle(&self) -> RawWindowHandle {
         self.0.window_handle().unwrap().as_raw()
     }
+
+    fn request_redraw(&self) {
+        self.0.request_redraw();
+    }
 }
 
 #[derive(Default)]
@@ -70,6 +74,7 @@ impl ApplicationHandler for WinitAppRunnerState {
 
     fn about_to_wait(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
         self.app.update();
+        self.app.request_redraw();
     }
 
     fn window_event(

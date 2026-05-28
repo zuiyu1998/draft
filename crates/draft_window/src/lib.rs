@@ -13,6 +13,7 @@ pub trait ISystemWindow: 'static + Any + Send + Sync {
     fn get_physical_size(&self) -> PhysicalSize;
     fn get_raw_window_handle(&self) -> RawWindowHandle;
     fn get_raw_display_handle(&self) -> RawDisplayHandle;
+    fn request_redraw(&self);
 }
 
 pub struct PhysicalSize {
@@ -57,6 +58,11 @@ impl SystemWindowManager {
         let mut guard = self.state.lock();
         guard.spawn_window(window)
     }
+
+    pub fn request_redraw(&self) {
+        let guard = self.state.lock();
+        guard.request_redraw();
+    }
 }
 
 impl Clone for SystemWindowManager {
@@ -78,6 +84,10 @@ impl SystemWindowManagerState {
         &self.pool
     }
 
+    pub fn primary(&self) -> Handle<SystemWindow> {
+        self.primary
+    }
+
     pub fn spawn_window(&mut self, window: SystemWindow) -> Handle<SystemWindow> {
         self.pool.spawn(window)
     }
@@ -87,5 +97,11 @@ impl SystemWindowManagerState {
 
         self.primary = handle;
         handle
+    }
+
+    pub fn request_redraw(&self) {
+        for window in self.pool.iter() {
+            window.get_window().request_redraw();
+        }
     }
 }

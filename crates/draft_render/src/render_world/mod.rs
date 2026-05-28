@@ -5,7 +5,10 @@ mod temporary_cache;
 
 use std::{hash::Hash, marker::PhantomData};
 
-use crate::FrameworkError;
+use crate::{
+    FrameworkError,
+    frame_graph::{GetPipelineContainer, PipelineContainer},
+};
 use draft_graphics::{RenderDevice, RenderServer};
 use draft_mesh::{Mesh, MeshResource, MeshVertexBufferLayoutRef, MeshVertexBufferLayouts};
 use draft_shader::{Shader, ShaderResource};
@@ -86,8 +89,20 @@ impl RenderWorld {
         }
     }
 
+    pub fn get_primary(&self) -> Handle<SystemWindow> {
+        self.windows.get_primary()
+    }
+
+    pub fn get_pipeline_container(&mut self) -> PipelineContainer {
+        self.pipeline_cache.get_pipeline_container()
+    }
+
     pub fn get_window(&self, handle: &Handle<SystemWindow>) -> &RenderWindow {
         self.windows.get(handle)
+    }
+
+     pub fn get_window_mut(&mut self, handle: &Handle<SystemWindow>) -> &mut RenderWindow {
+        self.windows.get_mut(handle)
     }
 
     pub fn create_unused_render_windows(&self) -> Vec<Handle<SystemWindow>> {
@@ -121,12 +136,20 @@ impl RenderWorld {
         render_server: &RenderServer,
         system_window_manager: &SystemWindowManager,
     ) {
-        for (handle, system_window) in system_window_manager.state().pool().pair_iter() {
+        let guard = system_window_manager.state();
+
+        let primary = guard.primary();
+
+        for (handle, system_window) in guard.pool().pair_iter() {
             let render_window = self
                 .windows
                 .get_or_create(render_server, handle, system_window);
 
             render_window.spawn_swapchain_texture();
+
+            if handle == primary {
+                self.windows.set_primary(primary);
+            }
         }
     }
 

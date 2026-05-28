@@ -89,11 +89,24 @@ impl RenderWindow {
 #[derive(Default)]
 pub struct RenderWindowContainer {
     windows: HashMap<Handle<SystemWindow>, RenderWindow>,
+    primary: Handle<SystemWindow>,
 }
 
 impl RenderWindowContainer {
     pub fn get(&self, handle: &Handle<SystemWindow>) -> &RenderWindow {
         self.windows.get(handle).unwrap()
+    }
+
+    pub fn get_mut(&mut self, handle: &Handle<SystemWindow>) -> &mut RenderWindow {
+        self.windows.get_mut(handle).unwrap()
+    }
+
+    pub fn set_primary(&mut self, handle: Handle<SystemWindow>) {
+        self.primary = handle;
+    }
+
+    pub fn get_primary(&self) -> Handle<SystemWindow> {
+        self.primary
     }
 
     pub fn get_or_create(
