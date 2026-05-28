@@ -387,5 +387,14 @@ pub struct MeshVertexAttribute {
     pub format: VertexFormat,
 }
 
+impl MeshVertexAttribute {
+    pub const fn new(id: u64, format: VertexFormat) -> Self {
+        Self {
+            id: MeshVertexAttributeId(id),
+            format,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Reflect, Eq, PartialOrd, Ord, Hash, Copy)]
 pub struct MeshVertexAttributeId(u64);

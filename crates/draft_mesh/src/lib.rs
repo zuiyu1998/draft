@@ -1,7 +1,7 @@
 mod index;
 mod vertex;
 
-use draft_graphics::PrimitiveTopology;
+use draft_graphics::{PrimitiveTopology, VertexFormat};
 use fyrox_core::{TypeUuidProvider, Uuid, reflect::*, sparse::AtomicIndex, uuid, visitor::*};
 use fyrox_resource::{Resource, ResourceData};
 use std::sync::Arc;
@@ -14,13 +14,18 @@ pub type MeshResource = Resource<Mesh>;
 #[derive(Debug, Clone, Default, Reflect, TypeUuidProvider)]
 #[type_uuid(id = "8a23a414-e66d-4e12-9628-92c6ab49c2f0")]
 pub struct Mesh {
-    primitive_topology: PrimitiveTopology,
+    pub primitive_topology: PrimitiveTopology,
 
     pub vertex_buffer: VertexBuffer,
     pub index_buffer: Option<IndexBuffer>,
 
     #[reflect(hidden)]
     pub cache_index: Arc<AtomicIndex>,
+}
+
+impl Mesh {
+    pub const ATTRIBUTE_POSITION: MeshVertexAttribute =
+        MeshVertexAttribute::new(0, VertexFormat::Float32x3);
 }
 
 impl Visit for Mesh {

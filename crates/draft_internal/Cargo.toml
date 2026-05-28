@@ -4,6 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+fyrox-core = { workspace = true }
+fyrox-resource = { workspace = true }
+
 draft_render = { path = "../draft_render" }
 draft_app = { path = "../draft_app" }
 draft_winit = { path = "../draft_winit" }
+draft_mesh = { path = "../draft_mesh" }
+draft_graphics = { path = "../draft_graphics" }
