@@ -14,6 +14,7 @@ pub struct RenderWindow {
     pub surface_format: TextureFormat,
 
     pub swap_chain_texture: Option<SurfaceTexture>,
+    pub has_camera: bool,
 }
 
 impl RenderWindow {
@@ -48,6 +49,7 @@ impl RenderWindow {
             surface,
             surface_format: format,
             swap_chain_texture: None,
+            has_camera: false,
         }
     }
 
@@ -56,11 +58,16 @@ impl RenderWindow {
             .configure(device.wgpu_device(), &self.surface_config);
     }
 
+    pub fn swap_chain_texture(&self) -> &SurfaceTexture {
+        self.swap_chain_texture.as_ref().unwrap()
+    }
+
     pub fn spawn_swapchain_texture(&mut self) {
         if let CurrentSurfaceTexture::Success(swap_chain_texture) =
             self.surface.get_current_texture()
         {
             self.swap_chain_texture = Some(swap_chain_texture);
+            self.unset_camera();
         }
     }
 
@@ -68,6 +75,14 @@ impl RenderWindow {
         if let Some(swap_chain_texture) = self.swap_chain_texture.take() {
             swap_chain_texture.present();
         }
+    }
+
+    pub fn set_camera(&mut self) {
+        self.has_camera = true;
+    }
+
+    pub fn unset_camera(&mut self) {
+        self.has_camera = false;
     }
 }
 
@@ -77,6 +92,10 @@ pub struct RenderWindowContainer {
 }
 
 impl RenderWindowContainer {
+    pub fn get(&self, handle: &Handle<SystemWindow>) -> &RenderWindow {
+        self.windows.get(handle).unwrap()
+    }
+
     pub fn get_or_create(
         &mut self,
         render_server: &RenderServer,
@@ -90,5 +109,15 @@ impl RenderWindowContainer {
         }
 
         self.windows.get_mut(&handle).unwrap()
+    }
+
+    pub fn create_unused_render_windows(&self) -> Vec<Handle<SystemWindow>> {
+        let mut target = Vec::new();
+        for (handle, render_window) in self.windows.iter() {
+            if !render_window.has_camera {
+                target.push(handle.clone());
+            }
+        }
+        target
     }
 }

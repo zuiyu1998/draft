@@ -9,8 +9,8 @@ use crate::FrameworkError;
 use draft_graphics::{RenderDevice, RenderServer};
 use draft_mesh::{Mesh, MeshResource, MeshVertexBufferLayoutRef, MeshVertexBufferLayouts};
 use draft_shader::{Shader, ShaderResource};
-use draft_window::SystemWindowManager;
-use fyrox_resource::Resource;
+use draft_window::{SystemWindow, SystemWindowManager};
+use fyrox_resource::{Resource, core::pool::Handle};
 
 pub use pipeline_cache::*;
 pub use render_window::*;
@@ -70,6 +70,14 @@ impl RenderWorld {
             windows: RenderWindowContainer::default(),
             pipeline_cache: PipelineCache::new(device),
         }
+    }
+
+    pub fn get_window(&self, handle: &Handle<SystemWindow>) -> &RenderWindow {
+        self.windows.get(handle)
+    }
+
+    pub fn create_unused_render_windows(&self) -> Vec<Handle<SystemWindow>> {
+        self.windows.create_unused_render_windows()
     }
 
     pub fn get_or_create_render_pipeline(

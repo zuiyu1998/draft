@@ -1,5 +1,5 @@
 use draft_graphics::RenderServer;
-use draft_render::{IWorld, WorldRenderer};
+use draft_render::{IWorld, RenderOptions, WorldRenderer};
 use draft_window::SystemWindow;
 
 pub type RenderServerConstructor =
@@ -27,12 +27,16 @@ impl GraphicsContext {
 
 impl Default for GraphicsContext {
     fn default() -> Self {
-        GraphicsContext::Uninitialized(GraphicsContextParams {})
+        GraphicsContext::Uninitialized(GraphicsContextParams {
+            options: RenderOptions::default(),
+        })
     }
 }
 
 #[derive(Clone)]
-pub struct GraphicsContextParams {}
+pub struct GraphicsContextParams {
+   pub options: RenderOptions,
+}
 
 pub struct InitializedGraphicsContext {
     pub params: GraphicsContextParams,

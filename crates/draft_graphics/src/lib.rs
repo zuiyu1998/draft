@@ -8,7 +8,7 @@ pub use wgpu::{
     FragmentState, MultisampleState, PipelineCompilationOptions, PrimitiveState, RenderPipeline,
     RenderPipelineDescriptor, ShaderModule, ShaderModuleDescriptor, ShaderSource, Surface,
     SurfaceConfiguration, SurfaceTexture, VertexBufferLayout, VertexState, VertexStepMode,
-    util::BufferInitDescriptor,TextureFormat
+    util::BufferInitDescriptor,TextureFormat, Color
 };
 
 pub enum Pipeline {

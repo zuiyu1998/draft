@@ -52,8 +52,11 @@ impl App {
             let render_server =
                 (params.render_server_constructor)(graphics_context_params, params.window);
 
-            let mut renderer =
-                WorldRenderer::new(render_server, self.system_window_manager.clone());
+            let mut renderer = WorldRenderer::new(
+                render_server,
+                self.system_window_manager.clone(),
+                graphics_context_params.options.clone(),
+            );
 
             renderer.initialize();
 
