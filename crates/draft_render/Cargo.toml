@@ -10,6 +10,12 @@ draft_mesh = { path = "../draft_mesh" }
 draft_shader = { path = "../draft_shader" }
 
 fyrox-resource = { workspace = true }
-
-wgpu = { version = "29.0" }
+wgpu = { version = "29.0.3", default-features = false, features = [
+    "wgsl",
+    "dx12",
+    "metal",
+    "vulkan",
+    "naga-ir",
+    "fragile-send-sync-non-atomic-wasm",
+] }
 thiserror = { version = "2.0" }

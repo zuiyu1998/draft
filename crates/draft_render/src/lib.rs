@@ -5,13 +5,15 @@ pub mod render_world;
 pub mod renderer_2d;
 
 use draft_graphics::{Color, RenderServer};
+use draft_mesh::Mesh;
 use draft_window::SystemWindowManager;
 
 pub const CORE_2D: &str = "core_2d";
 
 use crate::{
     render_pipeline::{RenderPipeline, RenderPipelineContainer, RenderPipelineRunContext},
-    render_world::RenderWorld,
+    render_world::{RenderWorld, ResourceId},
+    renderer_2d::Renderer2d,
 };
 
 pub use error::FrameworkError;
@@ -21,7 +23,23 @@ pub trait IWorld: 'static {
 }
 
 pub struct RenderContext<'a> {
-    pub render_world: &'a mut RenderWorld,
+    render_world: &'a mut RenderWorld,
+    renderer_2d: &'a mut Renderer2d,
+}
+
+impl<'a> RenderContext<'a> {
+    pub fn render_world(&mut self) -> &mut RenderWorld {
+        self.render_world
+    }
+
+    pub fn create_2d_render_pipeline(
+        &mut self,
+        mesh_id: ResourceId<Mesh>,
+    ) -> Result<(), FrameworkError> {
+        self.renderer_2d
+            .create_render_pipeline(self.render_world, mesh_id)?;
+        Ok(())
+    }
 }
 
 #[derive(Clone)]
@@ -48,6 +66,7 @@ pub struct WorldRenderer {
     pub render_pipeline_container: RenderPipelineContainer,
     pub render_world: RenderWorld,
     pub options: RenderOptions,
+    pub renderer_2d: Renderer2d,
 }
 
 impl WorldRenderer {
@@ -62,6 +81,7 @@ impl WorldRenderer {
             system_window_manager,
             render_pipeline_container: RenderPipelineContainer::default(),
             options,
+            renderer_2d: Default::default(),
         }
     }
 
@@ -76,6 +96,7 @@ impl WorldRenderer {
 
         let mut context = RenderContext {
             render_world: &mut self.render_world,
+            renderer_2d: &mut self.renderer_2d,
         };
 
         world.render(&mut context);

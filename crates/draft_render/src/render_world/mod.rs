@@ -3,7 +3,7 @@ mod render_window;
 mod resource_cache;
 mod temporary_cache;
 
-use std::marker::PhantomData;
+use std::{hash::Hash, marker::PhantomData};
 
 use crate::FrameworkError;
 use draft_graphics::{RenderDevice, RenderServer};
@@ -20,6 +20,20 @@ pub use temporary_cache::*;
 pub struct ResourceId<T> {
     pub slot: usize,
     _marker: PhantomData<T>,
+}
+
+impl<T> Hash for ResourceId<T> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.slot.hash(state);
+    }
+}
+
+impl<T> Eq for ResourceId<T> {}
+
+impl<T> PartialEq for ResourceId<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.slot == other.slot
+    }
 }
 
 impl<T> Clone for ResourceId<T> {
@@ -80,7 +94,7 @@ impl RenderWorld {
         self.windows.create_unused_render_windows()
     }
 
-    pub fn get_or_create_render_pipeline(
+    pub fn create_render_pipeline(
         &mut self,
         desc: GpuRenderPipelineDescriptor,
     ) -> Result<CachePipelineId, FrameworkError> {

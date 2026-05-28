@@ -36,10 +36,14 @@ impl SceneTree {
 
 impl IWorld for SceneTree {
     fn render(&self, context: &mut RenderContext) {
-        let _mesh_id = context
-            .render_world
+        let mesh_id = context
+            .render_world()
             .get_or_create_mesh_id(&self.mesh)
             .expect("get_or_create_mesh_id failed");
+
+        let _pipeline_id = context
+            .create_2d_render_pipeline(mesh_id)
+            .expect("create_2d_render_pipeline failed");
     }
 }
 
