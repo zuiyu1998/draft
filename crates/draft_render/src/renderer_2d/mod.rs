@@ -1,13 +1,13 @@
 mod resource;
 
-use std::collections::HashMap;
+use std::{collections::HashMap, mem::take};
 
 use draft_mesh::{Mesh, MeshVertexBufferLayoutRef};
 use wgpu::TextureFormat;
 
 use crate::{
     FrameworkError,
-    render_phase::RenderPhase,
+    render_phase::{MeshRenderPhase, RenderPhaseContainer},
     render_world::{
         CachePipelineId, GpuFragmentState, GpuRenderPipelineDescriptor, GpuVertexState,
         RenderWorld, ResourceId,
@@ -22,18 +22,45 @@ pub struct MeshMaterial {
     mesh_id: ResourceId<Mesh>,
 }
 
+pub struct RenderPhaseBuilder {
+    pub mesh_id: ResourceId<Mesh>,
+    pub pipeline_id: CachePipelineId,
+}
+
+impl RenderPhaseBuilder {
+    pub fn build(self) -> MeshRenderPhase {
+        MeshRenderPhase {
+            mesh_id: self.mesh_id,
+            pipeline_id: self.pipeline_id,
+        }
+    }
+}
+
 pub struct Renderer2d {
     mesh_material_cache: HashMap<MeshMaterial, CachePipelineId>,
-    pub phases: Vec<RenderPhase>,
+    pub phase_builders: Vec<RenderPhaseBuilder>,
 }
 
 impl Renderer2d {
     pub fn unset(&mut self) {
-        self.phases.clear();
+        self.phase_builders.clear();
     }
 
-    pub fn add_render_phase(&mut self, mesh_id: ResourceId<Mesh>, pipeline_id: CachePipelineId) {
-        self.phases.push(RenderPhase {
+    pub fn spawn_render_phase(&mut self, render_phase_container: &mut RenderPhaseContainer) {
+        let phase_builders = take(&mut self.phase_builders);
+
+        for phase_builder in phase_builders.into_iter() {
+            let render_phase = phase_builder.build();
+            render_phase_container.add(CORE_2D, render_phase);
+        }
+    }
+
+    pub fn add_render_phase_builder(
+        &mut self,
+        mesh_id: ResourceId<Mesh>,
+        pipeline_id: CachePipelineId,
+    ) {
+        self.phase_builders.push(RenderPhaseBuilder {
             mesh_id,
             pipeline_id,
         });
@@ -113,7 +140,7 @@ impl Default for Renderer2d {
     fn default() -> Self {
         Self {
             mesh_material_cache: HashMap::default(),
-            phases: Vec::new(),
+            phase_builders: Default::default(),
         }
     }
 }

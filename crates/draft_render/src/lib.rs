@@ -11,6 +11,7 @@ use draft_window::SystemWindowManager;
 
 use crate::{
     frame_graph::{FrameGraph, FrameGraphContext, TransientResourceCache},
+    render_phase::RenderPhaseContainer,
     render_pipeline::{
         RenderPipelineContainer, RenderPipelineRunContext, initialize_2d_render_pipeline,
     },
@@ -42,8 +43,13 @@ impl<'a> RenderContext<'a> {
             .create_render_pipeline(self.render_world, mesh_id)
     }
 
-    pub fn add_render_phase(&mut self, mesh_id: ResourceId<Mesh>, pipeline_id: CachePipelineId) {
-        self.renderer_2d.add_render_phase(mesh_id, pipeline_id);
+    pub fn add_render_phase_builder(
+        &mut self,
+        mesh_id: ResourceId<Mesh>,
+        pipeline_id: CachePipelineId,
+    ) {
+        self.renderer_2d
+            .add_render_phase_builder(mesh_id, pipeline_id);
     }
 }
 
@@ -69,6 +75,7 @@ pub struct WorldRenderer {
     pub render_server: RenderServer,
     pub system_window_manager: SystemWindowManager,
     pub render_pipeline_container: RenderPipelineContainer,
+    pub render_phase_container: RenderPhaseContainer,
     pub render_world: RenderWorld,
     pub options: RenderOptions,
     pub renderer_2d: Renderer2d,
@@ -89,6 +96,7 @@ impl WorldRenderer {
             options,
             renderer_2d: Default::default(),
             transient_resource_cache: TransientResourceCache::default(),
+            render_phase_container: RenderPhaseContainer::default(),
         }
     }
 
@@ -156,10 +164,11 @@ impl WorldRenderer {
 
     pub fn render_frame(&mut self) {
         self.render_world.swap_frame();
+        self.renderer_2d.spawn_render_phase(&mut self.render_phase_container);
 
         let pipeline_container = self.render_world.get_pipeline_container();
         let mut context = RenderPipelineRunContext {
-            phases: &mut self.renderer_2d.phases,
+            render_phase_container: &mut self.render_phase_container,
             world: &mut self.render_world,
             options: &self.options,
         };

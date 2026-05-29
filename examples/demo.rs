@@ -45,7 +45,7 @@ impl IWorld for SceneTree {
             .create_2d_render_pipeline(mesh_id)
             .expect("create_2d_render_pipeline failed");
 
-        context.add_render_phase(mesh_id, pipeline_id);
+        context.add_render_phase_builder(mesh_id, pipeline_id);
     }
 }
 

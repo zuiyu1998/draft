@@ -3,8 +3,9 @@ use std::collections::HashMap;
 use crate::{
     RenderOptions,
     frame_graph::{FrameGraph, TransientRenderPassColorAttachment, TransientTextureView},
-    render_phase::{RenderPhase, TrackedRenderPassBuilder},
+    render_phase::{RenderPhaseContainer, TrackedRenderPassBuilder},
     render_world::RenderWorld,
+    renderer_2d::CORE_2D,
 };
 use draft_graphics::TextureView;
 
@@ -24,7 +25,7 @@ impl RenderPipelineContainer {
 }
 
 pub struct RenderPipelineRunContext<'a> {
-    pub phases: &'a Vec<RenderPhase>,
+    pub render_phase_container: &'a RenderPhaseContainer,
     pub(crate) world: &'a mut RenderWorld,
     pub(crate) options: &'a RenderOptions,
 }
@@ -92,6 +93,10 @@ pub struct Main2dNode;
 
 impl Node for Main2dNode {
     fn run(&self, frame_graph: &mut FrameGraph, context: &mut RenderPipelineRunContext) {
+        let Some(phases) = context.render_phase_container.get(CORE_2D) else {
+            return;
+        };
+
         let mut pass_builder = frame_graph.create_pass_builder("main_2d");
         let mut render_pass_builder = pass_builder.create_render_pass_builder("main_2d_node");
 
@@ -109,7 +114,7 @@ impl Node for Main2dNode {
 
         let mut tracked = TrackedRenderPassBuilder::new(render_pass_builder);
 
-        for phase in context.phases.iter() {
+        for phase in phases.iter() {
             phase.render(&mut tracked, context.world);
         }
     }

@@ -1,6 +1,6 @@
 mod draw_state;
 
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use draft_graphics::Buffer;
 use draft_mesh::Mesh;
@@ -12,20 +12,47 @@ use crate::{
 
 pub use draw_state::*;
 
-pub struct RenderPhase {
+#[derive(Default)]
+pub struct RenderPhaseContainer(HashMap<String, Vec<Box<dyn RenderPhase>>>);
+
+
+impl RenderPhaseContainer {
+    pub fn get(&self, name: &str) -> Option<&Vec<Box<dyn RenderPhase>>> {
+        self.0.get(name)
+    }
+
+    pub fn add(&mut self, name: &str, render_phase: impl RenderPhase + 'static) {
+        self.add_boxed(name, Box::new(render_phase));
+    }
+
+    pub fn add_boxed(&mut self, name: &str, render_phase: Box<dyn RenderPhase>) {
+        self.0
+            .entry(name.to_string())
+            .or_default()
+            .push(render_phase);
+    }
+}
+
+pub trait RenderPhase: 'static {
+    fn render(&self, builder: &mut TrackedRenderPassBuilder, render_world: &RenderWorld);
+}
+
+pub struct MeshRenderPhase {
     pub mesh_id: ResourceId<Mesh>,
     pub pipeline_id: CachePipelineId,
 }
 
-impl RenderPhase {
+impl MeshRenderPhase {
     pub fn new(mesh_id: ResourceId<Mesh>, pipeline_id: CachePipelineId) -> Self {
         Self {
             mesh_id,
             pipeline_id,
         }
     }
+}
 
-    pub fn render(&self, builder: &mut TrackedRenderPassBuilder, render_world: &RenderWorld) {
+impl RenderPhase for MeshRenderPhase {
+    fn render(&self, builder: &mut TrackedRenderPassBuilder, render_world: &RenderWorld) {
         builder.set_render_pipeline(self.pipeline_id);
 
         let buffer = render_world.get_vertex_buffer(self.mesh_id);
