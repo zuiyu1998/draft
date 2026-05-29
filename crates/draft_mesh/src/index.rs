@@ -1,4 +1,5 @@
 use bytemuck::cast_slice;
+use draft_graphics::IndexFormat;
 use fyrox_core::reflect::*;
 
 #[derive(Debug, Clone, Default, Reflect)]
@@ -17,6 +18,20 @@ impl IndexBuffer {
         match &self.indices {
             Indices::U16(indices) => cast_slice(indices).to_vec(),
             Indices::U32(indices) => cast_slice(indices).to_vec(),
+        }
+    }
+
+    pub fn get_index_format(&self) -> IndexFormat {
+        match &self.indices {
+            Indices::U16(_) => IndexFormat::Uint16,
+            Indices::U32(_) => IndexFormat::Uint32,
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        match &self.indices {
+            Indices::U16(buffer) => buffer.len(),
+            Indices::U32(buffer) => buffer.len(),
         }
     }
 }

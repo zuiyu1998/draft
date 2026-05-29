@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     RenderOptions,
     frame_graph::{FrameGraph, TransientRenderPassColorAttachment, TransientTextureView},
-    render_phase::RenderPhase,
+    render_phase::{RenderPhase, TrackedRenderPassBuilder},
     render_world::RenderWorld,
 };
 use draft_graphics::TextureView;
@@ -106,5 +106,11 @@ impl Node for Main2dNode {
                 store: wgpu::StoreOp::Store,
             },
         });
+
+        let mut tracked = TrackedRenderPassBuilder::new(render_pass_builder);
+
+        for phase in context.phases.iter() {
+            phase.render(&mut tracked, context.world);
+        }
     }
 }

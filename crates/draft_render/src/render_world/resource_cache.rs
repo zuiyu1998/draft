@@ -113,4 +113,12 @@ impl<R: RenderResource> ResourceCache<R> {
             .get_raw(id.slot)
             .map(|etnry| etnry.resource.clone())
     }
+
+    pub fn take_update_resource_ids(&mut self) -> Vec<ResourceId<R>> {
+        std::mem::take(&mut self.update_resource_ids)
+    }
+
+    pub fn take_add_resource_ids(&mut self) -> Vec<ResourceId<R>> {
+        std::mem::take(&mut self.add_resource_ids)
+    }
 }

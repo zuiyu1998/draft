@@ -79,7 +79,7 @@ impl Renderer2d {
                 shader: SHADER.resource(),
                 entry_point: Some("fs_main".into()),
                 targets: vec![Some(wgpu::ColorTargetState {
-                    format: TextureFormat::Rgba8UnormSrgb,
+                    format: TextureFormat::Bgra8UnormSrgb,
                     blend: Some(wgpu::BlendState {
                         color: wgpu::BlendComponent::REPLACE,
                         alpha: wgpu::BlendComponent::REPLACE,

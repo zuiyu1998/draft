@@ -1,3 +1,4 @@
+mod mesh_allocator;
 mod pipeline_cache;
 mod render_window;
 mod resource_cache;
@@ -9,12 +10,13 @@ use crate::{
     FrameworkError,
     frame_graph::{GetPipelineContainer, PipelineContainer},
 };
-use draft_graphics::{RenderDevice, RenderServer};
+use draft_graphics::{Buffer, RenderDevice, RenderServer};
 use draft_mesh::{Mesh, MeshResource, MeshVertexBufferLayoutRef, MeshVertexBufferLayouts};
 use draft_shader::{Shader, ShaderResource};
 use draft_window::{SystemWindow, SystemWindowManager};
 use fyrox_resource::{Resource, core::pool::Handle};
 
+pub use mesh_allocator::*;
 pub use pipeline_cache::*;
 pub use render_window::*;
 pub use resource_cache::*;
@@ -76,6 +78,7 @@ pub struct RenderWorld {
     pipeline_cache: PipelineCache,
     mesh_vertex_buffer_layouts: MeshVertexBufferLayouts,
     windows: RenderWindowContainer,
+    mesh_allocator: MeshAllocator,
 }
 
 impl RenderWorld {
@@ -86,7 +89,28 @@ impl RenderWorld {
             shader_cache: ResourceCache::default(),
             windows: RenderWindowContainer::default(),
             pipeline_cache: PipelineCache::new(device),
+            mesh_allocator: MeshAllocator::new(device),
         }
+    }
+
+    pub fn swap_frame(&mut self) {
+        let add_mesh_ids = self.mesh_cache.take_add_resource_ids();
+        let update_mesh_ids = self.mesh_cache.take_update_resource_ids();
+
+        for id in add_mesh_ids.iter().chain(update_mesh_ids.iter()) {
+            let mesh = self.mesh_cache.get(*id).unwrap();
+            let mesh = mesh.data_ref();
+
+            self.mesh_allocator.insert_mesh(*id, &mesh);
+        }
+    }
+
+    pub fn get_vertex_buffer(&self, mesh_id: ResourceId<Mesh>) -> &Buffer {
+        self.mesh_allocator.get_vertex_buffer(mesh_id)
+    }
+
+    pub fn get_index_buffer(&self, mesh_id: ResourceId<Mesh>) -> Option<&IndexBufferRenderData> {
+        self.mesh_allocator.get_index_buffer(mesh_id)
     }
 
     pub fn get_primary(&self) -> Handle<SystemWindow> {

@@ -155,8 +155,9 @@ impl WorldRenderer {
     }
 
     pub fn render_frame(&mut self) {
-        let pipeline_container = self.render_world.get_pipeline_container();
+        self.render_world.swap_frame();
 
+        let pipeline_container = self.render_world.get_pipeline_container();
         let mut context = RenderPipelineRunContext {
             phases: &mut self.renderer_2d.phases,
             world: &mut self.render_world,
