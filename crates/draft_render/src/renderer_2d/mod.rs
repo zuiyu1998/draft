@@ -7,6 +7,7 @@ use wgpu::TextureFormat;
 
 use crate::{
     FrameworkError,
+    render_phase::RenderPhase,
     render_world::{
         CachePipelineId, GpuFragmentState, GpuRenderPipelineDescriptor, GpuVertexState,
         RenderWorld, ResourceId,
@@ -15,11 +16,6 @@ use crate::{
 
 pub use resource::*;
 pub const CORE_2D: &str = "core_2d";
-
-pub struct RenderPhase {
-    pub mesh_id: ResourceId<Mesh>,
-    pub pipeline_id: CachePipelineId,
-}
 
 #[derive(PartialEq, Hash, Clone, Eq)]
 pub struct MeshMaterial {

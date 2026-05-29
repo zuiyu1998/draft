@@ -73,9 +73,9 @@ impl<T> Default for ResourceId<T> {
 pub struct RenderWorld {
     mesh_cache: ResourceCache<Mesh>,
     shader_cache: ResourceCache<Shader>,
+    pipeline_cache: PipelineCache,
     mesh_vertex_buffer_layouts: MeshVertexBufferLayouts,
     windows: RenderWindowContainer,
-    pipeline_cache: PipelineCache,
 }
 
 impl RenderWorld {
@@ -101,7 +101,7 @@ impl RenderWorld {
         self.windows.get(handle)
     }
 
-     pub fn get_window_mut(&mut self, handle: &Handle<SystemWindow>) -> &mut RenderWindow {
+    pub fn get_window_mut(&mut self, handle: &Handle<SystemWindow>) -> &mut RenderWindow {
         self.windows.get_mut(handle)
     }
 

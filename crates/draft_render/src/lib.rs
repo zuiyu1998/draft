@@ -1,5 +1,6 @@
 pub mod error;
 pub mod frame_graph;
+pub mod render_phase;
 pub mod render_pipeline;
 pub mod render_world;
 pub mod renderer_2d;

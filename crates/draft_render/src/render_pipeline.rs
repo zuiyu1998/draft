@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use crate::{
     RenderOptions,
     frame_graph::{FrameGraph, TransientRenderPassColorAttachment, TransientTextureView},
+    render_phase::RenderPhase,
     render_world::RenderWorld,
-    renderer_2d::RenderPhase,
 };
 use draft_graphics::TextureView;
 
