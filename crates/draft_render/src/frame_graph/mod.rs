@@ -8,6 +8,7 @@ mod resource_node;
 mod resource_table;
 mod texture_view;
 mod transient_resource;
+mod bind_group;
 
 use draft_graphics::RenderDevice;
 
@@ -21,6 +22,7 @@ pub use resource_node::*;
 pub use resource_table::*;
 pub use texture_view::*;
 pub use transient_resource::*;
+pub use bind_group::*;
 
 pub trait TransientResourceCreator {
     fn create_resource(&self, desc: &AnyTransientResourceDescriptor) -> AnyTransientResource;

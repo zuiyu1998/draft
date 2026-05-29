@@ -1,10 +1,11 @@
 mod render_pass;
 
 use crate::frame_graph::{
-    PipelineContainer, ResourceRef, ResourceTable, ResourceView, TransientResource,
-    TransientTextureView, TransientTextureViewDescriptor,
+    BindGroupEntry, BindingResource, PipelineContainer, ResourceRef, ResourceTable, ResourceView,
+    TransientBindGroup, TransientBindGroupDescriptor, TransientResource, TransientTextureView,
+    TransientTextureViewDescriptor,
 };
-use draft_graphics::RenderDevice;
+use draft_graphics::{BindGroupDescriptor, BufferBinding, RenderDevice};
 use wgpu::{CommandBuffer, CommandEncoder, CommandEncoderDescriptor, RenderPipeline};
 
 pub use render_pass::*;
@@ -40,6 +41,52 @@ impl PassContext<'_> {
         resource_ref: &ResourceRef<ResourceType, ViewType>,
     ) -> &ResourceType {
         self.resource_table.get_resource(resource_ref)
+    }
+
+    pub fn create_bind_group_entry<'a>(
+        &'a self,
+        entry: &BindGroupEntry,
+    ) -> wgpu::BindGroupEntry<'a> {
+        let resource = match &entry.resource {
+            BindingResource::Buffer(buffer_binding) => {
+                let buffer = self.get_resource(&buffer_binding.buffer_ref);
+
+                wgpu::BindingResource::Buffer(BufferBinding {
+                    buffer: &buffer.resource,
+                    offset: buffer_binding.offset,
+                    size: buffer_binding.size,
+                })
+            }
+        };
+
+        wgpu::BindGroupEntry {
+            binding: entry.binding,
+            resource,
+        }
+    }
+
+    pub fn create_bind_group_with_descriptor(
+        &self,
+        desc: &TransientBindGroupDescriptor,
+    ) -> wgpu::BindGroup {
+        let mut entries = vec![];
+
+        for entry in desc.entries.iter() {
+            entries.push(self.create_bind_group_entry(entry));
+        }
+
+        self.device.create_bind_group(&BindGroupDescriptor {
+            label: None,
+            layout: &desc.layout,
+            entries: &entries,
+        })
+    }
+
+    pub fn create_bind_group(&self, bind_group: &TransientBindGroup) -> wgpu::BindGroup {
+        match bind_group {
+            TransientBindGroup::BindGroup(bind_group) => bind_group.clone(),
+            TransientBindGroup::Desc(desc) => self.create_bind_group_with_descriptor(desc),
+        }
     }
 
     pub fn create_texture_view_with_descriptor<ViewType: ResourceView>(

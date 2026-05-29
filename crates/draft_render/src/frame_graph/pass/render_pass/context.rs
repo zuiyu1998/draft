@@ -2,7 +2,9 @@ use core::ops::Range;
 
 use wgpu::IndexFormat;
 
-use crate::frame_graph::{GpuRenderPass, PassContext, ResourceRead, ResourceRef, TransientBuffer};
+use crate::frame_graph::{
+    GpuRenderPass, PassContext, ResourceRead, ResourceRef, TransientBindGroup, TransientBuffer,
+};
 
 pub struct RenderPassContext<'a, 'b> {
     render_pass: GpuRenderPass,
@@ -23,15 +25,12 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
             .set_scissor_rect(x, y, width, height);
     }
 
-    pub fn set_gpu_bind_group(
-        &mut self,
-        index: u32,
-        bind_group: &wgpu::BindGroup,
-        offsets: &[u32],
-    ) {
+    pub fn set_bind_group(&mut self, index: u32, bind_group: &TransientBindGroup, offsets: &[u32]) {
+        let bind_group = self.pass_context.create_bind_group(bind_group);
+
         self.render_pass
             .get_render_pass_mut()
-            .set_bind_group(index, Some(bind_group), offsets);
+            .set_bind_group(index, Some(&bind_group), offsets);
     }
 
     pub fn draw_indexed(&mut self, indices: Range<u32>, base_vertex: i32, instances: Range<u32>) {
@@ -80,9 +79,8 @@ impl<'a, 'b> RenderPassContext<'a, 'b> {
     ) {
         let buffer = self.pass_context.resource_table.get_resource(buffer_ref);
 
-        self.render_pass.get_render_pass_mut().set_index_buffer(
-            buffer.resource.slice(offset..(offset + size)),
-            index_format,
-        );
+        self.render_pass
+            .get_render_pass_mut()
+            .set_index_buffer(buffer.resource.slice(offset..(offset + size)), index_format);
     }
 }

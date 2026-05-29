@@ -7,7 +7,7 @@ mod set_scissor_rect_parameter;
 mod set_vertex_buffer_parameter;
 
 use crate::frame_graph::{
-    RenderPass, RenderPassCommand, ResourceRead, ResourceRef, TransientBuffer,
+    RenderPass, RenderPassCommand, ResourceRead, ResourceRef, TransientBindGroup, TransientBuffer,
 };
 use core::ops::Range;
 use draw_indexed_parameter::*;
@@ -31,7 +31,7 @@ pub trait RenderPassExt {
         });
     }
 
-    fn set_gpu_bind_group(&mut self, index: u32, bind_group: &wgpu::BindGroup, offsets: &[u32]) {
+    fn set_bind_group(&mut self, index: u32, bind_group: &TransientBindGroup, offsets: &[u32]) {
         self.push(SetGpuBindGroupParameter {
             index,
             bind_group: bind_group.clone(),

@@ -4,8 +4,8 @@ use wgpu::IndexFormat;
 
 use crate::frame_graph::{
     PassNodeBuilderExt, RenderPass, ResourceHandle, ResourceMaterial, ResourceRead, ResourceRef,
-    ResourceWrite, TransientBuffer, TransientRenderPassColorAttachment, TransientResource,
-    TransientTextureView, TransientTextureViewHandle,
+    ResourceWrite, TransientBindGroup, TransientBuffer, TransientRenderPassColorAttachment,
+    TransientResource, TransientTextureView, TransientTextureViewHandle,
 };
 
 use super::{PassBuilder, RenderPassExt};
@@ -109,14 +109,13 @@ impl<'a, 'b> RenderPassBuilder<'a, 'b> {
         self
     }
 
-    pub fn set_gpu_bind_group(
+    pub fn set_bind_group(
         &mut self,
         index: u32,
-        bind_group: &wgpu::BindGroup,
+        bind_group: &TransientBindGroup,
         offsets: &[u32],
     ) -> &mut Self {
-        self.render_pass
-            .set_gpu_bind_group(index, bind_group, offsets);
+        self.render_pass.set_bind_group(index, bind_group, offsets);
 
         self
     }

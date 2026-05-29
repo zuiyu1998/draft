@@ -14,6 +14,10 @@ impl RenderDevice {
         &self.device
     }
 
+    pub fn create_bind_group(&self, desc: &wgpu::BindGroupDescriptor) -> wgpu::BindGroup {
+        self.device.create_bind_group(desc)
+    }
+
     pub fn create_shader_module(&self, desc: wgpu::ShaderModuleDescriptor) -> wgpu::ShaderModule {
         self.device.create_shader_module(desc)
     }

@@ -1,13 +1,13 @@
-use crate::frame_graph::{RenderPassCommand, RenderPassContext};
+use crate::frame_graph::{RenderPassCommand, RenderPassContext, TransientBindGroup};
 
 pub struct SetGpuBindGroupParameter {
     pub index: u32,
-    pub bind_group: wgpu::BindGroup,
+    pub bind_group: TransientBindGroup,
     pub offsets: Vec<u32>,
 }
 
 impl RenderPassCommand for SetGpuBindGroupParameter {
     fn execute(&self, render_pass_context: &mut RenderPassContext) {
-        render_pass_context.set_gpu_bind_group(self.index, &self.bind_group, &self.offsets);
+        render_pass_context.set_bind_group(self.index, &self.bind_group, &self.offsets);
     }
 }
