@@ -106,8 +106,6 @@ impl WorldRenderer {
     }
 
     pub fn prepare<W: IWorld>(&mut self, world: &W) {
-        self.renderer_2d.unset();
-
         self.render_world
             .prepare_windows(&self.render_server, &self.system_window_manager);
 
@@ -164,7 +162,8 @@ impl WorldRenderer {
 
     pub fn render_frame(&mut self) {
         self.render_world.swap_frame();
-        self.renderer_2d.spawn_render_phase(&mut self.render_phase_container);
+        self.renderer_2d
+            .spawn_render_phase(&mut self.render_phase_container);
 
         let pipeline_container = self.render_world.get_pipeline_container();
         let mut context = RenderPipelineRunContext {

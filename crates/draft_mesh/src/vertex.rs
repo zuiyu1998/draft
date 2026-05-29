@@ -24,6 +24,12 @@ pub struct MeshVertexBufferLayout {
     pub(crate) layout: VertexBufferLayout,
 }
 
+impl MeshVertexBufferLayout {
+    pub fn get_layout(&self) -> VertexBufferLayout {
+        self.layout.clone()
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct MeshVertexBufferLayoutRef(pub Arc<MeshVertexBufferLayout>);
 

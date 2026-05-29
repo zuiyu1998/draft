@@ -116,6 +116,7 @@ impl VertexFormat {
     pub fn get_wgpu_vertex_format(&self) -> wgpu::VertexFormat {
         match self {
             VertexFormat::Float16 => wgpu::VertexFormat::Float16,
+            VertexFormat::Float32x3 => wgpu::VertexFormat::Float32x3,
             _ => {
                 unimplemented!()
             }

@@ -42,10 +42,6 @@ pub struct Renderer2d {
 }
 
 impl Renderer2d {
-    pub fn unset(&mut self) {
-        self.phase_builders.clear();
-    }
-
     pub fn spawn_render_phase(&mut self, render_phase_container: &mut RenderPhaseContainer) {
         let phase_builders = take(&mut self.phase_builders);
 
@@ -93,14 +89,16 @@ impl Renderer2d {
 
     pub fn specialize(
         &mut self,
-        _layout: &MeshVertexBufferLayoutRef,
+        layout: &MeshVertexBufferLayoutRef,
     ) -> Result<GpuRenderPipelineDescriptor, FrameworkError> {
+        let layout = layout.0.get_layout();
+
         Ok(GpuRenderPipelineDescriptor {
             label: "Render Pipeline".into(),
             vertex: GpuVertexState {
                 shader: SHADER.resource(),
                 entry_point: Some("vs_main".into()),
-                buffers: vec![],
+                buffers: vec![layout],
             },
             fragment: Some(GpuFragmentState {
                 shader: SHADER.resource(),
