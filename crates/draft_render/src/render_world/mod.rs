@@ -3,6 +3,7 @@ mod pipeline_cache;
 mod render_window;
 mod resource_cache;
 mod temporary_cache;
+mod uniform_cache;
 
 use std::{hash::Hash, marker::PhantomData};
 
@@ -10,7 +11,7 @@ use crate::{
     FrameworkError,
     frame_graph::{GetPipelineContainer, PipelineContainer},
 };
-use draft_graphics::{Buffer, RenderDevice, RenderServer};
+use draft_graphics::{Buffer, RenderDevice, RenderQueue, RenderServer, BufferUsages};
 use draft_mesh::{Mesh, MeshResource, MeshVertexBufferLayoutRef, MeshVertexBufferLayouts};
 use draft_shader::{Shader, ShaderResource};
 use draft_window::{SystemWindow, SystemWindowManager};
@@ -21,6 +22,7 @@ pub use pipeline_cache::*;
 pub use render_window::*;
 pub use resource_cache::*;
 pub use temporary_cache::*;
+pub use uniform_cache::*;
 
 pub struct ResourceId<T> {
     pub slot: usize,
@@ -76,13 +78,14 @@ pub struct RenderWorld {
     mesh_cache: ResourceCache<Mesh>,
     shader_cache: ResourceCache<Shader>,
     pipeline_cache: PipelineCache,
+    uniform_cache: UniformCache,
     mesh_vertex_buffer_layouts: MeshVertexBufferLayouts,
     windows: RenderWindowContainer,
     mesh_allocator: MeshAllocator,
 }
 
 impl RenderWorld {
-    pub fn new(device: &RenderDevice) -> RenderWorld {
+    pub fn new(device: &RenderDevice, queue: &RenderQueue) -> RenderWorld {
         Self {
             mesh_cache: ResourceCache::default(),
             mesh_vertex_buffer_layouts: MeshVertexBufferLayouts::default(),
@@ -90,10 +93,15 @@ impl RenderWorld {
             windows: RenderWindowContainer::default(),
             pipeline_cache: PipelineCache::new(device),
             mesh_allocator: MeshAllocator::new(device),
+            uniform_cache: UniformCache::new(device, queue),
         }
     }
 
-    pub fn swap_frame(&mut self) {
+    pub fn upload(&mut self, name: &str, bytes: &[u8], usage: BufferUsages) {
+        self.uniform_cache.upload(name, bytes, usage);
+    }
+
+    pub fn begin_frame(&mut self) {
         let add_mesh_ids = self.mesh_cache.take_add_resource_ids();
         let update_mesh_ids = self.mesh_cache.take_update_resource_ids();
 
@@ -103,6 +111,8 @@ impl RenderWorld {
 
             self.mesh_allocator.insert_mesh(*id, &mesh);
         }
+
+        self.uniform_cache.unset();
     }
 
     pub fn get_vertex_buffer(&self, mesh_id: ResourceId<Mesh>) -> &Buffer {

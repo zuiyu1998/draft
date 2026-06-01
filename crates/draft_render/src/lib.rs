@@ -16,7 +16,7 @@ use crate::{
         RenderPipelineContainer, RenderPipelineRunContext, initialize_2d_render_pipeline,
     },
     render_world::{CachePipelineId, RenderWorld, ResourceId},
-    renderer_2d::{CORE_2D, Renderer2d},
+    renderer_2d::{CORE_2D, Mesh2dTransform, Renderer2d},
 };
 
 pub use error::FrameworkError;
@@ -43,13 +43,14 @@ impl<'a> RenderContext<'a> {
             .create_render_pipeline(self.render_world, mesh_id)
     }
 
-    pub fn add_render_phase_builder(
+    pub fn draw_mesh(
         &mut self,
         mesh_id: ResourceId<Mesh>,
         pipeline_id: CachePipelineId,
+        mesh_transform: Mesh2dTransform,
     ) {
         self.renderer_2d
-            .add_render_phase_builder(mesh_id, pipeline_id);
+            .draw_mesh(mesh_id, pipeline_id, mesh_transform);
     }
 }
 
@@ -89,7 +90,7 @@ impl WorldRenderer {
         options: RenderOptions,
     ) -> Self {
         Self {
-            render_world: RenderWorld::new(&render_server.device),
+            render_world: RenderWorld::new(&render_server.device, &render_server.queue),
             render_server,
             system_window_manager,
             render_pipeline_container: RenderPipelineContainer::default(),
@@ -161,9 +162,10 @@ impl WorldRenderer {
     }
 
     pub fn render_frame(&mut self) {
-        self.render_world.swap_frame();
+        self.render_world.begin_frame();
+
         self.renderer_2d
-            .spawn_render_phase(&mut self.render_phase_container);
+            .spawn_render_phase(&mut self.render_phase_container, &mut self.render_world);
 
         let pipeline_container = self.render_world.get_pipeline_container();
         let mut context = RenderPipelineRunContext {

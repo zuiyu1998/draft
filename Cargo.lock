@@ -540,9 +540,11 @@ dependencies = [
 name = "draft_render"
 version = "0.1.0"
 dependencies = [
+ "bytemuck",
  "draft_graphics",
  "draft_mesh",
  "draft_shader",
+ "draft_utils",
  "draft_window",
  "fyrox-resource",
  "thiserror 2.0.18",
@@ -557,6 +559,13 @@ dependencies = [
  "fyrox-core",
  "fyrox-resource",
  "thiserror 2.0.18",
+]
+
+[[package]]
+name = "draft_utils"
+version = "0.1.0"
+dependencies = [
+ "fyrox-core",
 ]
 
 [[package]]

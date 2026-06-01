@@ -1,9 +1,12 @@
 mod resource;
 
-use std::{collections::HashMap, mem::take};
+use std::{collections::HashMap, mem::take, ops::Deref};
 
+use bytemuck::{Pod, Zeroable, cast_slice};
 use draft_mesh::{Mesh, MeshVertexBufferLayoutRef};
-use wgpu::TextureFormat;
+use draft_utils::AffineExt;
+use fyrox_resource::core::algebra::{Affine3, Vector4};
+use wgpu::{BufferUsages, TextureFormat};
 
 use crate::{
     FrameworkError,
@@ -17,6 +20,36 @@ use crate::{
 pub use resource::*;
 pub const CORE_2D: &str = "core_2d";
 
+#[repr(C)]
+#[derive(Debug, Pod, Zeroable, Clone, Copy)]
+pub struct Mesh2dUniform {
+    // Affine 4x3 matrix transposed to 3x4
+    pub world_from_local: [Vector4<f32>; 3],
+    // 3x3 matrix packed in mat2x4 and f32 as:
+    //   [0].xyz, [1].x,
+    //   [1].yz, [2].xy
+    //   [2].z
+    pub local_from_world_transpose_a: [Vector4<f32>; 2],
+    pub local_from_world_transpose_b: f32,
+}
+
+impl Mesh2dUniform {
+    pub fn from_transform(mesh_transform: &Mesh2dTransform) -> Self {
+        let (local_from_world_transpose_a, local_from_world_transpose_b) =
+            mesh_transform.world_from_local.inverse_transpose_3x3();
+
+        Self {
+            world_from_local: mesh_transform.world_from_local.to_transpose(),
+            local_from_world_transpose_a,
+            local_from_world_transpose_b,
+        }
+    }
+}
+
+pub struct Mesh2dTransform {
+    pub world_from_local: Affine3<f32>,
+}
+
 #[derive(PartialEq, Hash, Clone, Eq)]
 pub struct MeshMaterial {
     mesh_id: ResourceId<Mesh>,
@@ -25,10 +58,22 @@ pub struct MeshMaterial {
 pub struct RenderPhaseBuilder {
     pub mesh_id: ResourceId<Mesh>,
     pub pipeline_id: CachePipelineId,
+    pub mesh_uniforms: Vec<Mesh2dUniform>,
 }
 
 impl RenderPhaseBuilder {
-    pub fn build(self) -> MeshRenderPhase {
+    pub fn add_mesh_uniform(&mut self, mesh_uniform: Mesh2dUniform) {
+        self.mesh_uniforms.push(mesh_uniform);
+    }
+}
+
+impl RenderPhaseBuilder {
+    pub fn build(&self, render_world: &mut RenderWorld) -> MeshRenderPhase {
+
+        let bytes = cast_slice(&self.mesh_uniforms);
+
+        render_world.upload("Mesh2dUniform", bytes, BufferUsages::COPY_DST | BufferUsages::UNIFORM);
+
         MeshRenderPhase {
             mesh_id: self.mesh_id,
             pipeline_id: self.pipeline_id,
@@ -36,30 +81,67 @@ impl RenderPhaseBuilder {
     }
 }
 
+#[derive(PartialEq, Eq, Clone, Copy, Hash)]
+pub struct MeshMaterialBuilderKey {
+    pub mesh_id: ResourceId<Mesh>,
+    pub pipeline_id: CachePipelineId,
+}
+
+#[derive(Default)]
+pub struct PhaseBuilders(HashMap<MeshMaterialBuilderKey, RenderPhaseBuilder>);
+
+impl Deref for PhaseBuilders {
+    type Target = HashMap<MeshMaterialBuilderKey, RenderPhaseBuilder>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl PhaseBuilders {
+    pub fn get_or_create_render_phase_builder(
+        &mut self,
+        mesh_id: ResourceId<Mesh>,
+        pipeline_id: CachePipelineId,
+    ) -> &mut RenderPhaseBuilder {
+        let key = MeshMaterialBuilderKey {
+            mesh_id,
+            pipeline_id,
+        };
+        self.0.entry(key).or_insert_with(|| RenderPhaseBuilder {
+            mesh_id,
+            pipeline_id,
+            mesh_uniforms: vec![],
+        })
+    }
+}
+
 pub struct Renderer2d {
     mesh_material_cache: HashMap<MeshMaterial, CachePipelineId>,
-    pub phase_builders: Vec<RenderPhaseBuilder>,
+    pub phase_builders: PhaseBuilders,
 }
 
 impl Renderer2d {
-    pub fn spawn_render_phase(&mut self, render_phase_container: &mut RenderPhaseContainer) {
+    pub fn spawn_render_phase(&mut self, render_phase_container: &mut RenderPhaseContainer, render_world: &mut RenderWorld) {
         let phase_builders = take(&mut self.phase_builders);
 
-        for phase_builder in phase_builders.into_iter() {
-            let render_phase = phase_builder.build();
+        for phase_builder in phase_builders.values() {
+            let render_phase = phase_builder.build(render_world);
             render_phase_container.add(CORE_2D, render_phase);
         }
     }
 
-    pub fn add_render_phase_builder(
+    pub fn draw_mesh(
         &mut self,
         mesh_id: ResourceId<Mesh>,
         pipeline_id: CachePipelineId,
+        mesh_transform: Mesh2dTransform,
     ) {
-        self.phase_builders.push(RenderPhaseBuilder {
-            mesh_id,
-            pipeline_id,
-        });
+        let phase_builder = self
+            .phase_builders
+            .get_or_create_render_phase_builder(mesh_id, pipeline_id);
+
+        phase_builder.add_mesh_uniform(Mesh2dUniform::from_transform(&mesh_transform));
     }
 
     pub fn create_render_pipeline(

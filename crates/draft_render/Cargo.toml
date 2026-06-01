@@ -8,6 +8,7 @@ draft_window = { path = "../draft_window" }
 draft_graphics = { path = "../draft_graphics" }
 draft_mesh = { path = "../draft_mesh" }
 draft_shader = { path = "../draft_shader" }
+draft_utils = { path = "../draft_utils" }
 
 fyrox-resource = { workspace = true }
 wgpu = { version = "29.0.3", default-features = false, features = [
@@ -19,3 +20,4 @@ wgpu = { version = "29.0.3", default-features = false, features = [
     "fragile-send-sync-non-atomic-wasm",
 ] }
 thiserror = { version = "2.0" }
+bytemuck = { version = "1.23.2", features = ["derive"] }

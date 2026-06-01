@@ -1,9 +1,12 @@
 use draft::{
     DefaultPlugins,
     app::App,
-    core::Uuid,
+    core::{
+        Uuid,
+        algebra::{Affine3, Translation3, Vector3},
+    },
     mesh::{IndexBuffer, Mesh, MeshResource, VertexAttributeValues},
-    render::{IWorld, RenderContext},
+    render::{IWorld, RenderContext, renderer_2d::Mesh2dTransform},
     resource::{Resource, untyped::ResourceKind},
 };
 
@@ -36,16 +39,24 @@ impl SceneTree {
 
 impl IWorld for SceneTree {
     fn render(&self, context: &mut RenderContext) {
-        let mesh_id = context
-            .render_world()
-            .get_or_create_mesh_id(&self.mesh)
-            .expect("get_or_create_mesh_id failed");
+        for x in 0..5 {
+            let mesh_id = context
+                .render_world()
+                .get_or_create_mesh_id(&self.mesh)
+                .expect("get_or_create_mesh_id failed");
 
-        let pipeline_id = context
-            .create_2d_render_pipeline(mesh_id)
-            .expect("create_2d_render_pipeline failed");
+            let pipeline_id = context
+                .create_2d_render_pipeline(mesh_id)
+                .expect("create_2d_render_pipeline failed");
 
-        context.add_render_phase_builder(mesh_id, pipeline_id);
+            let translation_vec = Vector3::new(x as f32, 0.0, 0.0);
+            let matrix = Translation3::from(translation_vec).to_homogeneous();
+            let world_from_local = Affine3::from_matrix_unchecked(matrix);
+
+            let mesh_transform = Mesh2dTransform { world_from_local };
+
+            context.draw_mesh(mesh_id, pipeline_id, mesh_transform);
+        }
     }
 }
 
