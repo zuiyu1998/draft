@@ -177,6 +177,7 @@ impl Renderer2d {
 
         Ok(GpuRenderPipelineDescriptor {
             label: "Render Pipeline".into(),
+            layout: vec![],
             vertex: GpuVertexState {
                 shader: SHADER.resource(),
                 entry_point: Some("vs_main".into()),

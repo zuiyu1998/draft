@@ -1,4 +1,6 @@
-use wgpu::util::{BufferInitDescriptor, DeviceExt};
+use wgpu::{
+    BindGroupLayoutDescriptor, BindGroupLayoutEntry, util::{BufferInitDescriptor, DeviceExt}
+};
 
 #[derive(Clone)]
 pub struct RenderDevice {
@@ -12,6 +14,25 @@ impl RenderDevice {
 
     pub fn wgpu_device(&self) -> &wgpu::Device {
         &self.device
+    }
+
+    pub fn create_pipeline_layout(
+        &self,
+        desc: &wgpu::PipelineLayoutDescriptor,
+    ) -> wgpu::PipelineLayout {
+        self.device.create_pipeline_layout(desc)
+    }
+
+    pub fn create_bind_group_layout<'a>(
+        &self,
+        label: impl Into<wgpu::Label<'a>>,
+        entries: &'a [BindGroupLayoutEntry],
+    ) -> wgpu::BindGroupLayout {
+        self.device
+            .create_bind_group_layout(&BindGroupLayoutDescriptor {
+                label: label.into(),
+                entries,
+            })
     }
 
     pub fn create_bind_group(&self, desc: &wgpu::BindGroupDescriptor) -> wgpu::BindGroup {

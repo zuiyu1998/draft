@@ -1,9 +1,10 @@
 use std::{borrow::Cow, collections::HashMap, sync::Arc};
 
 use draft_graphics::{
-    ColorTargetState, DepthStencilState, FragmentState, MultisampleState, Pipeline,
-    PipelineCompilationOptions, PrimitiveState, RenderDevice, RenderPipelineDescriptor,
-    ShaderModule, VertexBufferLayout as RawVertexBufferLayout, VertexState,
+    BindGroupLayout, BindGroupLayoutEntry, ColorTargetState, DepthStencilState, FragmentState,
+    MultisampleState, Pipeline, PipelineCompilationOptions, PipelineLayout,
+    PipelineLayoutDescriptor, PrimitiveState, RenderDevice, RenderPipelineDescriptor, ShaderModule,
+    VertexBufferLayout as RawVertexBufferLayout, VertexState,
 };
 use draft_mesh::VertexBufferLayout;
 use draft_shader::ShaderResource;
@@ -28,8 +29,15 @@ pub struct GpuFragmentState {
     pub targets: Vec<Option<ColorTargetState>>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Default)]
+pub struct BindGroupLayoutDescriptor {
+    pub label: Cow<'static, str>,
+    pub entries: Vec<BindGroupLayoutEntry>,
+}
+
 pub struct GpuRenderPipelineDescriptor {
     pub label: String,
+    pub layout: Vec<BindGroupLayoutDescriptor>,
     pub vertex: GpuVertexState,
     pub primitive: PrimitiveState,
     pub depth_stencil: Option<DepthStencilState>,
@@ -38,10 +46,65 @@ pub struct GpuRenderPipelineDescriptor {
     pub zero_initialize_workgroup_memory: bool,
 }
 
+#[derive(Default)]
+pub struct BindGroupLayoutCache(HashMap<BindGroupLayoutDescriptor, BindGroupLayout>);
+
+impl BindGroupLayoutCache {
+    pub fn get_or_create(
+        &mut self,
+        render_device: &RenderDevice,
+        descriptor: BindGroupLayoutDescriptor,
+    ) -> BindGroupLayout {
+        self.0
+            .entry(descriptor.clone())
+            .or_insert_with(|| {
+                render_device
+                    .create_bind_group_layout(descriptor.label.as_ref(), &descriptor.entries)
+            })
+            .clone()
+    }
+}
+
+#[derive(Default)]
+pub struct PipelineLayoutCache(HashMap<Vec<BindGroupLayoutDescriptor>, PipelineLayout>);
+
+impl PipelineLayoutCache {
+    pub fn get_or_create(
+        &mut self,
+        render_device: &RenderDevice,
+        descriptors: &[BindGroupLayoutDescriptor],
+        bind_group_layout_cache: &mut BindGroupLayoutCache,
+    ) -> PipelineLayout {
+        self.0
+            .entry(descriptors.to_vec())
+            .or_insert_with(|| {
+                let mut bind_group_layouts = vec![];
+
+                for descriptor in descriptors.iter() {
+                    bind_group_layouts.push(
+                        bind_group_layout_cache.get_or_create(render_device, descriptor.clone()),
+                    );
+                }
+
+                render_device.create_pipeline_layout(&PipelineLayoutDescriptor {
+                    label: None,
+                    bind_group_layouts: &bind_group_layouts
+                        .iter()
+                        .map(|layout| Some(layout))
+                        .collect::<Vec<_>>(),
+                    immediate_size: 0,
+                })
+            })
+            .clone()
+    }
+}
+
 pub struct PipelineCache {
     device: RenderDevice,
     shader_cache: HashMap<usize, Arc<ShaderModule>>,
     pipelines: Vec<Option<Pipeline>>,
+    bind_group_layout_cache: BindGroupLayoutCache,
+    pipeline_layout_cache: PipelineLayoutCache,
 }
 
 impl GetPipelineContainer for PipelineCache {
@@ -62,6 +125,8 @@ impl PipelineCache {
             device: device.clone(),
             shader_cache: HashMap::default(),
             pipelines: Default::default(),
+            bind_group_layout_cache: Default::default(),
+            pipeline_layout_cache: Default::default(),
         }
     }
 
@@ -135,13 +200,19 @@ impl PipelineCache {
             }),
         };
 
+        let pipeline_layout = self.pipeline_layout_cache.get_or_create(
+            &self.device,
+            &desc.layout,
+            &mut self.bind_group_layout_cache,
+        );
+
         let render_pipeline = self
             .device
             .create_render_pipelie(&RenderPipelineDescriptor {
                 vertex: vertext_state,
                 fragment: fragment_state,
                 label: Some(&desc.label),
-                layout: None,
+                layout: Some(&pipeline_layout),
                 primitive: desc.primitive,
                 multisample: desc.multisample,
                 depth_stencil: desc.depth_stencil.clone(),
