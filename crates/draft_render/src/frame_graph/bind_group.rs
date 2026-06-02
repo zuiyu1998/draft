@@ -10,9 +10,19 @@ pub struct BindGroupEntry {
     pub resource: BindingResource,
 }
 
+pub trait IntoBindingResource {
+    fn into_binding_resource(self) -> BindingResource;
+}
+
 #[derive(Clone)]
 pub enum BindingResource {
     Buffer(BindingBuffer),
+}
+
+impl IntoBindingResource for BindingBuffer {
+    fn into_binding_resource(self) -> BindingResource {
+        BindingResource::Buffer(self)
+    }
 }
 
 #[derive(Clone)]
@@ -28,6 +38,23 @@ pub struct TransientBindGroupDescriptor {
     pub entries: Vec<BindGroupEntry>,
 }
 
+impl TransientBindGroupDescriptor {
+    pub fn new(layout: BindGroupLayout) -> Self {
+        Self {
+            layout,
+            entries: vec![],
+        }
+    }
+
+    pub fn add_entry(&mut self, binding: u32, value: impl IntoBindingResource) -> &mut Self {
+        let entry = BindGroupEntry {
+            binding,
+            resource: value.into_binding_resource(),
+        };
+        self.entries.push(entry);
+        self
+    }
+}
 #[derive(Clone)]
 pub enum TransientBindGroup {
     BindGroup(BindGroup),

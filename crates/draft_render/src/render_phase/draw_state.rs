@@ -84,6 +84,11 @@ impl<'a, 'b> TrackedRenderPassBuilder<'a, 'b> {
         self.draw_state.reset();
     }
 
+    pub fn set_bind_group(&mut self, index: u32, bind_group: &TransientBindGroup, offsets: &[u32]) {
+        self.render_pass_builder
+            .set_bind_group(index, bind_group, offsets);
+    }
+
     pub fn set_render_pipeline(&mut self, pipeline_id: CachePipelineId) {
         if self.draw_state.is_pipeline_id_set() {
             panic!("Render pipeline ID has already been set for this render pass builder.");

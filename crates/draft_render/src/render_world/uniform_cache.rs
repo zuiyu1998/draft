@@ -4,7 +4,7 @@ use crate::render_world::TemporaryCache;
 use draft_graphics::{Buffer, BufferDescriptor, BufferUsages, RenderDevice, RenderQueue};
 
 pub struct UniformRenderData {
-    buffer: Buffer,
+    pub buffer: Buffer,
 }
 
 #[derive(Default)]
@@ -62,6 +62,19 @@ pub struct UniformCache {
     queue: RenderQueue,
 }
 
+#[derive(Clone)]
+pub struct UniformIndex {
+    pub key: UniformSetKey,
+    pub index: usize,
+}
+
+#[derive(PartialEq, Eq, Hash, Clone)]
+pub struct UniformSetKey {
+    pub size: u64,
+    pub usage: BufferUsages,
+    pub name: String,
+}
+
 impl UniformCache {
     pub fn new(device: &RenderDevice, queue: &RenderQueue) -> Self {
         Self {
@@ -70,21 +83,16 @@ impl UniformCache {
             queue: queue.clone(),
         }
     }
-}
 
-pub struct UniformIndex {
-    pub key: UniformSetKey,
-    pub index: usize,
-}
+    pub fn get_uniform_render_data(&self, index: &UniformIndex) -> Option<&UniformRenderData> {
+        self.sets.get(&index.key).and_then(|set| {
+            set.cache
+                .buffer
+                .get_raw(index.index)
+                .map(|entry| &entry.value)
+        })
+    }
 
-#[derive(PartialEq, Eq, Hash, Clone)]
-pub struct UniformSetKey {
-    size: u64,
-    usage: BufferUsages,
-    name: String,
-}
-
-impl UniformCache {
     pub fn unset(&mut self) {
         for set in self.sets.values_mut() {
             set.unset();

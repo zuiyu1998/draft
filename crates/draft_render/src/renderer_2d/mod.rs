@@ -12,9 +12,12 @@ use nalgebra::{Affine3, Vector4};
 
 use crate::{
     FrameworkError,
-    render_phase::{MeshRenderPhase, RenderPhaseContainer},
+    render_phase::{
+        BindGroupBinding, BindGroupPhase, BufferBinding, MeshPhase, MeshRenderPhase,
+        RenderPhaseContainer, ResourceBinding,
+    },
     render_resource::{
-        BindGroupLayoutDescriptor, BindGroupLayoutEntries, binding_types::uniform_buffer,
+        BindGroupLayoutDescriptor, BindGroupLayoutEntries, binding_types::uniform_buffer_sized,
     },
     render_world::{
         CachePipelineId, GpuFragmentState, GpuPipelineLayoutDescriptor,
@@ -78,16 +81,34 @@ impl RenderPhaseBuilder {
     pub fn build(&self, render_world: &mut RenderWorld) -> MeshRenderPhase {
         let bytes = cast_slice(&self.mesh_uniforms);
 
-        let _view_index = render_world.upload(
+        let view_index = render_world.upload_uniform(
             "Mesh2dUniform",
             bytes,
             BufferUsages::COPY_DST | BufferUsages::UNIFORM,
         );
 
+        let layout = render_world.get_bind_group_layout("view");
+
+        let bind_group_phase = BindGroupPhase {
+            index: 0,
+            offsets: vec![0],
+            binding: BindGroupBinding::Binding {
+                resource_bindings: vec![ResourceBinding::Buffer(BufferBinding {
+                    uniform_index: view_index,
+                    offset: 0,
+                    size: None,
+                })],
+                bind_group_layout: layout,
+            },
+        };
+
         MeshRenderPhase {
-            mesh_id: self.mesh_id,
+            mesh: MeshPhase {
+                mesh_id: self.mesh_id,
+                instances: 0..self.mesh_uniforms.len() as u32,
+            },
             pipeline_id: self.pipeline_id,
-            bind_groups: vec![],
+            bind_groups: vec![bind_group_phase],
         }
     }
 }
@@ -191,7 +212,7 @@ impl Renderer2d {
         let layout = layout.0.get_layout();
 
         let view = BindGroupLayoutEntries::new(ShaderStages::all())
-            .add_entry(uniform_buffer::<Mesh2dUniform>(false))
+            .add_entry(uniform_buffer_sized(true, None))
             .build();
 
         let view_desc = BindGroupLayoutDescriptor {

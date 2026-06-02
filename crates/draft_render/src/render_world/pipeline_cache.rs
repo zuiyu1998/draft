@@ -67,19 +67,31 @@ pub struct GpuRenderPipelineDescriptor {
 }
 
 #[derive(Default)]
-pub struct BindGroupLayoutCache(HashMap<BindGroupLayoutDescriptor, BindGroupLayout>);
+pub struct BindGroupLayoutCache {
+    cache: HashMap<BindGroupLayoutDescriptor, BindGroupLayout>,
+    name_to_layout: HashMap<String, BindGroupLayout>,
+}
 
 impl BindGroupLayoutCache {
+    pub fn get_bind_group_layout(&self, name: &str) -> Option<BindGroupLayout> {
+        self.name_to_layout.get(name).cloned()
+    }
+
     pub fn get_or_create(
         &mut self,
         render_device: &RenderDevice,
         descriptor: BindGroupLayoutDescriptor,
     ) -> BindGroupLayout {
-        self.0
+        self.cache
             .entry(descriptor.clone())
             .or_insert_with(|| {
-                render_device
-                    .create_bind_group_layout(descriptor.label.as_ref(), &descriptor.entries)
+                let layout = render_device
+                    .create_bind_group_layout(descriptor.label.as_ref(), &descriptor.entries);
+
+                self.name_to_layout
+                    .insert(descriptor.label.to_string(), layout.clone());
+
+                layout
             })
             .clone()
     }
@@ -153,6 +165,12 @@ impl PipelineCache {
             bind_group_layout_cache: Default::default(),
             pipeline_layout_cache: Default::default(),
         }
+    }
+
+    pub fn get_bind_group_layout(&self, name: &str) -> BindGroupLayout {
+        self.bind_group_layout_cache
+            .get_bind_group_layout(name)
+            .unwrap()
     }
 
     pub fn create_shader_moudule(&mut self, shader: &ShaderResource) -> Arc<ShaderModule> {
