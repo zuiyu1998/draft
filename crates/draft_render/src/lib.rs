@@ -4,6 +4,7 @@ pub mod render_phase;
 pub mod render_pipeline;
 pub mod render_world;
 pub mod renderer_2d;
+pub mod render_resource;
 
 use draft_graphics::{Color, RenderServer};
 use draft_mesh::Mesh;

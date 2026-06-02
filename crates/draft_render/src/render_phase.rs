@@ -2,19 +2,18 @@ mod draw_state;
 
 use std::{collections::HashMap, sync::Arc};
 
-use draft_graphics::Buffer;
+use draft_graphics::{BindGroupLayout, Buffer};
 use draft_mesh::Mesh;
 
 use crate::{
     frame_graph::*,
-    render_world::{CachePipelineId, RenderWorld, ResourceId},
+    render_world::{CachePipelineId, RenderWorld, ResourceId, UniformIndex},
 };
 
 pub use draw_state::*;
 
 #[derive(Default)]
 pub struct RenderPhaseContainer(HashMap<String, Vec<Box<dyn RenderPhase>>>);
-
 
 impl RenderPhaseContainer {
     pub fn get(&self, name: &str) -> Option<&Vec<Box<dyn RenderPhase>>> {
@@ -37,16 +36,27 @@ pub trait RenderPhase: 'static {
     fn render(&self, builder: &mut TrackedRenderPassBuilder, render_world: &RenderWorld);
 }
 
+pub struct BindGroupIndex {
+    pub uniform_index: UniformIndex,
+    pub bind_group_layout: BindGroupLayout,
+}
+
 pub struct MeshRenderPhase {
     pub mesh_id: ResourceId<Mesh>,
     pub pipeline_id: CachePipelineId,
+    pub bind_groups: Vec<BindGroupIndex>,
 }
 
 impl MeshRenderPhase {
-    pub fn new(mesh_id: ResourceId<Mesh>, pipeline_id: CachePipelineId) -> Self {
+    pub fn new(
+        mesh_id: ResourceId<Mesh>,
+        pipeline_id: CachePipelineId,
+        bind_groups: Vec<BindGroupIndex>,
+    ) -> Self {
         Self {
             mesh_id,
             pipeline_id,
+            bind_groups,
         }
     }
 }

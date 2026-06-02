@@ -11,7 +11,7 @@ use crate::{
     FrameworkError,
     frame_graph::{GetPipelineContainer, PipelineContainer},
 };
-use draft_graphics::{Buffer, RenderDevice, RenderQueue, RenderServer, BufferUsages};
+use draft_graphics::{Buffer, BufferUsages, RenderDevice, RenderQueue, RenderServer};
 use draft_mesh::{Mesh, MeshResource, MeshVertexBufferLayoutRef, MeshVertexBufferLayouts};
 use draft_shader::{Shader, ShaderResource};
 use draft_window::{SystemWindow, SystemWindowManager};
@@ -97,8 +97,8 @@ impl RenderWorld {
         }
     }
 
-    pub fn upload(&mut self, name: &str, bytes: &[u8], usage: BufferUsages) {
-        self.uniform_cache.upload(name, bytes, usage);
+    pub fn upload(&mut self, name: &str, bytes: &[u8], usage: BufferUsages) -> UniformIndex {
+        self.uniform_cache.upload(name, bytes, usage)
     }
 
     pub fn begin_frame(&mut self) {

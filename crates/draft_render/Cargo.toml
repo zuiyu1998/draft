@@ -11,6 +11,9 @@ draft_shader = { path = "../draft_shader" }
 draft_utils = { path = "../draft_utils" }
 
 fyrox-resource = { workspace = true }
+nalgebra = { version = "0.34", features = ["bytemuck", "convert-glam030", "encase"] }
+
+encase = "0.12"
 wgpu = { version = "29.0.3", default-features = false, features = [
     "wgsl",
     "dx12",

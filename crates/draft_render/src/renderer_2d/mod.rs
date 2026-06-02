@@ -5,23 +5,30 @@ use std::{collections::HashMap, mem::take, ops::Deref};
 use bytemuck::{Pod, Zeroable, cast_slice};
 use draft_mesh::{Mesh, MeshVertexBufferLayoutRef};
 use draft_utils::AffineExt;
-use fyrox_resource::core::algebra::{Affine3, Vector4};
+use encase::ShaderType;
 use wgpu::{BufferUsages, TextureFormat};
+
+use nalgebra::{Affine3, Vector4};
 
 use crate::{
     FrameworkError,
     render_phase::{MeshRenderPhase, RenderPhaseContainer},
+    render_resource::{
+        BindGroupLayoutDescriptor, BindGroupLayoutEntries, binding_types::uniform_buffer,
+    },
     render_world::{
-        CachePipelineId, GpuFragmentState, GpuRenderPipelineDescriptor, GpuVertexState,
-        RenderWorld, ResourceId,
+        CachePipelineId, GpuFragmentState, GpuPipelineLayoutDescriptor,
+        GpuRenderPipelineDescriptor, GpuVertexState, RenderWorld, ResourceId,
     },
 };
+
+use draft_graphics::ShaderStages;
 
 pub use resource::*;
 pub const CORE_2D: &str = "core_2d";
 
 #[repr(C)]
-#[derive(Debug, Pod, Zeroable, Clone, Copy)]
+#[derive(Debug, Pod, Zeroable, Clone, Copy, ShaderType)]
 pub struct Mesh2dUniform {
     // Affine 4x3 matrix transposed to 3x4
     pub world_from_local: [Vector4<f32>; 3],
@@ -69,14 +76,18 @@ impl RenderPhaseBuilder {
 
 impl RenderPhaseBuilder {
     pub fn build(&self, render_world: &mut RenderWorld) -> MeshRenderPhase {
-
         let bytes = cast_slice(&self.mesh_uniforms);
 
-        render_world.upload("Mesh2dUniform", bytes, BufferUsages::COPY_DST | BufferUsages::UNIFORM);
+        let _view_index = render_world.upload(
+            "Mesh2dUniform",
+            bytes,
+            BufferUsages::COPY_DST | BufferUsages::UNIFORM,
+        );
 
         MeshRenderPhase {
             mesh_id: self.mesh_id,
             pipeline_id: self.pipeline_id,
+            bind_groups: vec![],
         }
     }
 }
@@ -122,7 +133,11 @@ pub struct Renderer2d {
 }
 
 impl Renderer2d {
-    pub fn spawn_render_phase(&mut self, render_phase_container: &mut RenderPhaseContainer, render_world: &mut RenderWorld) {
+    pub fn spawn_render_phase(
+        &mut self,
+        render_phase_container: &mut RenderPhaseContainer,
+        render_world: &mut RenderWorld,
+    ) {
         let phase_builders = take(&mut self.phase_builders);
 
         for phase_builder in phase_builders.values() {
@@ -175,9 +190,22 @@ impl Renderer2d {
     ) -> Result<GpuRenderPipelineDescriptor, FrameworkError> {
         let layout = layout.0.get_layout();
 
+        let view = BindGroupLayoutEntries::new(ShaderStages::all())
+            .add_entry(uniform_buffer::<Mesh2dUniform>(false))
+            .build();
+
+        let view_desc = BindGroupLayoutDescriptor {
+            label: "view".into(),
+            entries: view,
+        };
+
+        let mut pipeline_layout_desc = GpuPipelineLayoutDescriptor::default();
+
+        pipeline_layout_desc.add_bind_group_layout(0, view_desc);
+
         Ok(GpuRenderPipelineDescriptor {
             label: "Render Pipeline".into(),
-            layout: vec![],
+            layout: pipeline_layout_desc,
             vertex: GpuVertexState {
                 shader: SHADER.resource(),
                 entry_point: Some("vs_main".into()),

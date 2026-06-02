@@ -1,9 +1,9 @@
 use std::{borrow::Cow, collections::HashMap, sync::Arc};
 
 use draft_graphics::{
-    BindGroupLayout, BindGroupLayoutEntry, ColorTargetState, DepthStencilState, FragmentState,
-    MultisampleState, Pipeline, PipelineCompilationOptions, PipelineLayout,
-    PipelineLayoutDescriptor, PrimitiveState, RenderDevice, RenderPipelineDescriptor, ShaderModule,
+    BindGroupLayout, ColorTargetState, DepthStencilState, FragmentState, MultisampleState,
+    Pipeline, PipelineCompilationOptions, PipelineLayout, PipelineLayoutDescriptor, PrimitiveState,
+    RenderDevice, RenderPipelineDescriptor, ShaderModule,
     VertexBufferLayout as RawVertexBufferLayout, VertexState,
 };
 use draft_mesh::VertexBufferLayout;
@@ -13,31 +13,51 @@ use wgpu::ShaderModuleDescriptor;
 use crate::{
     FrameworkError,
     frame_graph::{GetPipelineContainer, PipelineContainer},
+    render_resource::BindGroupLayoutDescriptor,
 };
 
 pub type CachePipelineId = usize;
 
+#[derive(Clone)]
 pub struct GpuVertexState {
     pub shader: ShaderResource,
     pub entry_point: Option<Cow<'static, str>>,
     pub buffers: Vec<VertexBufferLayout>,
 }
 
+#[derive(Clone)]
 pub struct GpuFragmentState {
     pub shader: ShaderResource,
     pub entry_point: Option<Cow<'static, str>>,
     pub targets: Vec<Option<ColorTargetState>>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Default)]
-pub struct BindGroupLayoutDescriptor {
-    pub label: Cow<'static, str>,
-    pub entries: Vec<BindGroupLayoutEntry>,
+#[derive(Clone, Default)]
+pub struct GpuPipelineLayoutDescriptor {
+    bind_group_layouts: HashMap<u32, BindGroupLayoutDescriptor>,
+    max_bind_group_index: u32,
 }
 
+impl GpuPipelineLayoutDescriptor {
+    pub fn create_bind_group_layouts(&self) -> Vec<Option<BindGroupLayoutDescriptor>> {
+        let mut bind_group_layouts = vec![];
+        for i in 0..=self.max_bind_group_index {
+            bind_group_layouts.push(self.bind_group_layouts.get(&i).cloned());
+        }
+
+        bind_group_layouts
+    }
+
+    pub fn add_bind_group_layout(&mut self, index: u32, layout: BindGroupLayoutDescriptor) {
+        self.bind_group_layouts.insert(index, layout);
+        self.max_bind_group_index = self.max_bind_group_index.max(index);
+    }
+}
+
+#[derive(Clone)]
 pub struct GpuRenderPipelineDescriptor {
     pub label: String,
-    pub layout: Vec<BindGroupLayoutDescriptor>,
+    pub layout: GpuPipelineLayoutDescriptor,
     pub vertex: GpuVertexState,
     pub primitive: PrimitiveState,
     pub depth_stencil: Option<DepthStencilState>,
@@ -66,13 +86,13 @@ impl BindGroupLayoutCache {
 }
 
 #[derive(Default)]
-pub struct PipelineLayoutCache(HashMap<Vec<BindGroupLayoutDescriptor>, PipelineLayout>);
+pub struct PipelineLayoutCache(HashMap<Vec<Option<BindGroupLayoutDescriptor>>, PipelineLayout>);
 
 impl PipelineLayoutCache {
     pub fn get_or_create(
         &mut self,
         render_device: &RenderDevice,
-        descriptors: &[BindGroupLayoutDescriptor],
+        descriptors: &[Option<BindGroupLayoutDescriptor>],
         bind_group_layout_cache: &mut BindGroupLayoutCache,
     ) -> PipelineLayout {
         self.0
@@ -81,16 +101,16 @@ impl PipelineLayoutCache {
                 let mut bind_group_layouts = vec![];
 
                 for descriptor in descriptors.iter() {
-                    bind_group_layouts.push(
-                        bind_group_layout_cache.get_or_create(render_device, descriptor.clone()),
-                    );
+                    bind_group_layouts.push(descriptor.as_ref().map(|descriptor| {
+                        bind_group_layout_cache.get_or_create(render_device, descriptor.clone())
+                    }));
                 }
 
                 render_device.create_pipeline_layout(&PipelineLayoutDescriptor {
                     label: None,
                     bind_group_layouts: &bind_group_layouts
                         .iter()
-                        .map(|layout| Some(layout))
+                        .map(|layout| layout.as_ref())
                         .collect::<Vec<_>>(),
                     immediate_size: 0,
                 })
@@ -99,10 +119,15 @@ impl PipelineLayoutCache {
     }
 }
 
+pub struct State {
+    pub pipeline: Pipeline,
+    pub desc: GpuRenderPipelineDescriptor,
+}
+
 pub struct PipelineCache {
     device: RenderDevice,
     shader_cache: HashMap<usize, Arc<ShaderModule>>,
-    pipelines: Vec<Option<Pipeline>>,
+    pipelines: Vec<Option<State>>,
     bind_group_layout_cache: BindGroupLayoutCache,
     pipeline_layout_cache: PipelineLayoutCache,
 }
@@ -111,8 +136,8 @@ impl GetPipelineContainer for PipelineCache {
     fn get_pipeline_container(&self) -> PipelineContainer {
         let mut pipelines = PipelineContainer::default();
 
-        for pipeline in self.pipelines.iter() {
-            pipelines.push(pipeline.as_ref().map(|pipeline| pipeline.clone()));
+        for state in self.pipelines.iter() {
+            pipelines.push(state.as_ref().map(|state| state.pipeline.clone()));
         }
 
         pipelines
@@ -202,7 +227,7 @@ impl PipelineCache {
 
         let pipeline_layout = self.pipeline_layout_cache.get_or_create(
             &self.device,
-            &desc.layout,
+            &desc.layout.create_bind_group_layouts(),
             &mut self.bind_group_layout_cache,
         );
 
@@ -222,8 +247,10 @@ impl PipelineCache {
 
         let len = self.pipelines.len();
 
-        self.pipelines
-            .push(Some(Pipeline::RenderPipeline(render_pipeline)));
+        self.pipelines.push(Some(State {
+            pipeline: Pipeline::RenderPipeline(render_pipeline),
+            desc: desc.clone(),
+        }));
 
         Ok(len)
     }
