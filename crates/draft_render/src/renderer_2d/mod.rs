@@ -57,164 +57,25 @@ impl Mesh2dUniform {
     }
 }
 
-pub struct Mesh2dTransform {
-    pub world_from_local: Affine3<f32>,
-}
-
-#[derive(PartialEq, Hash, Clone, Eq)]
-pub struct MeshMaterial {
-    mesh_id: ResourceId<Mesh>,
-}
-
-pub struct RenderPhaseBuilder {
-    pub mesh_id: ResourceId<Mesh>,
-    pub pipeline_id: CachePipelineId,
-    pub mesh_uniforms: Vec<Mesh2dUniform>,
-}
-
-impl RenderPhaseBuilder {
-    pub fn add_mesh_uniform(&mut self, mesh_uniform: Mesh2dUniform) {
-        self.mesh_uniforms.push(mesh_uniform);
-    }
-}
-
-impl RenderPhaseBuilder {
-    pub fn build(
+pub trait MaterialPipeline: 'static {
+    fn specialize(
         &self,
+        layout: &MeshVertexBufferLayoutRef,
+    ) -> Result<GpuRenderPipelineDescriptor, FrameworkError>;
+
+    fn create_render_phase(
+        &self,
+        command: &RenderPhaseCommand,
         render_device: &RenderDevice,
         render_world: &mut RenderWorld,
-    ) -> MeshRenderPhase {
-        let limits = render_device.limits();
-
-        let mut gpu_array_buffer = GpuArrayBuffer::<Mesh2dUniform>::new(&limits);
-
-        for uniform in self.mesh_uniforms.iter() {
-            gpu_array_buffer.push(*uniform);
-        }
-
-        let view_index = gpu_array_buffer.write("Mesh2dUniform", render_world);
-
-        let layout = render_world.get_bind_group_layout("view");
-
-        let bind_group_phase = BindGroupPhase {
-            index: 0,
-            offsets: vec![0],
-            binding: BindGroupBinding::Binding {
-                resource_bindings: vec![ResourceBinding::Buffer(BufferBinding {
-                    uniform_index: view_index,
-                    offset: 0,
-                    size: None,
-                })],
-                bind_group_layout: layout,
-            },
-        };
-
-        MeshRenderPhase {
-            mesh: MeshPhase {
-                mesh_id: self.mesh_id,
-                instances: 0..self.mesh_uniforms.len() as u32,
-            },
-            pipeline_id: self.pipeline_id,
-            bind_groups: vec![bind_group_phase],
-        }
-    }
+    ) -> MeshRenderPhase;
 }
 
-#[derive(PartialEq, Eq, Clone, Copy, Hash)]
-pub struct MeshMaterialBuilderKey {
-    pub mesh_id: ResourceId<Mesh>,
-    pub pipeline_id: CachePipelineId,
-}
+pub struct Mesh2dMaterialPipeline {}
 
-#[derive(Default)]
-pub struct PhaseBuilders(HashMap<MeshMaterialBuilderKey, RenderPhaseBuilder>);
-
-impl Deref for PhaseBuilders {
-    type Target = HashMap<MeshMaterialBuilderKey, RenderPhaseBuilder>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl PhaseBuilders {
-    pub fn get_or_create_render_phase_builder(
-        &mut self,
-        mesh_id: ResourceId<Mesh>,
-        pipeline_id: CachePipelineId,
-    ) -> &mut RenderPhaseBuilder {
-        let key = MeshMaterialBuilderKey {
-            mesh_id,
-            pipeline_id,
-        };
-        self.0.entry(key).or_insert_with(|| RenderPhaseBuilder {
-            mesh_id,
-            pipeline_id,
-            mesh_uniforms: vec![],
-        })
-    }
-}
-
-pub struct Renderer2d {
-    mesh_material_cache: HashMap<MeshMaterial, CachePipelineId>,
-    pub phase_builders: PhaseBuilders,
-}
-
-impl Renderer2d {
-    pub fn spawn_render_phase(
-        &mut self,
-        render_device: &RenderDevice,
-        render_world: &mut RenderWorld,
-        render_phase_container: &mut RenderPhaseContainer,
-    ) {
-        let phase_builders = take(&mut self.phase_builders);
-
-        for phase_builder in phase_builders.values() {
-            let render_phase = phase_builder.build(render_device, render_world);
-            render_phase_container.add(CORE_2D, render_phase);
-        }
-    }
-
-    pub fn draw_mesh(
-        &mut self,
-        mesh_id: ResourceId<Mesh>,
-        pipeline_id: CachePipelineId,
-        mesh_transform: Mesh2dTransform,
-    ) {
-        let phase_builder = self
-            .phase_builders
-            .get_or_create_render_phase_builder(mesh_id, pipeline_id);
-
-        phase_builder.add_mesh_uniform(Mesh2dUniform::from_transform(&mesh_transform));
-    }
-
-    pub fn create_render_pipeline(
-        &mut self,
-        render_world: &mut RenderWorld,
-        mesh_id: ResourceId<Mesh>,
-    ) -> Result<CachePipelineId, FrameworkError> {
-        let mesh_material = MeshMaterial { mesh_id };
-        if let Some(id) = self.mesh_material_cache.get(&mesh_material) {
-            return Ok(*id);
-        }
-
-        let mesh = render_world
-            .get_mesh(mesh_id)
-            .ok_or_else(|| FrameworkError::MeshNotFound)?;
-
-        let layout = render_world.get_mesh_vertex_buffer_layout(&mesh);
-
-        let desc = self.specialize(&layout)?;
-
-        let id = render_world.create_render_pipeline(desc)?;
-
-        self.mesh_material_cache.insert(mesh_material, id);
-
-        Ok(id)
-    }
-
-    pub fn specialize(
-        &mut self,
+impl MaterialPipeline for Mesh2dMaterialPipeline {
+    fn specialize(
+        &self,
         layout: &MeshVertexBufferLayoutRef,
     ) -> Result<GpuRenderPipelineDescriptor, FrameworkError> {
         let layout = layout.0.get_layout();
@@ -272,13 +133,214 @@ impl Renderer2d {
             zero_initialize_workgroup_memory: false,
         })
     }
+
+    fn create_render_phase(
+        &self,
+        command: &RenderPhaseCommand,
+        render_device: &RenderDevice,
+        render_world: &mut RenderWorld,
+    ) -> MeshRenderPhase {
+        let limits = render_device.limits();
+
+        let mut gpu_array_buffer = GpuArrayBuffer::<Mesh2dUniform>::new(&limits);
+
+        for uniform in command.mesh_uniforms.iter() {
+            gpu_array_buffer.push(*uniform);
+        }
+
+        let view_index = gpu_array_buffer.write("Mesh2dUniform", render_world);
+
+        let layout = render_world.get_bind_group_layout("view");
+
+        let bind_group_phase = BindGroupPhase {
+            index: 0,
+            offsets: vec![0],
+            binding: BindGroupBinding::Binding {
+                resource_bindings: vec![ResourceBinding::Buffer(BufferBinding {
+                    uniform_index: view_index,
+                    offset: 0,
+                    size: None,
+                })],
+                bind_group_layout: layout,
+            },
+        };
+
+        MeshRenderPhase {
+            mesh: MeshPhase {
+                mesh_id: command.mesh_id,
+                instances: 0..command.mesh_uniforms.len() as u32,
+            },
+            pipeline_id: command.pipeline_id,
+            bind_groups: vec![bind_group_phase],
+        }
+    }
+}
+
+pub struct MaterialPipelineContainer {
+    pipelines: HashMap<String, Box<dyn MaterialPipeline>>,
+}
+
+impl MaterialPipelineContainer {
+    pub fn new() -> Self {
+        let mut container = Self::empty();
+
+        container.add_pipeline("mesh_2d", Box::new(Mesh2dMaterialPipeline {}));
+
+        container
+    }
+
+    pub fn empty() -> Self {
+        Self {
+            pipelines: HashMap::new(),
+        }
+    }
+
+    pub fn add_pipeline(&mut self, name: &str, pipeline: Box<dyn MaterialPipeline>) {
+        self.pipelines.insert(name.to_string(), pipeline);
+    }
+
+    pub fn get_pipeline(&self, name: &str) -> Option<&Box<dyn MaterialPipeline>> {
+        self.pipelines.get(name)
+    }
+}
+
+pub struct Mesh2dTransform {
+    pub world_from_local: Affine3<f32>,
+}
+
+#[derive(PartialEq, Hash, Clone, Eq)]
+pub struct MeshMaterial {
+    mesh_id: ResourceId<Mesh>,
+}
+
+pub struct RenderPhaseCommand {
+    pub mesh_id: ResourceId<Mesh>,
+    pub pipeline_id: CachePipelineId,
+    pub mesh_uniforms: Vec<Mesh2dUniform>,
+}
+
+impl RenderPhaseCommand {
+    pub fn add_mesh_uniform(&mut self, mesh_uniform: Mesh2dUniform) {
+        self.mesh_uniforms.push(mesh_uniform);
+    }
+}
+
+#[derive(PartialEq, Eq, Clone, Copy, Hash)]
+pub struct MeshMaterialBuilderKey {
+    pub mesh_id: ResourceId<Mesh>,
+    pub pipeline_id: CachePipelineId,
+}
+
+#[derive(Default)]
+pub struct RenderPhaseCommandContainer(HashMap<MeshMaterialBuilderKey, RenderPhaseCommand>);
+
+impl Deref for RenderPhaseCommandContainer {
+    type Target = HashMap<MeshMaterialBuilderKey, RenderPhaseCommand>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl RenderPhaseCommandContainer {
+    pub fn get_or_create_render_phase_command(
+        &mut self,
+        mesh_id: ResourceId<Mesh>,
+        pipeline_id: CachePipelineId,
+    ) -> &mut RenderPhaseCommand {
+        let key = MeshMaterialBuilderKey {
+            mesh_id,
+            pipeline_id,
+        };
+        self.0.entry(key).or_insert_with(|| RenderPhaseCommand {
+            mesh_id,
+            pipeline_id,
+            mesh_uniforms: vec![],
+        })
+    }
+}
+
+pub struct Renderer2d {
+    mesh_material_cache: HashMap<MeshMaterial, CachePipelineId>,
+    pub render_phase_command_container: RenderPhaseCommandContainer,
+    material_pipeline_container: MaterialPipelineContainer,
+}
+
+impl Renderer2d {
+    pub fn spawn_render_phase(
+        &mut self,
+        render_device: &RenderDevice,
+        render_world: &mut RenderWorld,
+        render_phase_container: &mut RenderPhaseContainer,
+    ) {
+        let render_phase_commands = take(&mut self.render_phase_command_container);
+
+        let material_pipeline = self
+            .material_pipeline_container
+            .get_pipeline("mesh_2d")
+            .unwrap();
+
+        for render_phase_command in render_phase_commands.values() {
+            let render_phase = material_pipeline.create_render_phase(
+                render_phase_command,
+                render_device,
+                render_world,
+            );
+
+            render_phase_container.add(CORE_2D, render_phase);
+        }
+    }
+
+    pub fn draw_mesh(
+        &mut self,
+        mesh_id: ResourceId<Mesh>,
+        pipeline_id: CachePipelineId,
+        mesh_transform: Mesh2dTransform,
+    ) {
+        let render_phase_command = self
+            .render_phase_command_container
+            .get_or_create_render_phase_command(mesh_id, pipeline_id);
+
+        render_phase_command.add_mesh_uniform(Mesh2dUniform::from_transform(&mesh_transform));
+    }
+
+    pub fn create_render_pipeline(
+        &mut self,
+        render_world: &mut RenderWorld,
+        mesh_id: ResourceId<Mesh>,
+    ) -> Result<CachePipelineId, FrameworkError> {
+        let mesh_material = MeshMaterial { mesh_id };
+        if let Some(id) = self.mesh_material_cache.get(&mesh_material) {
+            return Ok(*id);
+        }
+
+        let mesh = render_world
+            .get_mesh(mesh_id)
+            .ok_or_else(|| FrameworkError::MeshNotFound)?;
+
+        let layout = render_world.get_mesh_vertex_buffer_layout(&mesh);
+
+        let material_pipeline = self
+            .material_pipeline_container
+            .get_pipeline("mesh_2d")
+            .unwrap();
+
+        let desc = material_pipeline.specialize(&layout)?;
+
+        let id = render_world.create_render_pipeline(desc)?;
+
+        self.mesh_material_cache.insert(mesh_material, id);
+
+        Ok(id)
+    }
 }
 
 impl Default for Renderer2d {
     fn default() -> Self {
         Self {
             mesh_material_cache: HashMap::default(),
-            phase_builders: Default::default(),
+            render_phase_command_container: Default::default(),
+            material_pipeline_container: MaterialPipelineContainer::new(),
         }
     }
 }
