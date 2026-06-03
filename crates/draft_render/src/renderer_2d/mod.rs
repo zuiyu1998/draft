@@ -2,11 +2,11 @@ mod resource;
 
 use std::{collections::HashMap, mem::take, ops::Deref};
 
-use bytemuck::{Pod, Zeroable, cast_slice};
+use bytemuck::{Pod, Zeroable};
 use draft_mesh::{Mesh, MeshVertexBufferLayoutRef};
 use draft_utils::AffineExt;
 use encase::ShaderType;
-use wgpu::{BufferUsages, TextureFormat};
+use wgpu::TextureFormat;
 
 use nalgebra::{Affine3, Vector4};
 
@@ -17,7 +17,8 @@ use crate::{
         RenderPhaseContainer, ResourceBinding,
     },
     render_resource::{
-        BindGroupLayoutDescriptor, BindGroupLayoutEntries, binding_types::uniform_buffer_sized,
+        BindGroupLayoutDescriptor, BindGroupLayoutEntries, GpuArrayBuffer,
+        binding_types::uniform_buffer_sized,
     },
     render_world::{
         CachePipelineId, GpuFragmentState, GpuPipelineLayoutDescriptor,
@@ -25,7 +26,7 @@ use crate::{
     },
 };
 
-use draft_graphics::ShaderStages;
+use draft_graphics::{RenderDevice, ShaderStages};
 
 pub use resource::*;
 pub const CORE_2D: &str = "core_2d";
@@ -78,14 +79,20 @@ impl RenderPhaseBuilder {
 }
 
 impl RenderPhaseBuilder {
-    pub fn build(&self, render_world: &mut RenderWorld) -> MeshRenderPhase {
-        let bytes = cast_slice(&self.mesh_uniforms);
+    pub fn build(
+        &self,
+        render_device: &RenderDevice,
+        render_world: &mut RenderWorld,
+    ) -> MeshRenderPhase {
+        let limits = render_device.limits();
 
-        let view_index = render_world.upload_uniform(
-            "Mesh2dUniform",
-            bytes,
-            BufferUsages::COPY_DST | BufferUsages::UNIFORM,
-        );
+        let mut gpu_array_buffer = GpuArrayBuffer::<Mesh2dUniform>::new(&limits);
+
+        for uniform in self.mesh_uniforms.iter() {
+            gpu_array_buffer.push(*uniform);
+        }
+
+        let view_index = gpu_array_buffer.write("Mesh2dUniform", render_world);
 
         let layout = render_world.get_bind_group_layout("view");
 
@@ -156,13 +163,14 @@ pub struct Renderer2d {
 impl Renderer2d {
     pub fn spawn_render_phase(
         &mut self,
-        render_phase_container: &mut RenderPhaseContainer,
+        render_device: &RenderDevice,
         render_world: &mut RenderWorld,
+        render_phase_container: &mut RenderPhaseContainer,
     ) {
         let phase_builders = take(&mut self.phase_builders);
 
         for phase_builder in phase_builders.values() {
-            let render_phase = phase_builder.build(render_world);
+            let render_phase = phase_builder.build(render_device, render_world);
             render_phase_container.add(CORE_2D, render_phase);
         }
     }

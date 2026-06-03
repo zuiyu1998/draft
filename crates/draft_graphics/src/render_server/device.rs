@@ -1,5 +1,6 @@
 use wgpu::{
-    BindGroupLayoutDescriptor, BindGroupLayoutEntry, util::{BufferInitDescriptor, DeviceExt}
+    BindGroupLayoutDescriptor, BindGroupLayoutEntry,
+    util::{BufferInitDescriptor, DeviceExt},
 };
 
 #[derive(Clone)]
@@ -10,6 +11,10 @@ pub struct RenderDevice {
 impl RenderDevice {
     pub fn new(device: wgpu::Device) -> Self {
         Self { device }
+    }
+
+    pub fn limits(&self) -> wgpu::Limits {
+        self.device.limits()
     }
 
     pub fn wgpu_device(&self) -> &wgpu::Device {

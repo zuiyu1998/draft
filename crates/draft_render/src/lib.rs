@@ -2,9 +2,9 @@ pub mod error;
 pub mod frame_graph;
 pub mod render_phase;
 pub mod render_pipeline;
+pub mod render_resource;
 pub mod render_world;
 pub mod renderer_2d;
-pub mod render_resource;
 
 use draft_graphics::{Color, RenderServer};
 use draft_mesh::Mesh;
@@ -165,8 +165,11 @@ impl WorldRenderer {
     pub fn render_frame(&mut self) {
         self.render_world.begin_frame();
 
-        self.renderer_2d
-            .spawn_render_phase(&mut self.render_phase_container, &mut self.render_world);
+        self.renderer_2d.spawn_render_phase(
+            &self.render_server.device,
+            &mut self.render_world,
+            &mut self.render_phase_container,
+        );
 
         let pipeline_container = self.render_world.get_pipeline_container();
         let mut context = RenderPipelineRunContext {

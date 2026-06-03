@@ -7,7 +7,7 @@ pub use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupLayout, BindGroupLayoutEntry, BindingType, BlendState,
     Buffer, BufferAddress, BufferBinding, BufferBindingType, BufferDescriptor, BufferUsages, Color,
     ColorTargetState, ColorWrites, CommandBuffer, DepthStencilState, FragmentState, IndexFormat,
-    MultisampleState, PipelineCompilationOptions, PipelineLayout, PipelineLayoutDescriptor,
+    Limits, MultisampleState, PipelineCompilationOptions, PipelineLayout, PipelineLayoutDescriptor,
     PrimitiveState, RenderPipeline, RenderPipelineDescriptor, ShaderModule, ShaderModuleDescriptor,
     ShaderSource, ShaderStages, Surface, SurfaceConfiguration, SurfaceTexture, TextureFormat,
     TextureView, VertexBufferLayout, VertexState, VertexStepMode, util::BufferInitDescriptor,
